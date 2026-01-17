@@ -33,6 +33,33 @@ const config = {
 
 let pool;
 
+// Normalize text to remove problematic Unicode characters (like Cyrillic look-alikes)
+function normalizeText(text) {
+    if (!text) return text;
+    
+    // Map of common Cyrillic characters that look like Latin ones
+    const cyrillicToLatin = {
+        'а': 'a', 'А': 'A',
+        'е': 'e', 'Е': 'E',
+        'о': 'o', 'О': 'O',
+        'р': 'p', 'Р': 'P',
+        'с': 'c', 'С': 'C',
+        'у': 'y', 'У': 'Y',
+        'х': 'x', 'Х': 'X',
+        'і': 'i', 'І': 'I'
+    };
+    
+    // Replace Cyrillic lookalikes with proper Latin characters
+    let normalized = text;
+    for (const [cyrillic, latin] of Object.entries(cyrillicToLatin)) {
+        normalized = normalized.split(cyrillic).join(latin);
+    }
+    
+    // Normalize Unicode to decomposed form and remove combining marks
+    // This keeps accented characters but normalizes representation
+    return normalized.normalize('NFC');
+}
+
 // Initialize Database Connection
 async function initializeDB() {
     try {
@@ -568,7 +595,7 @@ app.post('/api/songs', async (req, res) => {
         await transaction.begin();
         
         try {
-            // Insert song
+            // Insert song (normalize contentText to prevent encoding issues)
             const songResult = await new sql.Request(transaction)
                 .input('title', sql.NVarChar, title)
                 .input('songDate', sql.NVarChar, songDate || '')
@@ -577,7 +604,7 @@ app.post('/api/songs', async (req, res) => {
                 .input('capo', sql.NVarChar, capo || '')
                 .input('bpm', sql.NVarChar, bpm || '')
                 .input('effects', sql.NVarChar, effects || '')
-                .input('contentText', sql.NVarChar, contentText)
+                .input('contentText', sql.NVarChar, normalizeText(contentText))
                 .query(`
                     INSERT INTO Songs (Title, SongDate, Notes, SongKey, Capo, BPM, Effects, ContentText)
                     OUTPUT INSERTED.Id
@@ -630,7 +657,7 @@ app.put('/api/songs/:id', async (req, res) => {
         await transaction.begin();
         
         try {
-            // Update song
+            // Update song (normalize contentText to prevent encoding issues)
             await new sql.Request(transaction)
                 .input('id', sql.Int, id)
                 .input('title', sql.NVarChar, title)
@@ -640,7 +667,7 @@ app.put('/api/songs/:id', async (req, res) => {
                 .input('capo', sql.NVarChar, capo || '')
                 .input('bpm', sql.NVarChar, bpm || '')
                 .input('effects', sql.NVarChar, effects || '')
-                .input('contentText', sql.NVarChar, contentText)
+                .input('contentText', sql.NVarChar, normalizeText(contentText))
                 .query(`
                     UPDATE Songs 
                     SET Title = @title, SongDate = @songDate, Notes = @notes,

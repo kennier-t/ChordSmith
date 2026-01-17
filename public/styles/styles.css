@@ -1099,7 +1099,7 @@ h2::after {
     width: 100%;
     border-collapse: collapse;
     font-family: 'Cascadia Mono', 'Courier New', monospace;
-    font-size: 10pt;
+    font-size: 12pt;
 }
 
 .metadata-table td {
@@ -1131,7 +1131,7 @@ h2::after {
     min-height: 300px;
     padding: 12px;
     border: 1px solid var(--border);
-    font-family: 'Aptos', 'Calibri', sans-serif;
+    font-family: Helvetica, Arial, sans-serif;
     font-size: 12pt;
     line-height: 1.5;
     resize: vertical;

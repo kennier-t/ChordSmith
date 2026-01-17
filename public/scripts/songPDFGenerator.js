@@ -112,8 +112,8 @@ const SongPDFGenerator = (function() {
         
         yPosition += row2Height + 8;
         
-        // Use Times font (closest to Aptos available) for lyrics, size 12
-        doc.setFont('times', 'normal');
+        // Use Helvetica font (closest to Aptos available) for lyrics, size 12pt
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(12);
         
         const lyricsMargin = 12;
