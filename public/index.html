@@ -193,6 +193,17 @@
                     <div class="folders-actions">
                         <button id="create-new-folder-btn" class="download-btn">Create Folder</button>
                         <button id="create-new-song-btn" class="utility-btn">Create New Song</button>
+                        <div class="sort-control">
+                            <label for="folder-sort-select">Sort by:</label>
+                            <select id="folder-sort-select">
+                                <option value="date-asc">Date (Oldest First)</option>
+                                <option value="date-desc">Date (Newest First)</option>
+                                <option value="name-asc">Name (A-Z)</option>
+                                <option value="name-desc">Name (Z-A)</option>
+                                <option value="songs-desc">Songs (Most First)</option>
+                                <option value="songs-asc">Songs (Least First)</option>
+                            </select>
+                        </div>
                     </div>
                     <div id="folders-list" class="folders-list"></div>
                 </div>

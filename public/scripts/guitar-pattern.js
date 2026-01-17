@@ -6,13 +6,13 @@
     
     // Configuración del patrón
     const config = {
-        guitarCount: 35, // Número total de guitarras
-        minSize: 110,
-        maxSize: 220,
+        guitarCount: 40, // Número total de guitarras (aumentado)
+        minSize: 120,
+        maxSize: 260,
         minRotation: -45,
         maxRotation: 45,
-        minOpacity: 0.08,
-        maxOpacity: 0.15,
+        minOpacity: 0.18, // Aumentado significativamente
+        maxOpacity: 0.35, // Aumentado significativamente
         animationDuration: 180 // segundos
     };
     
@@ -92,8 +92,8 @@
             background-position: center;
             opacity: ${opacity};
             transform: translate(-50%, -50%) rotate(${rotation}deg);
-            filter: grayscale(35%) contrast(0.82) brightness(1.12) sepia(5%);
-            mix-blend-mode: multiply;
+            filter: grayscale(25%) contrast(0.95) brightness(1.05) sepia(8%);
+            mix-blend-mode: normal;
             animation: subtleFloat${index % 3} ${animationDuration}s ease-in-out infinite;
             animation-delay: ${animationDelay}s;
             will-change: transform;

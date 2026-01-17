@@ -49,6 +49,13 @@ const SONGS_SERVICE = (function() {
         });
     }
     
+    async function renameFolder(folderId, newName) {
+        return await apiCall(`/folders/${folderId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ name: newName })
+        });
+    }
+    
     async function deleteFolder(folderId) {
         await apiCall(`/folders/${folderId}`, {
             method: 'DELETE'
@@ -120,6 +127,7 @@ const SONGS_SERVICE = (function() {
     return {
         getAllFolders,
         createFolder,
+        renameFolder,
         deleteFolder,
         getAllSongs,
         getSongById,

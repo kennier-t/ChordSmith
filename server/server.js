@@ -418,6 +418,28 @@ app.post('/api/folders', async (req, res) => {
     }
 });
 
+// PUT update folder name
+app.put('/api/folders/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+        
+        if (!name || !name.trim()) {
+            return res.status(400).json({ error: 'Folder name is required' });
+        }
+        
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('name', sql.NVarChar, name.trim())
+            .query('UPDATE Folders SET Name = @name WHERE Id = @id');
+        
+        res.json({ message: 'Folder renamed successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // DELETE folder
 app.delete('/api/folders/:id', async (req, res) => {
     try {
