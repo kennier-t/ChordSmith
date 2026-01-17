@@ -112,9 +112,9 @@ const SongPDFGenerator = (function() {
         
         yPosition += row2Height + 8;
         
-        // Use Helvetica font (closest to Aptos available) for lyrics, size 12pt
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(12);
+        // Use Courier font for lyrics, size 14px
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(11);
         
         const lyricsMargin = 12;
         const maxLineWidth = pageWidth - (lyricsMargin * 2);
