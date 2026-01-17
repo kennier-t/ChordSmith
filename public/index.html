@@ -4,18 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chord Families</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="guitar-pattern.css">
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/guitar-pattern.css">
 </head>
 <body>
     <div id="app">
         <!-- Vista principal: familias de acordes -->
         <div id="families-view" class="view">
-            <div class="top-button-container">
-                <button id="open-songs-btn" class="utility-btn">Songs</button>
-            </div>
-            <div class="main-buttons">
+            <div class="top-buttons-container">
                 <button id="gen-song-chords-btn" class="utility-btn">Gen Song Chords</button>
+                <button id="open-songs-btn" class="utility-btn">Songs</button>
                 <button id="create-chord-btn" class="utility-btn">Create Chord</button>
             </div>
             <h1>Chord Families</h1>
@@ -279,18 +277,18 @@
         </div>
     </div>
 
-    <script src="guitar-pattern.js"></script>
+    <script src="scripts/guitar-pattern.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="dbService.js"></script>
-    <script src="songsService.js"></script>
-    <script src="chordData.js"></script>
-    <script src="chordRenderer.js"></script>
-    <script src="songPDFGenerator.js"></script>
-    <script src="app.js"></script>
-    <script src="songChords.js"></script>
-    <script src="chordEditor.js"></script>
-    <script src="songEditor.js"></script>
-    <script src="songsManager.js"></script>
+    <script src="scripts/dbService-api.js"></script>
+    <script src="scripts/songsService-api.js"></script>
+    <script src="scripts/chordData.js"></script>
+    <script src="scripts/chordRenderer.js"></script>
+    <script src="scripts/songPDFGenerator.js"></script>
+    <script src="scripts/app.js"></script>
+    <script src="scripts/songChords.js"></script>
+    <script src="scripts/chordEditor.js"></script>
+    <script src="scripts/songEditor.js"></script>
+    <script src="scripts/songsManager.js"></script>
 </body>
 </html>

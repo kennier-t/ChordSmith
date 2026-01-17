@@ -78,10 +78,10 @@ function showView(view) {
 }
 
 // Mostrar vista de familia
-function showFamilyView(family) {
+async function showFamilyView(family) {
     console.log('showFamilyView llamado con:', family);
     currentFamily = family;
-    const chords = getChordsForFamily(family);
+    const chords = await DB_SERVICE.getChordsForFamily(family);
     console.log('Acordes encontrados:', chords.length, chords);
     
     if (chords.length === 0) {
@@ -162,7 +162,7 @@ async function downloadChord(chord, format) {
 
 // Descargar familia completa
 async function downloadFamily(family, format) {
-    const chords = getChordsForFamily(family);
+    const chords = await DB_SERVICE.getChordsForFamily(family);
     
     if (chords.length === 0) {
         alert('No chords available to download in this family.');

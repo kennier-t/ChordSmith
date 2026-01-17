@@ -5,20 +5,23 @@ const SongEditor = (function() {
     let selectedChordIds = [];
     
     function initialize() {
-        document.getElementById('open-create-song-btn').addEventListener('click', () => openEditor());
-        document.getElementById('close-song-editor-modal').addEventListener('click', closeEditor);
-        document.getElementById('save-song-btn').addEventListener('click', saveSong);
-        document.getElementById('cancel-song-edit-btn').addEventListener('click', closeEditor);
+        const closeBtn = document.getElementById('close-song-editor-modal');
+        const saveBtn = document.getElementById('save-song-btn');
+        const cancelBtn = document.getElementById('cancel-song-edit-btn');
+        
+        if (closeBtn) closeBtn.addEventListener('click', closeEditor);
+        if (saveBtn) saveBtn.addEventListener('click', saveSong);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeEditor);
         
         populateChordSelector();
     }
     
-    function openEditor(songId = null) {
+    async function openEditor(songId = null) {
         currentSongId = songId;
         selectedChordIds = [];
         
         if (songId) {
-            const song = SONGS_SERVICE.getSongById(songId);
+            const song = await SONGS_SERVICE.getSongById(songId);
             if (!song) {
                 alert('Song not found');
                 return;
@@ -33,10 +36,10 @@ const SongEditor = (function() {
             document.getElementById('song-effects-input').value = song.effects;
             document.getElementById('song-content-textarea').value = song.contentText;
             
-            selectedChordIds = SONGS_SERVICE.getSongChordDiagrams(songId);
-            updateSelectedChordsList();
+            selectedChordIds = await SONGS_SERVICE.getSongChordDiagrams(songId);
+            await updateSelectedChordsList();
             
-            const folderIds = SONGS_SERVICE.getSongFolders(songId).map(f => f.id);
+            const folderIds = (await SONGS_SERVICE.getSongFolders(songId)).map(f => f.id);
             document.querySelectorAll('.folder-checkbox').forEach(cb => {
                 cb.checked = folderIds.includes(parseInt(cb.value));
             });
@@ -57,7 +60,7 @@ const SongEditor = (function() {
             updateSelectedChordsList();
         }
         
-        refreshFolderCheckboxes();
+        await refreshFolderCheckboxes();
         document.getElementById('song-editor-modal').classList.remove('hidden');
     }
     
@@ -67,9 +70,9 @@ const SongEditor = (function() {
         selectedChordIds = [];
     }
     
-    function populateChordSelector() {
+    async function populateChordSelector() {
         const container = document.getElementById('chord-selector-grid');
-        const allChords = DB_SERVICE.getAllChords();
+        const allChords = await DB_SERVICE.getAllChords();
         
         container.innerHTML = '';
         
@@ -110,19 +113,19 @@ const SongEditor = (function() {
         updateSelectedChordsList();
     }
     
-    function moveChordUp(index) {
+    async function moveChordUp(index) {
         if (index === 0) return;
         [selectedChordIds[index], selectedChordIds[index - 1]] = [selectedChordIds[index - 1], selectedChordIds[index]];
-        updateSelectedChordsList();
+        await updateSelectedChordsList();
     }
     
-    function moveChordDown(index) {
+    async function moveChordDown(index) {
         if (index === selectedChordIds.length - 1) return;
         [selectedChordIds[index], selectedChordIds[index + 1]] = [selectedChordIds[index + 1], selectedChordIds[index]];
-        updateSelectedChordsList();
+        await updateSelectedChordsList();
     }
     
-    function updateSelectedChordsList() {
+    async function updateSelectedChordsList() {
         const container = document.getElementById('selected-chords-list');
         container.innerHTML = '';
         
@@ -131,8 +134,9 @@ const SongEditor = (function() {
             return;
         }
         
-        selectedChordIds.forEach((chordId, index) => {
-            const chord = DB_SERVICE.getChordById(chordId);
+        for (let index = 0; index < selectedChordIds.length; index++) {
+            const chordId = selectedChordIds[index];
+            const chord = await DB_SERVICE.getChordById(chordId);
             if (!chord) return;
             
             const item = document.createElement('div');
@@ -153,12 +157,12 @@ const SongEditor = (function() {
             item.appendChild(info);
             item.appendChild(actions);
             container.appendChild(item);
-        });
+        }
     }
     
-    function refreshFolderCheckboxes() {
+    async function refreshFolderCheckboxes() {
         const container = document.getElementById('folder-selection');
-        const folders = SONGS_SERVICE.getAllFolders();
+        const folders = await SONGS_SERVICE.getAllFolders();
         
         container.innerHTML = '<h4>Save to Folders:</h4>';
         
@@ -178,7 +182,7 @@ const SongEditor = (function() {
         });
     }
     
-    function saveSong() {
+    async function saveSong() {
         const title = document.getElementById('song-title-input').value.trim();
         
         if (!title) {
@@ -210,15 +214,15 @@ const SongEditor = (function() {
         
         try {
             if (currentSongId) {
-                SONGS_SERVICE.updateSong(currentSongId, songData);
+                await SONGS_SERVICE.updateSong(currentSongId, songData);
                 alert('Song updated successfully!');
             } else {
-                SONGS_SERVICE.createSong(songData);
+                await SONGS_SERVICE.createSong(songData);
                 alert('Song created successfully!');
             }
             
             if (typeof SongsManager !== 'undefined' && SongsManager.refreshFoldersList) {
-                SongsManager.refreshFoldersList();
+                await SongsManager.refreshFoldersList();
             }
             
             closeEditor();

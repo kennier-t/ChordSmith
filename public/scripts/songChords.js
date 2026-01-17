@@ -12,9 +12,9 @@ let selectedChords = [];
 let allChordsData = [];
 
 // Inicializar funcionalidad de Song Chords
-function initializeSongChords() {
+async function initializeSongChords() {
     // Obtener todos los acordes disponibles
-    allChordsData = getAllAvailableChords();
+    allChordsData = await getAllAvailableChords();
     
     // Poblar los selectores
     populateChordSelectors();
@@ -38,7 +38,7 @@ function initializeSongChords() {
 }
 
 // Obtener todos los acordes disponibles de todas las familias (originales + custom)
-function getAllAvailableChords() {
+async function getAllAvailableChords() {
     const chordMap = new Map();
     
     // Get all chords (includes both original and custom if DB_SERVICE is available)
@@ -46,7 +46,7 @@ function getAllAvailableChords() {
     
     if (typeof DB_SERVICE !== 'undefined') {
         // Use DB_SERVICE to get all chords (original + custom)
-        allChords = DB_SERVICE.getAllChords();
+        allChords = await DB_SERVICE.getAllChords();
     } else {
         // Fallback: use getChordsForFamily
         const families = getAllFamilies();

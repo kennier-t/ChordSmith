@@ -22,25 +22,26 @@ const SongsManager = (function() {
         document.getElementById('songs-modal').classList.add('hidden');
     }
     
-    function showFoldersView() {
+    async function showFoldersView() {
         currentFolderId = null;
         document.getElementById('folders-view').classList.remove('hidden');
         document.getElementById('songs-list-view').classList.add('hidden');
-        refreshFoldersList();
+        await refreshFoldersList();
     }
     
-    function showSongsListView(folderId) {
+    async function showSongsListView(folderId) {
         currentFolderId = folderId;
-        const folder = SONGS_SERVICE.getAllFolders().find(f => f.id === folderId);
+        const folders = await SONGS_SERVICE.getAllFolders();
+        const folder = folders.find(f => f.id === folderId);
         document.getElementById('folder-title').textContent = folder ? folder.name : 'All Songs';
         document.getElementById('folders-view').classList.add('hidden');
         document.getElementById('songs-list-view').classList.remove('hidden');
-        refreshSongsList(folderId);
+        await refreshSongsList(folderId);
     }
     
-    function refreshFoldersList() {
+    async function refreshFoldersList() {
         const container = document.getElementById('folders-list');
-        const folders = SONGS_SERVICE.getAllFolders();
+        const folders = await SONGS_SERVICE.getAllFolders();
         
         container.innerHTML = '';
         
@@ -49,8 +50,8 @@ const SongsManager = (function() {
             return;
         }
         
-        folders.forEach(folder => {
-            const songs = SONGS_SERVICE.getSongsByFolder(folder.id);
+        for (const folder of folders) {
+            const songs = await SONGS_SERVICE.getSongsByFolder(folder.id);
             const item = document.createElement('div');
             item.className = 'folder-item';
             item.innerHTML = `
@@ -61,12 +62,12 @@ const SongsManager = (function() {
                 <button class="delete-folder-btn" onclick="SongsManager.deleteFolder(${folder.id})">Delete</button>
             `;
             container.appendChild(item);
-        });
+        }
     }
     
-    function refreshSongsList(folderId) {
+    async function refreshSongsList(folderId) {
         const container = document.getElementById('songs-list');
-        const songs = folderId ? SONGS_SERVICE.getSongsByFolder(folderId) : SONGS_SERVICE.getAllSongs();
+        const songs = folderId ? await SONGS_SERVICE.getSongsByFolder(folderId) : await SONGS_SERVICE.getAllSongs();
         
         container.innerHTML = '';
         
@@ -97,18 +98,18 @@ const SongsManager = (function() {
         });
     }
     
-    function createNewFolder() {
+    async function createNewFolder() {
         const name = prompt('Enter folder name:');
         if (name && name.trim()) {
-            SONGS_SERVICE.createFolder(name.trim());
-            refreshFoldersList();
+            await SONGS_SERVICE.createFolder(name.trim());
+            await refreshFoldersList();
         }
     }
     
-    function deleteFolder(folderId) {
+    async function deleteFolder(folderId) {
         if (confirm('Delete this folder? Songs will not be deleted, only removed from this folder.')) {
-            SONGS_SERVICE.deleteFolder(folderId);
-            refreshFoldersList();
+            await SONGS_SERVICE.deleteFolder(folderId);
+            await refreshFoldersList();
         }
     }
     
@@ -117,21 +118,21 @@ const SongsManager = (function() {
     }
     
     async function downloadSongPDF(songId) {
-        const song = SONGS_SERVICE.getSongById(songId);
+        const song = await SONGS_SERVICE.getSongById(songId);
         if (!song) {
             alert('Song not found');
             return;
         }
         
-        const chordIds = SONGS_SERVICE.getSongChordDiagrams(songId);
+        const chordIds = await SONGS_SERVICE.getSongChordDiagrams(songId);
         await SongPDFGenerator.downloadPDF(song, chordIds, `${song.title}.pdf`);
     }
     
-    function deleteSong(songId) {
-        const song = SONGS_SERVICE.getSongById(songId);
+    async function deleteSong(songId) {
+        const song = await SONGS_SERVICE.getSongById(songId);
         if (confirm(`Delete song "${song.title}"?`)) {
-            SONGS_SERVICE.deleteSong(songId);
-            refreshSongsList(currentFolderId);
+            await SONGS_SERVICE.deleteSong(songId);
+            await refreshSongsList(currentFolderId);
         }
     }
     

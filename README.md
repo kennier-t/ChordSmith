@@ -37,33 +37,49 @@ A web application for visualizing, creating, and downloading guitar chord diagra
 
 ## Getting Started
 
-1. Open `index.html` in your web browser
-2. Click on any family button (C, D, E, F, G, A, B) to explore chords
-3. Click "Create Chord" to build your own custom chords
-4. Click "Create Song" to create songs with lyrics and chord diagrams
-5. Click "Songs" to manage your song library and folders
-6. Use "Gen Song Chords" to create chord sequences
+### Prerequisites
+- Node.js (v14 or higher)
+- SQL Server with ODBC Driver 17 installed
+- Windows Authentication configured for SQL Server
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up the database:
+   - Open SQL Server Management Studio (SSMS)
+   - Run `database/setup-complete.sql`
+   - This single script creates everything: database, tables, views, and initial data
+4. Update the connection string in `server/server.js` with your server name
+5. Start the server:
+   ```bash
+   npm start
+   ```
+6. Open your browser and navigate to `http://localhost:3000`
+
+### Usage
+
+1. Click on any family button (C, D, E, F, G, A, B) to explore chords
+2. Click "Create Chord" to build your own custom chords
+3. Click "Songs" to manage your song library and folders
+4. Use "Gen Song Chords" to create chord sequences
 
 ## Technologies
 
-- **HTML5 Canvas** for interactive chord editing
-- **Vanilla JavaScript** (no frameworks)
-- **CSS3** for responsive design
-- **localStorage** for data persistence
-- **jsPDF** for PDF generation
-- **SQL Server** database schema (optional backend)
+**Frontend:**
+- HTML5 Canvas for interactive chord editing
+- Vanilla JavaScript (no frameworks)
+- CSS3 for responsive design
+- jsPDF for PDF generation
 
-## Database Setup (Optional)
+**Backend:**
+- Node.js + Express for API server
+- SQL Server for data persistence
+- msnodesqlv8 for Windows Authentication
 
-If you want to connect to SQL Server instead of using localStorage:
-
-1. Open SQL Server Management Studio
-2. Run the script: `ChordFamilies-Database.sql`
-3. Run the script: `ChordFamilies-Songs-Extension.sql`
-4. Implement a backend API (Node.js, .NET, etc.)
-5. Modify `dbService.js` and `songsService.js` to use API calls instead of localStorage
-
-The app currently works standalone using browser localStorage - no backend required!
 
 ## How It Works
 
@@ -79,8 +95,15 @@ The app currently works standalone using browser localStorage - no backend requi
 - Validates finger positions and chord names
 
 ### Architecture
-- `dbService.js`: Chord data layer (simulates SQL Server with localStorage)
-- `songsService.js`: Songs data layer (localStorage)
+
+**Backend (Node.js/Express):**
+- `server/server.js`: Express API server with SQL Server integration
+- RESTful endpoints for chords, songs, folders
+- Static file serving from public directory
+
+**Frontend:**
+- `dbService-api.js`: API client for chord operations
+- `songsService-api.js`: API client for songs/folders
 - `chordEditor.js`: Interactive canvas chord editor
 - `songEditor.js`: Song creation and editing
 - `songsManager.js`: Songs and folders management
@@ -93,21 +116,32 @@ The app currently works standalone using browser localStorage - no backend requi
 
 ```
 Chord-Families/
-├── index.html              # Main page
-├── app.js                  # Core application
-├── chordData.js            # Chord data integration
-├── chordRenderer.js        # Rendering engine
-├── dbService.js            # Chord data service (localStorage)
-├── songsService.js         # Songs data service (localStorage)
-├── chordEditor.js          # Interactive chord editor
-├── songEditor.js           # Song editor
-├── songsManager.js         # Songs/folders manager
-├── songPDFGenerator.js     # PDF generator
-├── songChords.js           # Sequence generator
-├── guitar-pattern.js       # Background pattern
-├── styles.css              # Complete styling
-├── ChordFamilies-Database.sql       # SQL Server schema
-└── ChordFamilies-Songs-Extension.sql # Songs tables
+├── public/                 # Frontend files
+│   ├── index.html          # Main page
+│   ├── debug.html          # Debug page
+│   ├── scripts/            # JavaScript files
+│   │   ├── app.js          # Core application
+│   │   ├── chordData.js    # Chord data
+│   │   ├── chordRenderer.js # SVG/PNG rendering
+│   │   ├── chordEditor.js  # Interactive editor
+│   │   ├── dbService-api.js # API client for chords
+│   │   ├── songsService-api.js # API client for songs
+│   │   ├── songEditor.js   # Song editor
+│   │   ├── songsManager.js # Songs/folders manager
+│   │   ├── songPDFGenerator.js # PDF generator
+│   │   ├── songChords.js   # Chord sequences
+│   │   └── guitar-pattern.js # Background pattern
+│   └── styles/             # CSS files
+│       ├── styles.css      # Main styles
+│       └── guitar-pattern.css # Pattern styles
+├── server/                 # Backend files
+│   └── server.js           # Express API server
+├── database/               # Database scripts
+│   ├── ChordFamilies-Database.sql # Main schema
+│   ├── ChordFamilies-Songs-Extension.sql # Songs extension
+│   └── setup scripts       # Configuration scripts
+├── package.json            # Dependencies
+└── README.md              # Documentation
 ```
 
 ## Browser Support

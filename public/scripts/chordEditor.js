@@ -65,19 +65,19 @@
         };
     }
     
-    function showListView() {
+    async function showListView() {
         document.getElementById('chord-list-view').classList.remove('hidden');
         document.getElementById('chord-editor-view').classList.add('hidden');
-        refreshCustomChordsList();
+        await refreshCustomChordsList();
     }
     
-    function showEditorView(chordId = null) {
+    async function showEditorView(chordId = null) {
         document.getElementById('chord-list-view').classList.add('hidden');
         document.getElementById('chord-editor-view').classList.remove('hidden');
         
         // Reset or load chord
         if (chordId) {
-            loadChordForEditing(chordId);
+            await loadChordForEditing(chordId);
             document.getElementById('delete-chord-btn').classList.remove('hidden');
         } else {
             resetEditor();
@@ -103,8 +103,8 @@
         document.getElementById('name-error').textContent = '';
     }
     
-    function loadChordForEditing(chordId) {
-        const chord = DB_SERVICE.getChordById(chordId);
+    async function loadChordForEditing(chordId) {
+        const chord = await DB_SERVICE.getChordById(chordId);
         if (!chord) {
             alert('Chord not found');
             showListView();
@@ -128,9 +128,9 @@
         document.getElementById('name-error').textContent = '';
     }
     
-    function refreshCustomChordsList() {
+    async function refreshCustomChordsList() {
         const container = document.getElementById('custom-chords-list');
-        const customChords = DB_SERVICE.getCustomChords();
+        const customChords = await DB_SERVICE.getCustomChords();
         
         container.innerHTML = '';
         

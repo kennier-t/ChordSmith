@@ -116,12 +116,27 @@ h2::after {
     background: var(--primary);
 }
 
-/* Botones principales (Gen Song Chords y Create Chord) */
-.main-buttons {
+/* Top buttons container - aligned horizontally */
+.top-buttons-container {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 32px;
     gap: 16px;
+}
+
+.top-buttons-container #gen-song-chords-btn {
+    margin-right: auto;
+}
+
+.top-buttons-container #open-songs-btn {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.top-buttons-container #create-chord-btn {
+    margin-left: auto;
 }
 
 .utility-btn {
@@ -598,8 +613,18 @@ h2::after {
         grid-template-columns: 1fr;
     }
     
-    .main-buttons {
+    .top-buttons-container {
         flex-direction: column;
+    }
+    
+    .top-buttons-container #open-songs-btn {
+        position: static;
+        transform: none;
+    }
+    
+    .top-buttons-container #gen-song-chords-btn,
+    .top-buttons-container #create-chord-btn {
+        margin: 0;
     }
 }
 
@@ -775,11 +800,6 @@ h2::after {
     }
 }
 
-/* Top Button Container - Centered Songs Button */
-.top-button-container {
-    text-align: center;
-    margin-bottom: 20px;
-}
 
 /* Songs Modal Styles */
 .folders-actions {

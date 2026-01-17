@@ -1,9 +1,19 @@
 const SongPDFGenerator = (function() {
     'use strict';
     
+    // Helper function to normalize text for PDF rendering
+    function normalizeText(text) {
+        if (!text) return '';
+        // Ensure text is properly decoded and normalized
+        return text.normalize('NFC');
+    }
+    
     async function generatePDF(song, chordIds) {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        const doc = new jsPDF({
+            putOnlyUsedFonts: true,
+            compress: true
+        });
         
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();
@@ -19,24 +29,39 @@ const SongPDFGenerator = (function() {
         const row1Height = 15;
         const row2Height = 15;
         
-        doc.setFontSize(10);
         doc.setLineWidth(0.2);
         
         doc.rect(tableX, yPosition, col1Width, row1Height);
         doc.rect(tableX + col1Width, yPosition, col2Width, row1Height);
         doc.rect(tableX + col1Width + col2Width, yPosition, col3Width, row1Height + row2Height);
         
-        const titleText = 'Title: ' + (song.title || '');
-        const titleLines = doc.splitTextToSize(titleText, col1Width - 4);
-        doc.text(titleLines.slice(0, 2), tableX + 2, yPosition + 5);
+        // Use Courier bold for metadata labels, size 10
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(10);
         
-        const dateText = 'Date: ' + (song.songDate || '');
-        const dateLines = doc.splitTextToSize(dateText, col2Width - 4);
-        doc.text(dateLines.slice(0, 2), tableX + col1Width + 2, yPosition + 5);
+        // Title field
+        let currentY = yPosition + 5;
+        doc.text('Title:', tableX + 2, currentY);
+        doc.setFont('courier', 'normal');
+        const titleValue = song.title || '';
+        const titleLines = doc.splitTextToSize(titleValue, col1Width - 4);
+        doc.text(titleLines.slice(0, 2), tableX + 2 + doc.getTextWidth('Title: '), currentY);
         
-        const notesText = 'Notes: ' + (song.notes || '');
-        const notesLines = doc.splitTextToSize(notesText, col3Width - 4);
-        doc.text(notesLines.slice(0, 4), tableX + col1Width + col2Width + 2, yPosition + 5);
+        // Date field
+        doc.setFont('courier', 'bold');
+        doc.text('Date:', tableX + col1Width + 2, currentY);
+        doc.setFont('courier', 'normal');
+        const dateValue = song.songDate || '';
+        const dateLines = doc.splitTextToSize(dateValue, col2Width - 4 - doc.getTextWidth('Date: '));
+        doc.text(dateLines.slice(0, 2), tableX + col1Width + 2 + doc.getTextWidth('Date: '), currentY);
+        
+        // Notes field
+        doc.setFont('courier', 'bold');
+        doc.text('Notes:', tableX + col1Width + col2Width + 2, currentY);
+        doc.setFont('courier', 'normal');
+        const notesValue = song.notes || '';
+        const notesLines = doc.splitTextToSize(notesValue, col3Width - 4 - doc.getTextWidth('Notes: '));
+        doc.text(notesLines.slice(0, 4), tableX + col1Width + col2Width + 2 + doc.getTextWidth('Notes: '), currentY);
         
         yPosition += row1Height;
         
@@ -51,37 +76,72 @@ const SongPDFGenerator = (function() {
         doc.rect(tableX + col2_1Width + col2_2Width, yPosition, col2_3Width, row2Height);
         doc.rect(tableX + col2_1Width + col2_2Width + col2_3Width, yPosition, col2_4Width, row2Height);
         
-        const keyText = 'Key: ' + (song.songKey || '');
-        const keyLines = doc.splitTextToSize(keyText, col2_1Width - 4);
-        doc.text(keyLines.slice(0, 2), tableX + 2, yPosition + 5);
+        currentY = yPosition + 5;
         
-        const capoText = 'Capo: ' + (song.capo || '');
-        const capoLines = doc.splitTextToSize(capoText, col2_2Width - 4);
-        doc.text(capoLines.slice(0, 2), tableX + col2_1Width + 2, yPosition + 5);
+        // Key field
+        doc.setFont('courier', 'bold');
+        doc.text('Key:', tableX + 2, currentY);
+        doc.setFont('courier', 'normal');
+        const keyValue = song.songKey || '';
+        const keyLines = doc.splitTextToSize(keyValue, col2_1Width - 4 - doc.getTextWidth('Key: '));
+        doc.text(keyLines.slice(0, 2), tableX + 2 + doc.getTextWidth('Key: '), currentY);
         
-        const bpmText = 'BPM: ' + (song.bpm || '');
-        const bpmLines = doc.splitTextToSize(bpmText, col2_3Width - 4);
-        doc.text(bpmLines.slice(0, 2), tableX + col2_1Width + col2_2Width + 2, yPosition + 5);
+        // Capo field
+        doc.setFont('courier', 'bold');
+        doc.text('Capo:', tableX + col2_1Width + 2, currentY);
+        doc.setFont('courier', 'normal');
+        const capoValue = song.capo || '';
+        const capoLines = doc.splitTextToSize(capoValue, col2_2Width - 4 - doc.getTextWidth('Capo: '));
+        doc.text(capoLines.slice(0, 2), tableX + col2_1Width + 2 + doc.getTextWidth('Capo: '), currentY);
         
-        const effectsText = 'Effects: ' + (song.effects || '');
-        const effectsLines = doc.splitTextToSize(effectsText, col2_4Width - 4);
-        doc.text(effectsLines.slice(0, 2), tableX + col2_1Width + col2_2Width + col2_3Width + 2, yPosition + 5);
+        // BPM field
+        doc.setFont('courier', 'bold');
+        doc.text('BPM:', tableX + col2_1Width + col2_2Width + 2, currentY);
+        doc.setFont('courier', 'normal');
+        const bpmValue = song.bpm || '';
+        const bpmLines = doc.splitTextToSize(bpmValue, col2_3Width - 4 - doc.getTextWidth('BPM: '));
+        doc.text(bpmLines.slice(0, 2), tableX + col2_1Width + col2_2Width + 2 + doc.getTextWidth('BPM: '), currentY);
         
-        yPosition += row2Height + 10;
+        // Effects field
+        doc.setFont('courier', 'bold');
+        doc.text('Effects:', tableX + col2_1Width + col2_2Width + col2_3Width + 2, currentY);
+        doc.setFont('courier', 'normal');
+        const effectsValue = song.effects || '';
+        const effectsLines = doc.splitTextToSize(effectsValue, col2_4Width - 4 - doc.getTextWidth('Effects: '));
+        doc.text(effectsLines.slice(0, 2), tableX + col2_1Width + col2_2Width + col2_3Width + 2 + doc.getTextWidth('Effects: '), currentY);
         
-        doc.setFont('helvetica', 'normal');
+        yPosition += row2Height + 8;
+        
+        // Use Times font (closest to Aptos available) for lyrics, size 12
+        doc.setFont('times', 'normal');
         doc.setFontSize(12);
         
         const lyricsMargin = 12;
+        const maxLineWidth = pageWidth - (lyricsMargin * 2);
         
-        const contentLines = song.contentText.split('\n');
+        // Normalize text to ensure proper character encoding
+        const normalizedContent = normalizeText(song.contentText);
+        const contentLines = normalizedContent.split('\n');
         contentLines.forEach(line => {
             if (yPosition > pageHeight - 40) {
                 doc.addPage();
                 yPosition = lyricsMargin;
             }
-            doc.text(line || ' ', lyricsMargin, yPosition);
-            yPosition += 6;
+            
+            // Wrap text to respect right margin
+            const wrappedLines = doc.splitTextToSize(line || ' ', maxLineWidth);
+            wrappedLines.forEach(wrappedLine => {
+                if (yPosition > pageHeight - 40) {
+                    doc.addPage();
+                    yPosition = lyricsMargin;
+                }
+                // Use array format to ensure proper character encoding
+                doc.text(wrappedLine, lyricsMargin, yPosition, { 
+                    align: 'left',
+                    maxWidth: maxLineWidth 
+                });
+                yPosition += 5;
+            });
         });
         
         const chordDiagramsImage = await generateChordDiagramsImage(chordIds || []);
@@ -91,7 +151,7 @@ const SongPDFGenerator = (function() {
                 doc.addPage();
                 yPosition = 15;
             } else {
-                yPosition += 10;
+                yPosition += 3;
             }
             
             const diagramWidthMm = 30;
@@ -113,7 +173,7 @@ const SongPDFGenerator = (function() {
         const selectedChords = [];
         
         for (let i = 0; i < chordIds.length; i++) {
-            const chord = DB_SERVICE.getChordById(chordIds[i]);
+            const chord = await DB_SERVICE.getChordById(chordIds[i]);
             selectedChords.push(chord || null);
         }
         
