@@ -123,22 +123,71 @@
             </div>
         </div>
 
-        <!-- Modal para Create Chord -->
+        <!-- Modal para Create Chord con CRUD -->
         <div id="create-chord-modal" class="modal hidden">
             <div class="modal-overlay"></div>
-            <div class="modal-content">
+            <div class="modal-content modal-large">
                 <button id="close-create-chord-modal" class="close-btn">×</button>
-                <h2>Create Chord</h2>
-                <p class="modal-message">This functionality is not available yet</p>
+                <h2>Custom Chords</h2>
+                
+                <!-- Vista de Lista -->
+                <div id="chord-list-view">
+                    <button id="create-new-chord-btn" class="download-btn">Create New Chord</button>
+                    <div id="custom-chords-list" class="custom-chords-list">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+                </div>
+                
+                <!-- Vista de Editor -->
+                <div id="chord-editor-view" class="hidden">
+                    <button id="back-to-list-btn" class="back-btn">← Back to List</button>
+                    
+                    <div class="editor-container">
+                        <div class="editor-controls">
+                            <div class="form-group">
+                                <label>Chord Name:</label>
+                                <input type="text" id="chord-name-input" placeholder="e.g. Cmaj7" maxlength="10">
+                                <span id="name-error" class="error-message"></span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Base Fret:</label>
+                                <input type="number" id="base-fret-input" value="1" min="1" max="12">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Instructions:</label>
+                                <ul class="instructions-list">
+                                    <li>Click on fret to add finger (1-4)</li>
+                                    <li>Click above strings for X (not played)</li>
+                                    <li>Drag across strings for barre</li>
+                                    <li>Click finger to change number or remove</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="editor-canvas-container">
+                            <canvas id="chord-editor-canvas" width="300" height="400"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="editor-actions">
+                        <button id="save-chord-btn" class="download-btn">Save Chord</button>
+                        <button id="cancel-edit-btn" class="utility-btn">Cancel</button>
+                        <button id="delete-chord-btn" class="utility-btn delete-btn hidden">Delete</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script src="guitar-pattern.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="dbService.js"></script>
     <script src="chordData.js"></script>
     <script src="chordRenderer.js"></script>
     <script src="app.js"></script>
     <script src="songChords.js"></script>
+    <script src="chordEditor.js"></script>
 </body>
 </html>

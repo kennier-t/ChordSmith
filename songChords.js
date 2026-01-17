@@ -37,30 +37,40 @@ function initializeSongChords() {
     document.getElementById('download-song-chords-svg').addEventListener('click', () => downloadSongChords('svg'));
 }
 
-// Obtener todos los acordes disponibles de todas las familias
+// Obtener todos los acordes disponibles de todas las familias (originales + custom)
 function getAllAvailableChords() {
     const chordMap = new Map();
-    const families = getAllFamilies();
     
-    families.forEach(family => {
-        const chords = getChordsForFamily(family);
-        chords.forEach(chord => {
-            // Solo agregar el primer acorde con este nombre (evitar duplicados)
-            if (!chordMap.has(chord.name)) {
-                chordMap.set(chord.name, {
-                    ...chord,
-                    family: family,
-                    displayName: chord.name
-                });
-            }
+    // Get all chords (includes both original and custom if DB_SERVICE is available)
+    let allChords = [];
+    
+    if (typeof DB_SERVICE !== 'undefined') {
+        // Use DB_SERVICE to get all chords (original + custom)
+        allChords = DB_SERVICE.getAllChords();
+    } else {
+        // Fallback: use getChordsForFamily
+        const families = getAllFamilies();
+        families.forEach(family => {
+            const chords = getChordsForFamily(family);
+            allChords.push(...chords);
         });
+    }
+    
+    // Remove duplicates based on chord name
+    allChords.forEach(chord => {
+        if (!chordMap.has(chord.name)) {
+            chordMap.set(chord.name, {
+                ...chord,
+                displayName: chord.name
+            });
+        }
     });
     
     // Convertir map a array y ordenar alfabéticamente
-    const allChords = Array.from(chordMap.values());
-    allChords.sort((a, b) => a.name.localeCompare(b.name));
+    const uniqueChords = Array.from(chordMap.values());
+    uniqueChords.sort((a, b) => a.name.localeCompare(b.name));
     
-    return allChords;
+    return uniqueChords;
 }
 
 // Poblar los selectores de acordes

@@ -361,10 +361,31 @@ const CHORD_DATA = {
 
 // Función para obtener todos los acordes de una familia
 function getChordsForFamily(family) {
+    // Use DB_SERVICE if initialized, otherwise fallback to CHORD_DATA
+    if (typeof DB_SERVICE !== 'undefined') {
+        return DB_SERVICE.getChordsForFamily(family);
+    }
     return CHORD_DATA[family] || [];
 }
 
 // Función para obtener todas las familias disponibles
 function getAllFamilies() {
+    // Use DB_SERVICE if initialized, otherwise fallback to CHORD_DATA
+    if (typeof DB_SERVICE !== 'undefined') {
+        return DB_SERVICE.getAllFamilies().map(f => f.name);
+    }
     return Object.keys(CHORD_DATA);
+}
+
+// Función para obtener todos los acordes (originales + custom)
+function getAllChords() {
+    if (typeof DB_SERVICE !== 'undefined') {
+        return DB_SERVICE.getAllChords();
+    }
+    // Fallback: extract all chords from CHORD_DATA
+    const allChords = [];
+    Object.values(CHORD_DATA).forEach(familyChords => {
+        allChords.push(...familyChords);
+    });
+    return allChords;
 }
