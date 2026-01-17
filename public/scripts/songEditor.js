@@ -9,6 +9,7 @@ const SongEditor = (function() {
         const saveBtn = document.getElementById('save-song-btn');
         const cancelBtn = document.getElementById('cancel-song-edit-btn');
         const keyInput = document.getElementById('song-key-input');
+        const columnGuidesSelect = document.getElementById('column-guides-select');
         
         if (closeBtn) closeBtn.addEventListener('click', closeEditor);
         if (saveBtn) saveBtn.addEventListener('click', saveSong);
@@ -23,7 +24,52 @@ const SongEditor = (function() {
             });
         }
         
+        // Column guides control
+        if (columnGuidesSelect) {
+            columnGuidesSelect.addEventListener('change', updateColumnGuides);
+        }
+        
+        // Update guides on window resize
+        window.addEventListener('resize', () => {
+            if (!document.getElementById('song-editor-modal').classList.contains('hidden')) {
+                updateColumnGuides();
+            }
+        });
+        
         populateChordSelector();
+    }
+    
+    function updateColumnGuides() {
+        const select = document.getElementById('column-guides-select');
+        const guidesContainer = document.getElementById('column-guides');
+        const textarea = document.getElementById('song-content-textarea');
+        const mode = select.value;
+        
+        guidesContainer.innerHTML = '';
+        
+        if (mode === 'none') {
+            guidesContainer.classList.add('hidden');
+            return;
+        }
+        
+        guidesContainer.classList.remove('hidden');
+        
+        // Get textarea width including padding
+        const textareaWidth = textarea.offsetWidth;
+        const paddingLeft = parseInt(window.getComputedStyle(textarea).paddingLeft);
+        const paddingRight = parseInt(window.getComputedStyle(textarea).paddingRight);
+        const contentWidth = textareaWidth - paddingLeft - paddingRight;
+        
+        const columns = mode === 'two' ? 2 : 3;
+        const columnWidth = contentWidth / columns;
+        
+        // Create guide lines
+        for (let i = 1; i < columns; i++) {
+            const line = document.createElement('div');
+            line.className = 'column-guide-line';
+            line.style.left = `${paddingLeft + (columnWidth * i)}px`;
+            guidesContainer.appendChild(line);
+        }
     }
     
     async function openEditor(songId = null) {
@@ -75,6 +121,11 @@ const SongEditor = (function() {
         }
         
         document.getElementById('song-editor-modal').classList.remove('hidden');
+        
+        // Initialize column guides after modal is visible
+        setTimeout(() => {
+            updateColumnGuides();
+        }, 100);
     }
     
     function closeEditor() {

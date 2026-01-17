@@ -264,8 +264,21 @@
                     
                     <!-- Editor de contenido -->
                     <div class="song-content-editor">
-                        <h3>Song Content</h3>
-                        <textarea id="song-content-textarea" placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."></textarea>
+                        <div class="content-header">
+                            <h3>Song Content</h3>
+                            <div class="column-guides-control">
+                                <label for="column-guides-select">Column Guides:</label>
+                                <select id="column-guides-select">
+                                    <option value="none" selected>None</option>
+                                    <option value="two">2 Columns</option>
+                                    <option value="three">3 Columns</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="textarea-wrapper">
+                            <textarea id="song-content-textarea" placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."></textarea>
+                            <div id="column-guides" class="column-guides"></div>
+                        </div>
                     </div>
                     
                     <!-- Selector de diagramas -->
