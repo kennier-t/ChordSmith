@@ -1046,25 +1046,36 @@ h2::after {
 
 /* Song Group Headers */
 .song-group-header {
-    background: var(--background-light);
-    border: 1px solid var(--border);
-    padding: 12px 20px;
-    margin-bottom: 8px;
-    border-radius: 6px;
+    padding: 20px 0 12px 0;
+    margin-bottom: 16px;
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
+.song-group-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--primary) 50%, transparent 100%);
+    opacity: 0.4;
+}
+
 .song-group-header h4 {
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 1.125rem;
+    font-weight: 300;
     margin: 0;
     color: var(--text-primary);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 .group-count {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
     font-weight: 400;
 }
