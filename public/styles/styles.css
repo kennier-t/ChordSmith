@@ -922,7 +922,12 @@ h2::after {
 }
 
 .custom-select-arrow {
-    font-size: 0.75rem;
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 4.5L6 7.5L9 4.5" stroke="%23666" stroke-width="1.5" fill="none"/></svg>');
+    background-size: contain;
+    background-repeat: no-repeat;
     transition: transform 0.3s ease;
     pointer-events: none;
 }

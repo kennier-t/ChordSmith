@@ -219,17 +219,23 @@
                     <div class="songs-list-header">
                         <h3 id="folder-title"></h3>
                         <div id="all-songs-sort-control" class="sort-control hidden">
-                            <label for="all-songs-sort-select" data-translate="Sort by:">Sort by:</label>
-                            <select id="all-songs-sort-select" onchange="SongsManager.handleAllSongsSortChange(this.value)">
-                                <option value="key" data-translate="Key">Key</option>
-                                <option value="folder" data-translate="Folder">Folder</option>
-                                <option value="artist" data-translate="Artist">Artist</option>
-                            </select>
+                            <label for="all-songs-sort-btn" data-translate="Sort by:">Sort by:</label>
+                            <div class="custom-select-container">
+                                <button id="all-songs-sort-btn" class="custom-select" onclick="SongsManager.toggleSortDropdown()">
+                                    <span id="all-songs-sort-display">Key</span>
+                                    <span class="custom-select-arrow"></span>
+                                </button>
+                                <div id="all-songs-sort-dropdown" class="custom-dropdown hidden">
+                                    <div class="custom-dropdown-item" data-value="key" onclick="SongsManager.selectSortOption('key')" data-translate="Key">Key</div>
+                                    <div class="custom-dropdown-item" data-value="folder" onclick="SongsManager.selectSortOption('folder')" data-translate="Folder">Folder</div>
+                                    <div class="custom-dropdown-item" data-value="artist" onclick="SongsManager.selectSortOption('artist')" data-translate="Artist">Artist</div>
+                                </div>
+                            </div>
                             <label for="value-filter-btn" data-translate="Visible:">Visible:</label>
                             <div class="custom-select-container">
                                 <button id="value-filter-btn" class="custom-select" onclick="SongsManager.toggleValueDropdown()">
                                     <span id="value-filter-display">All</span>
-                                    <span class="custom-select-arrow">▼</span>
+                                    <span class="custom-select-arrow"></span>
                                 </button>
                                 <div id="value-dropdown" class="custom-dropdown hidden">
                                     <!-- Options will be populated dynamically -->
