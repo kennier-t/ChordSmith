@@ -140,7 +140,7 @@ const SongEditor = (function() {
         if (songId) {
             const song = await SONGS_SERVICE.getSongById(songId);
             if (!song) {
-                alert('Song not found');
+                alert(translations[currentLanguage]['Song not found'] || 'Song not found');
                 return;
             }
             
@@ -218,7 +218,7 @@ const SongEditor = (function() {
     
     function addChordToSelection(chordId) {
         if (selectedChordIds.length >= 8) {
-            alert('Maximum 8 chords allowed');
+            alert(translations[currentLanguage]['Maximum 8 chords allowed'] || 'Maximum 8 chords allowed');
             return;
         }
         
@@ -376,13 +376,14 @@ const SongEditor = (function() {
         const container = document.getElementById('folder-selection');
         const folders = await SONGS_SERVICE.getAllFolders();
         
-        container.innerHTML = '<h4>Save to Folders:</h4>';
+                container.innerHTML = '<h4 data-translate="Save to folders"></h4>';
+                translatePage();
         
-        if (folders.length === 0) {
-            container.innerHTML += '<p class="empty-message">No folders available. Create one in Songs view first.</p>';
-            return;
-        }
-        
+                if (folders.length === 0) {
+                    container.innerHTML += '<p class="empty-message" data-translate="No folders available. Create one in Songs view first."></p>';
+                    translatePage();
+                    return;
+                }        
         folders.forEach(folder => {
             const label = document.createElement('label');
             label.className = 'folder-checkbox-label';
@@ -398,14 +399,14 @@ const SongEditor = (function() {
         const title = document.getElementById('song-title-input').value.trim();
         
         if (!title) {
-            alert('Title is required');
+            alert(translations[currentLanguage]['Title is required'] || 'Title is required');
             return;
         }
         
         const contentText = document.getElementById('song-content-textarea').value;
         
         if (!contentText.trim()) {
-            alert('Song content cannot be empty');
+            alert(translations[currentLanguage]['Song content cannot be empty'] || 'Song content cannot be empty');
             return;
         }
         
@@ -427,10 +428,10 @@ const SongEditor = (function() {
         try {
             if (currentSongId) {
                 await SONGS_SERVICE.updateSong(currentSongId, songData);
-                alert('Song updated successfully!');
+                alert(translations[currentLanguage]['Song updated successfully!'] || 'Song updated successfully!');
             } else {
                 await SONGS_SERVICE.createSong(songData);
-                alert('Song created successfully!');
+                alert(translations[currentLanguage]['Song created successfully!'] || 'Song created successfully!');
             }
             
             if (typeof SongsManager !== 'undefined' && SongsManager.refreshFoldersList) {
@@ -439,7 +440,7 @@ const SongEditor = (function() {
             
             closeEditor();
         } catch (error) {
-            alert('Error saving song: ' + error.message);
+            alert(translations[currentLanguage]['Error saving song: '] + error.message);
         }
     }
     

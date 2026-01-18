@@ -103,7 +103,7 @@ function updateAllSelectors() {
         const currentValue = select.value;
         
         // Clear and repopulate
-        select.innerHTML = '<option value="">-- Select Chord --</option>';
+        select.innerHTML = `<option value="">${translations[currentLanguage]['-- Select Chord --']}</option>`;
         
         allChordsData.forEach((chord, index) => {
             const option = document.createElement('option');
@@ -113,7 +113,7 @@ function updateAllSelectors() {
             // Disable if already selected in another selector
             if (selectedValues.includes(index.toString()) && currentValue !== index.toString()) {
                 option.disabled = true;
-                option.textContent += ' (already selected)';
+                option.textContent += ` (${translations[currentLanguage]['already selected'] || 'already selected'})`;
             }
             
             select.appendChild(option);
@@ -147,29 +147,29 @@ function checkAndToggleSeventhChord() {
     // Enable seventh chord only if first 6 are filled
     if (filledCount === 6) {
         seventhSelect.disabled = false;
-        if (seventhSelect.options[0].text.includes('Fill first')) {
-            seventhSelect.options[0].text = '-- Select Chord --';
+        if (seventhSelect.options[0].text.includes(translations[currentLanguage]['-- Fill first 6 chords --'])) {
+            seventhSelect.options[0].text = translations[currentLanguage]['-- Select Chord --'];
         }
-        
+
         // Enable eighth chord only if seventh is selected
         if (seventhSelect.value !== '') {
             eighthSelect.disabled = false;
-            if (eighthSelect.options[0].text.includes('Fill chord')) {
-                eighthSelect.options[0].text = '-- Select Chord --';
+            if (eighthSelect.options[0].text.includes(translations[currentLanguage]['-- Fill chord 7 first --'])) {
+                eighthSelect.options[0].text = translations[currentLanguage]['-- Select Chord --'];
             }
         } else {
             eighthSelect.disabled = true;
             eighthSelect.value = '';
-            eighthSelect.options[0].text = '-- Fill chord 7 first --';
+            eighthSelect.options[0].text = translations[currentLanguage]['-- Fill chord 7 first --'];
         }
     } else {
         seventhSelect.disabled = true;
         seventhSelect.value = '';
-        seventhSelect.options[0].text = '-- Fill first 6 chords --';
-        
+        seventhSelect.options[0].text = translations[currentLanguage]['-- Fill first 6 chords --'];
+
         eighthSelect.disabled = true;
         eighthSelect.value = '';
-        eighthSelect.options[0].text = '-- Fill chord 7 first --';
+        eighthSelect.options[0].text = translations[currentLanguage]['-- Fill chord 7 first --'];
     }
 }
 

@@ -1,0 +1,264 @@
+const translations = {
+    en: {
+        'Gen Song Chords': 'Gen Song Chords',
+        'Songs': 'Songs',
+        'Create Chord': 'Create Chord',
+        'PDF → Text': 'PDF → Text',
+        'Chord Families': 'Chord Families',
+        '← Back': '← Back',
+        'Download Full Family (PNG)': 'Download Full Family (PNG)',
+        'Download Full Family (SVG)': 'Download Full Family (SVG)',
+        'Download PNG': 'Download PNG',
+        'Download SVG': 'Download SVG',
+        'Generate Song Chords': 'Generate Song Chords',
+        'Select up to 8 chords for your song (in order)': 'Select up to 8 chords for your song (in order)',
+        'Chord 1:': 'Chord 1:',
+        'Chord 2:': 'Chord 2:',
+        'Chord 3:': 'Chord 3:',
+        'Chord 4:': 'Chord 4:',
+        'Chord 5:': 'Chord 5:',
+        'Chord 6:': 'Chord 6:',
+        'Chord 7 (Optional):': 'Chord 7 (Optional):',
+        'Chord 8 (Optional):': 'Chord 8 (Optional):',
+        '-- Select Chord --': '-- Select Chord --',
+        '-- Fill first 6 chords --': '-- Fill first 6 chords --',
+        '-- Fill chord 7 first --': '-- Fill chord 7 first --',
+        'Generate': 'Generate',
+        'Preview:': 'Preview:',
+        'Custom Chords': 'Custom Chords',
+        'Create New Chord': 'Create New Chord',
+        'Back to List': 'Back to List',
+        'Chord Name:': 'Chord Name:',
+        'Base Fret:': 'Base Fret:',
+        'Instructions:': 'Instructions:',
+        'Click on fret to add finger (1-4)': 'Click on fret to add finger (1-4)',
+        'Click above strings for X (not played)': 'Click above strings for X (not played)',
+        'Drag across strings for barre': 'Drag across strings for barre',
+        'Click finger to change number or remove': 'Click finger to change number or remove',
+        'Save Chord': 'Save Chord',
+        'Cancel': 'Cancel',
+        'Delete': 'Delete',
+        'Create Folder': 'Create Folder',
+        'Create New Song': 'Create New Song',
+        'Sort by:': 'Sort by:',
+        'Date (Oldest First)': 'Date (Oldest First)',
+        'Date (Newest First)': 'Date (Newest First)',
+        'Name (A-Z)': 'Name (A-Z)',
+        'Name (Z-A)': 'Name (Z-A)',
+        'Songs (Most First)': 'Songs (Most First)',
+        'Songs (Least First)': 'Songs (Least First)',
+        'Back to Folders': 'Back to Folders',
+        'Create/Edit Song': 'Create/Edit Song',
+        'Metadata': 'Metadata',
+        'Title:': 'Title:',
+        'Date:': 'Date:',
+        'Notes:': 'Notes:',
+        'Key:': 'Key:',
+        'Capo:': 'Capo:',
+        'BPM:': 'BPM:',
+        'Effects:': 'Effects:',
+        'Song Content': 'Song Content',
+        'Column Guides:': 'Column Guides:',
+        'None': 'None',
+        'Personalized': 'Personalized',
+        '2 Columns': '2 Columns',
+        '3 Columns': '3 Columns',
+        'Paste or type your song here...': 'Paste or type your song here...',
+        'Chords go on the line above lyrics.': 'Chords go on the line above lyrics.',
+        'Double line break separates sections.': 'Double line break separates sections.',
+        'Selected Chords (up to 8)': 'Selected Chords (up to 8)',
+        'Available Chords': 'Available Chords',
+        'Save Song': 'Save Song',
+                'Edit': 'Edit',
+                'Rename': 'Rename',
+                'Save to folders': 'Save to folders',
+                'No custom chords yet. Create one!': 'No custom chords yet. Create one!',
+                'No folders yet. Create one to organize your songs!': 'No folders yet. Create one to organize your songs!',
+                'No songs in this folder. Create your first song!': 'No songs in this folder. Create your first song!',
+                'Enter folder name:': 'Enter folder name:',
+                'Enter new folder name:': 'Enter new folder name:',
+                'Delete this folder? Songs will not be deleted, only removed from this folder.': 'Delete this folder? Songs will not be deleted, only removed from this folder.',
+                'Delete song': 'Delete song',
+                'C Family': 'C Family',
+                'D Family': 'D Family',
+                'E Family': 'E Family',
+                'F Family': 'F Family',
+                'G Family': 'G Family',
+                'A Family': 'A Family',
+                'B Family': 'B Family',
+                        'Select PDF': 'Select PDF',
+                        'Drag & drop': 'Drag & drop',
+                        'your PDF here': 'your PDF here',
+                        'or click to select': 'or click to select',
+                        'No file selected': 'No file selected',
+                        'Convert': 'Convert',
+                        'Preserves formatting and spacing using pdftotext -layout': 'Preserves formatting and spacing using pdftotext -layout',
+                        'Converted Text': 'Converted Text',
+                        'Converted text will appear here...': 'Converted text will appear here...',
+                        'Copy': 'Copy',
+                        'Clear': 'Clear',
+                        'Ready': 'Ready',
+                    },
+                    es: {
+                        'Gen Song Chords': 'Generar Acordes',
+                        'Songs': 'Canciones',
+                        'Create Chord': 'Crear Acorde',
+                        'PDF → Text': 'PDF → Texto',
+                        'Chord Families': 'Familias de Acordes',
+                        '← Back': '← Volver',
+                        'Download Full Family (PNG)': 'Descargar Familia Completa (PNG)',
+                        'Download Full Family (SVG)': 'Descargar Familia Completa (SVG)',
+                        'Download PNG': 'Descargar PNG',
+                        'Download SVG': 'Descargar SVG',
+                        'Generate Song Chords': 'Generar Acordes de Canción',
+                        'Select up to 8 chords for your song (in order)': 'Selecciona hasta 8 acordes para tu canción (en orden)',
+                        'Chord 1:': 'Acorde 1:',
+                        'Chord 2:': 'Acorde 2:',
+                        'Chord 3:': 'Acorde 3:',
+                        'Chord 4:': 'Acorde 4:',
+                        'Chord 5:': 'Acorde 5:',
+                        'Chord 6:': 'Acorde 6:',
+                        'Chord 7 (Optional):': 'Acorde 7 (Opcional):',
+                        'Chord 8 (Optional):': 'Acorde 8 (Opcional):',
+                        '-- Select Chord --': '-- Seleccionar Acorde --',
+                        '-- Fill first 6 chords --': '-- Llena los primeros 6 acordes --',
+                        '-- Fill chord 7 first --': '-- Llena el acorde 7 primero --',
+                        'Generate': 'Generar',
+                        'Preview:': 'Vista Previa:',
+                        'Custom Chords': 'Acordes Personalizados',
+                        'Create New Chord': 'Crear Nuevo Acorde',
+                        'Back to List': 'Volver a la Lista',
+                        'Chord Name:': 'Nombre del Acorde:',
+                        'Base Fret:': 'Traste Base:',
+                        'Instructions:': 'Instrucciones:',
+                        'Click on fret to add finger (1-4)': 'Haz clic en el traste para agregar el dedo (1-4)',
+                        'Click above strings for X (not played)': 'Haz clic arriba de las cuerdas para X (no se toca)',
+                        'Drag across strings for barre': 'Arrastra a través de las cuerdas para la cejilla',
+                        'Click finger to change number or remove': 'Haz clic en el dedo para cambiar el número o eliminar',
+                        'Save Chord': 'Guardar Acorde',
+                        'Cancel': 'Cancelar',
+                        'Delete': 'Eliminar',
+                        'Create Folder': 'Crear Carpeta',
+                        'Create New Song': 'Crear Nueva Canción',
+                        'Sort by:': 'Ordenar por:',
+                        'Date (Oldest First)': 'Fecha (Más Antiguos Primero)',
+                        'Date (Newest First)': 'Fecha (Más Nuevos Primero)',
+                        'Name (A-Z)': 'Nombre (A-Z)',
+                        'Name (Z-A)': 'Nombre (Z-A)',
+                        'Songs (Most First)': 'Canciones (Más Primero)',
+                        'Songs (Least First)': 'Canciones (Menos Primero)',
+                        'Back to Folders': 'Volver a las Carpetas',
+                        'Create/Edit Song': 'Crear/Editar Canción',
+                        'Metadata': 'Metadatos',
+                        'Title:': 'Título:',
+                        'Date:': 'Fecha:',
+                        'Notes:': 'Notas:',
+                        'Key:': 'Tonalidad:',
+                        'Capo:': 'Capo:',
+                        'BPM:': 'BPM:',
+                        'Effects:': 'Efectos:',
+                        'Song Content': 'Contenido de la Canción',
+                        'Column Guides:': 'Guías de Columna:',
+                        'None': 'Ninguna',
+                        'Personalized': 'Personalizadas',
+                        '2 Columns': '2 Columnas',
+                        '3 Columns': '3 Columnas',
+                        'Paste or type your song here...': 'Pega o escribe tu canción aquí...',
+                        'Chords go on the line above lyrics.': 'Los acordes van en la línea sobre la letra.',
+                        'Double line break separates sections.': 'El doble salto de línea separa las secciones.',
+                        'Selected Chords (up to 8)': 'Acordes Seleccionados (hasta 8)',
+                        'Available Chords': 'Acordes Disponibles',
+                        'Save Song': 'Guardar Canción',
+                        'Edit': 'Editar',
+                        'Rename': 'Renombrar',
+                        'Save to folders': 'Guardar en carpetas',
+                        'No custom chords yet. Create one!': 'Aún no hay acordes personalizados. ¡Crea uno!',
+                        'No folders yet. Create one to organize your songs!': 'No hay carpetas todavía. ¡Crea una para organizar tus canciones!',
+                        'No songs in this folder. Create your first song!': 'No hay canciones en esta carpeta. ¡Crea tu primera canción!',
+                        'Enter folder name:': 'Introduce el nombre de la carpeta:',
+                        'Enter new folder name:': 'Introduce el nuevo nombre de la carpeta:',
+                        'Delete this folder? Songs will not be deleted, only removed from this folder.': '¿Eliminar esta carpeta? Las canciones no se eliminarán, solo se quitarán de esta carpeta.',
+                        'Delete song': 'Eliminar canción',
+                        'C Family': 'Familia de C',
+                        'D Family': 'Familia de D',
+                        'E Family': 'Familia de E',
+                        'F Family': 'Familia de F',
+                        'G Family': 'Familia de G',
+                        'A Family': 'Familia de A',
+                        'B Family': 'Familia de B',
+                        'Select PDF': 'Seleccionar PDF',
+                        'Drag & drop': 'Arrastra y suelta',
+                        'your PDF here': 'tu PDF aquí',
+                        'or click to select': 'o haz clic para seleccionar',
+                        'No file selected': 'Ningún archivo seleccionado',
+                        'Convert': 'Convertir',
+                        'Preserves formatting and spacing using pdftotext -layout': 'Conserva el formato y el espaciado usando pdftotext -layout',
+                        'Converted Text': 'Texto Convertido',
+                        'Converted text will appear here...': 'El texto convertido aparecerá aquí...',
+                        'Copy': 'Copiar',
+                        'Clear': 'Limpiar',
+                        'Ready': 'Listo',
+                        'No folders available. Create one in Songs view first.': 'No hay carpetas disponibles. Crea una primero en la vista de Canciones.',
+                        'already selected': 'ya seleccionado',
+                        'No chords selected. Click on chords below to add them.': 'No hay acordes seleccionados. Haz clic en los acordes abajo para agregarlos.',
+                        'Song content cannot be empty': 'El contenido de la canción no puede estar vacío',
+                        'Title is required': 'El título es obligatorio',
+                        'Maximum 8 chords allowed': 'Máximo 8 acordes permitidos',
+                        'Song not found': 'Canción no encontrada',
+                        'Song updated successfully!': '¡Canción actualizada exitosamente!',
+                        'Song created successfully!': '¡Canción creada exitosamente!',
+                        'Error saving song: ': 'Error guardando canción: '
+                    }};
+
+let currentLanguage = localStorage.getItem('language') || 'es';
+
+function setLanguage(lang) {
+    currentLanguage = lang;
+    localStorage.setItem('language', lang);
+    translatePage();
+}
+
+function translatePage() {
+    const elements = document.querySelectorAll('[data-translate]');
+    elements.forEach(el => {
+        const key = el.getAttribute('data-translate');
+        if (translations[currentLanguage] && translations[currentLanguage][key]) {
+            el.textContent = translations[currentLanguage][key];
+        }
+    });
+
+    const textareas = document.querySelectorAll('textarea[data-translate-placeholder-1]');
+    textareas.forEach(el => {
+        const key1 = el.getAttribute('data-translate-placeholder-1');
+        const key2 = el.getAttribute('data-translate-placeholder-2');
+        const key3 = el.getAttribute('data-translate-placeholder-3');
+        
+        if (translations[currentLanguage]) {
+            const placeholder1 = translations[currentLanguage][key1] || '';
+            const placeholder2 = translations[currentLanguage][key2] || '';
+            const placeholder3 = translations[currentLanguage][key3] || '';
+            
+            el.placeholder = `${placeholder1}\n\n${placeholder2}\n${placeholder3}`;
+        }
+    });
+
+    const single_textareas = document.querySelectorAll('textarea[data-translate-placeholder]');
+    single_textareas.forEach(el => {
+        const key = el.getAttribute('data-translate-placeholder');
+        if (translations[currentLanguage] && translations[currentLanguage][key]) {
+            el.placeholder = translations[currentLanguage][key];
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const langToggle = document.getElementById('language-toggle');
+    if (langToggle) {
+        langToggle.addEventListener('click', () => {
+            const newLang = currentLanguage === 'en' ? 'es' : 'en';
+            setLanguage(newLang);
+        });
+    }
+    translatePage();
+});
+

@@ -44,10 +44,11 @@ const SongsManager = (function() {
             folderTitleElement.innerHTML = `
                 ${folder.name}
                 <div class="folder-header-actions">
-                    <button class="action-btn" onclick="SongsManager.renameFolder(${folder.id}, '${folder.name.replace(/'/g, "\\'")}')">Rename</button>
-                    <button class="action-btn delete-btn" onclick="SongsManager.deleteFolder(${folder.id})">Delete</button>
+                    <button class="action-btn" onclick="SongsManager.renameFolder(${folder.id}, '${folder.name.replace(/'/g, "\\'")}')" data-translate="Rename"></button>
+                    <button class="action-btn delete-btn" onclick="SongsManager.deleteFolder(${folder.id})" data-translate="Delete"></button>
                 </div>
             `;
+            translatePage();
         } else {
             folderTitleElement.textContent = 'All Songs';
         }
@@ -91,7 +92,7 @@ const SongsManager = (function() {
         container.innerHTML = '';
         
         if (folders.length === 0) {
-            container.innerHTML = '<div class="empty-message">No folders yet. Create one to organize your songs!</div>';
+            container.innerHTML = '<div class="empty-message" data-translate="No folders yet. Create one to organize your songs!">No folders yet. Create one to organize your songs!</div>';
             return;
         }
         
@@ -134,7 +135,7 @@ const SongsManager = (function() {
         container.innerHTML = '';
         
         if (songs.length === 0) {
-            container.innerHTML = '<div class="empty-message">No songs in this folder. Create your first song!</div>';
+            container.innerHTML = '<div class="empty-message" data-translate="No songs in this folder. Create your first song!">No songs in this folder. Create your first song!</div>';
             return;
         }
         
@@ -151,17 +152,18 @@ const SongsManager = (function() {
                     </div>
                 </div>
                 <div class="song-actions">
-                    <button class="action-btn" onclick="SongsManager.editSong(${song.id})">Edit</button>
+                    <button class="action-btn" onclick="SongsManager.editSong(${song.id})" data-translate="Edit"></button>
                     <button class="action-btn" onclick="SongsManager.downloadSongPDF(${song.id})">PDF</button>
-                    <button class="action-btn delete-btn" onclick="SongsManager.deleteSong(${song.id})">Delete</button>
+                    <button class="action-btn delete-btn" onclick="SongsManager.deleteSong(${song.id})" data-translate="Delete"></button>
                 </div>
             `;
             container.appendChild(item);
         });
+        translatePage();
     }
     
     async function createNewFolder() {
-        const name = prompt('Enter folder name:');
+        const name = prompt(translations[currentLanguage]['Enter folder name:'] || 'Enter folder name:');
         if (name && name.trim()) {
             await SONGS_SERVICE.createFolder(name.trim());
             await refreshFoldersList();
@@ -169,7 +171,7 @@ const SongsManager = (function() {
     }
     
     async function renameFolder(folderId, currentName) {
-        const newName = prompt('Enter new folder name:', currentName);
+        const newName = prompt(translations[currentLanguage]['Enter new folder name:'] || 'Enter new folder name:', currentName);
         if (newName && newName.trim() && newName.trim() !== currentName) {
             await SONGS_SERVICE.renameFolder(folderId, newName.trim());
             await refreshFoldersList();
@@ -177,7 +179,7 @@ const SongsManager = (function() {
     }
     
     async function deleteFolder(folderId) {
-        if (confirm('Delete this folder? Songs will not be deleted, only removed from this folder.')) {
+        if (confirm(translations[currentLanguage]['Delete this folder? Songs will not be deleted, only removed from this folder.'] || 'Delete this folder? Songs will not be deleted, only removed from this folder.')) {
             await SONGS_SERVICE.deleteFolder(folderId);
             await refreshFoldersList();
         }
@@ -200,7 +202,7 @@ const SongsManager = (function() {
     
     async function deleteSong(songId) {
         const song = await SONGS_SERVICE.getSongById(songId);
-        if (confirm(`Delete song "${song.title}"?`)) {
+        if (confirm(`${translations[currentLanguage]['Delete song'] || 'Delete song'} "${song.title}"?`)) {
             await SONGS_SERVICE.deleteSong(songId);
             await refreshSongsList(currentFolderId);
         }

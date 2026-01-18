@@ -1,0 +1,23 @@
+#language-toggle {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    z-index: 10;
+    /* Filter to convert black to coffee brown #8B6F47 */
+    filter: invert(42%) sepia(15%) saturate(1000%) hue-rotate(357deg) brightness(95%) contrast(85%);
+    transition: all 0.3s ease;
+}
+
+#language-toggle:hover {
+    transform: scale(1.1);
+    filter: invert(32%) sepia(20%) saturate(1200%) hue-rotate(357deg) brightness(90%) contrast(90%);
+}
+
+#language-toggle:active {
+    transform: scale(0.95);
+}

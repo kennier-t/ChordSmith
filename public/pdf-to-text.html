@@ -8,20 +8,21 @@
     <link rel="stylesheet" href="styles/styles.css">
     <link rel="stylesheet" href="styles/pdf-to-text.css">
     <link rel="stylesheet" href="styles/guitar-pattern.css">
+    <link rel="stylesheet" href="styles/translation.css">
 </head>
 <body>
     <div id="app">
         <div class="pdf-view view">
             <div class="top-buttons-container">
-                <button id="back-btn" class="utility-btn">← Back</button>
+                <button id="back-btn" class="utility-btn" data-translate="← Back">← Back</button>
             </div>
             
-            <h1>PDF → Text</h1>
+            <h1 data-translate="PDF → Text">PDF → Text</h1>
             
             <div class="pdf-container">
                 <!-- Left column: drag & drop -->
                 <div class="pdf-left">
-                    <h2>Select PDF</h2>
+                    <h2 data-translate="Select PDF">Select PDF</h2>
                     
                     <div id="dropZone" class="drop-zone" tabindex="0">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden style="opacity:0.85">
@@ -29,34 +30,35 @@
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="#8B6F47" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                             <path d="M7 10l5-5 5 5" stroke="#8B6F47" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        <p><strong>Drag & drop</strong> your PDF here<br/><span class="small">or click to select</span></p>
+                        <p><strong data-translate="Drag & drop">Drag & drop</strong> <span data-translate="your PDF here">your PDF here</span><br/><span class="small" data-translate="or click to select">or click to select</span></p>
                     </div>
 
                     <div class="file-info">
-                        <div class="filename" id="filename">No file selected</div>
+                        <div class="filename" id="filename" data-translate="No file selected">No file selected</div>
                     </div>
 
-                    <button id="convertBtn" class="utility-btn convert-btn" disabled>Convert</button>
+                    <button id="convertBtn" class="utility-btn convert-btn" disabled data-translate="Convert">Convert</button>
 
-                    <div class="small info-text">Preserves formatting and spacing using pdftotext -layout</div>
+                    <div class="small info-text" data-translate="Preserves formatting and spacing using pdftotext -layout">Preserves formatting and spacing using pdftotext -layout</div>
 
                     <input id="fileInput" type="file" accept="application/pdf" style="display:none" />
                 </div>
 
                 <!-- Right column: result -->
                 <div class="pdf-right">
-                    <h2>Converted Text</h2>
-                    <textarea id="result" readonly placeholder="Converted text will appear here..."></textarea>
+                    <h2 data-translate="Converted Text">Converted Text</h2>
+                    <textarea id="result" readonly placeholder="Converted text will appear here..." data-translate-placeholder="Converted text will appear here..."></textarea>
                     <div class="controls">
-                        <button id="copyBtn" class="utility-btn copy-btn">Copy</button>
-                        <button id="clearBtn" class="utility-btn clear-btn">Clear</button>
-                        <div class="status" id="status">Ready</div>
+                        <button id="copyBtn" class="utility-btn copy-btn" data-translate="Copy">Copy</button>
+                        <button id="clearBtn" class="utility-btn clear-btn" data-translate="Clear">Clear</button>
+                        <div class="status" id="status" data-translate="Ready">Ready</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="scripts/translation.js"></script>
     <script src="scripts/pdf-to-text.js"></script>
     <script src="scripts/guitar-pattern.js"></script>
 </body>

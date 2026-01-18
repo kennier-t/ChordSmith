@@ -8,18 +8,20 @@
     <link rel="apple-touch-icon" href="assets/guitar.webp">
     <link rel="stylesheet" href="styles/styles.css">
     <link rel="stylesheet" href="styles/guitar-pattern.css">
+    <link rel="stylesheet" href="styles/translation.css">
 </head>
 <body>
     <div id="app">
         <!-- Main view: chord families -->
         <div id="families-view" class="view">
+            <img id="language-toggle" src="assets/translate.png" alt="Language Toggle">
             <div class="top-buttons-container">
-                <button id="gen-song-chords-btn" class="utility-btn utility-btn-modern">Gen Song Chords</button>
-                <button id="open-songs-btn" class="utility-btn utility-btn-modern">Songs</button>
-                <button id="create-chord-btn" class="utility-btn utility-btn-modern">Create Chord</button>
-                <button id="pdf-to-text-btn" class="utility-btn utility-btn-modern">PDF → Text</button>
+                <button id="gen-song-chords-btn" class="utility-btn utility-btn-modern" data-translate="Gen Song Chords">Gen Song Chords</button>
+                <button id="open-songs-btn" class="utility-btn utility-btn-modern" data-translate="Songs">Songs</button>
+                <button id="create-chord-btn" class="utility-btn utility-btn-modern" data-translate="Create Chord">Create Chord</button>
+                <button id="pdf-to-text-btn" class="utility-btn utility-btn-modern" data-translate="PDF → Text">PDF → Text</button>
             </div>
-            <h1>Chord Families</h1>
+            <h1 data-translate="Chord Families">Chord Families</h1>
             <div class="families-grid">
                 <button class="family-btn" data-family="C">C</button>
                 <button class="family-btn" data-family="D">D</button>
@@ -33,11 +35,11 @@
 
         <!-- Family view: chord gallery -->
         <div id="family-view" class="view hidden">
-            <button id="back-to-families" class="back-btn">← Back</button>
+            <button id="back-to-families" class="back-btn" data-translate="← Back">← Back</button>
             <h2 id="family-title"></h2>
             <div class="download-options">
-                <button id="download-family-png" class="download-btn">Download Full Family (PNG)</button>
-                <button id="download-family-svg" class="download-btn">Download Full Family (SVG)</button>
+                <button id="download-family-png" class="download-btn" data-translate="Download Full Family (PNG)">Download Full Family (PNG)</button>
+                <button id="download-family-svg" class="download-btn" data-translate="Download Full Family (SVG)">Download Full Family (SVG)</button>
             </div>
             <div id="chords-gallery" class="chords-gallery"></div>
         </div>
@@ -50,8 +52,8 @@
                 <h2 id="modal-chord-title"></h2>
                 <div id="modal-chord-preview"></div>
                 <div class="download-options">
-                    <button id="download-modal-chord-png" class="download-btn">Download PNG</button>
-                    <button id="download-modal-chord-svg" class="download-btn">Download SVG</button>
+                    <button id="download-modal-chord-png" class="download-btn" data-translate="Download PNG">Download PNG</button>
+                    <button id="download-modal-chord-svg" class="download-btn" data-translate="Download SVG">Download SVG</button>
                 </div>
             </div>
         </div>
@@ -61,67 +63,67 @@
             <div class="modal-overlay"></div>
             <div class="modal-content modal-large">
                 <button id="close-gen-song-modal" class="close-btn">×</button>
-                <h2>Generate Song Chords</h2>
-                <p class="modal-description">Select up to 8 chords for your song (in order)</p>
+                <h2 data-translate="Generate Song Chords">Generate Song Chords</h2>
+                <p class="modal-description" data-translate="Select up to 8 chords for your song (in order)">Select up to 8 chords for your song (in order)</p>
                 <div id="chord-selector-container">
                     <div class="chord-slot" data-slot="0">
-                        <label>Chord 1:</label>
+                        <label data-translate="Chord 1:">Chord 1:</label>
                         <select class="chord-select">
-                            <option value="">-- Select Chord --</option>
+                            <option value="" data-translate="-- Select Chord --">-- Select Chord --</option>
                         </select>
                     </div>
                     <div class="chord-slot" data-slot="1">
-                        <label>Chord 2:</label>
+                        <label data-translate="Chord 2:">Chord 2:</label>
                         <select class="chord-select">
-                            <option value="">-- Select Chord --</option>
+                            <option value="" data-translate="-- Select Chord --">-- Select Chord --</option>
                         </select>
                     </div>
                     <div class="chord-slot" data-slot="2">
-                        <label>Chord 3:</label>
+                        <label data-translate="Chord 3:">Chord 3:</label>
                         <select class="chord-select">
-                            <option value="">-- Select Chord --</option>
+                            <option value="" data-translate="-- Select Chord --">-- Select Chord --</option>
                         </select>
                     </div>
                     <div class="chord-slot" data-slot="3">
-                        <label>Chord 4:</label>
+                        <label data-translate="Chord 4:">Chord 4:</label>
                         <select class="chord-select">
-                            <option value="">-- Select Chord --</option>
+                            <option value="" data-translate="-- Select Chord --">-- Select Chord --</option>
                         </select>
                     </div>
                     <div class="chord-slot" data-slot="4">
-                        <label>Chord 5:</label>
+                        <label data-translate="Chord 5:">Chord 5:</label>
                         <select class="chord-select">
-                            <option value="">-- Select Chord --</option>
+                            <option value="" data-translate="-- Select Chord --">-- Select Chord --</option>
                         </select>
                     </div>
                     <div class="chord-slot" data-slot="5">
-                        <label>Chord 6:</label>
+                        <label data-translate="Chord 6:">Chord 6:</label>
                         <select class="chord-select">
-                            <option value="">-- Select Chord --</option>
+                            <option value="" data-translate="-- Select Chord --">-- Select Chord --</option>
                         </select>
                     </div>
                     <div class="chord-slot chord-slot-extra" data-slot="6">
-                        <label>Chord 7 (Optional):</label>
+                        <label data-translate="Chord 7 (Optional):">Chord 7 (Optional):</label>
                         <select class="chord-select chord-select-extra" disabled>
-                            <option value="">-- Fill first 6 chords --</option>
+                            <option value="" data-translate="-- Fill first 6 chords --">-- Fill first 6 chords --</option>
                         </select>
                     </div>
                     <div class="chord-slot chord-slot-extra" data-slot="7">
-                        <label>Chord 8 (Optional):</label>
+                        <label data-translate="Chord 8 (Optional):">Chord 8 (Optional):</label>
                         <select class="chord-select chord-select-extra-2" disabled>
-                            <option value="">-- Fill chord 7 first --</option>
+                            <option value="" data-translate="-- Fill chord 7 first --">-- Fill chord 7 first --</option>
                         </select>
                     </div>
                 </div>
                 <div class="modal-actions">
-                    <button id="generate-song-chords-btn" class="download-btn">Generate</button>
+                    <button id="generate-song-chords-btn" class="download-btn" data-translate="Generate">Generate</button>
                 </div>
                 <div id="song-chords-preview" class="hidden">
-                    <h3>Preview:</h3>
+                    <h3 data-translate="Preview:">Preview:</h3>
                     <div id="song-chords-image"></div>
                     <div class="download-options">
-                        <button id="download-song-chords-png" class="download-btn">Download PNG</button>
-                        <button id="download-song-chords-svg" class="download-btn">Download SVG</button>
+                        <button id="download-song-chords-png" class="download-btn" data-translate="Download PNG">Download PNG</button>
+                        <button id="download-song-chords-svg" class="download-btn" data-translate="Download SVG">Download SVG</button>
                     </div>
                 </div>
             </div>
@@ -132,11 +134,11 @@
             <div class="modal-overlay"></div>
             <div class="modal-content modal-large">
                 <button id="close-create-chord-modal" class="close-btn">×</button>
-                <h2>Custom Chords</h2>
+                <h2 data-translate="Custom Chords">Custom Chords</h2>
                 
                 <!-- List View -->
                 <div id="chord-list-view">
-                    <button id="create-new-chord-btn" class="download-btn">Create New Chord</button>
+                    <button id="create-new-chord-btn" class="download-btn" data-translate="Create New Chord">Create New Chord</button>
                     <div id="custom-chords-list" class="custom-chords-list">
                         <!-- Filled dynamically -->
                     </div>
@@ -144,28 +146,28 @@
                 
                 <!-- Editor View -->
                 <div id="chord-editor-view" class="hidden">
-                    <button id="back-to-list-btn" class="back-btn">← Back to List</button>
+                    <button id="back-to-list-btn" class="back-btn" data-translate="Back to List">← Back to List</button>
                     
                     <div class="editor-container">
                         <div class="editor-controls">
                             <div class="form-group">
-                                <label>Chord Name:</label>
+                                <label data-translate="Chord Name:">Chord Name:</label>
                                 <input type="text" id="chord-name-input" placeholder="e.g. Cmaj7" maxlength="10">
                                 <span id="name-error" class="error-message"></span>
                             </div>
                             
                             <div class="form-group">
-                                <label>Base Fret:</label>
+                                <label data-translate="Base Fret:">Base Fret:</label>
                                 <input type="number" id="base-fret-input" value="1" min="1" max="12">
                             </div>
                             
                             <div class="form-group">
-                                <label>Instructions:</label>
+                                <label data-translate="Instructions:">Instructions:</label>
                                 <ul class="instructions-list">
-                                    <li>Click on fret to add finger (1-4)</li>
-                                    <li>Click above strings for X (not played)</li>
-                                    <li>Drag across strings for barre</li>
-                                    <li>Click finger to change number or remove</li>
+                                    <li data-translate="Click on fret to add finger (1-4)">Click on fret to add finger (1-4)</li>
+                                    <li data-translate="Click above strings for X (not played)">Click above strings for X (not played)</li>
+                                    <li data-translate="Drag across strings for barre">Drag across strings for barre</li>
+                                    <li data-translate="Click finger to change number or remove">Click finger to change number or remove</li>
                                 </ul>
                             </div>
                         </div>
@@ -176,9 +178,9 @@
                     </div>
                     
                     <div class="editor-actions">
-                        <button id="save-chord-btn" class="download-btn">Save Chord</button>
-                        <button id="cancel-edit-btn" class="utility-btn">Cancel</button>
-                        <button id="delete-chord-btn" class="utility-btn delete-btn hidden">Delete</button>
+                        <button id="save-chord-btn" class="download-btn" data-translate="Save Chord">Save Chord</button>
+                        <button id="cancel-edit-btn" class="utility-btn" data-translate="Cancel">Cancel</button>
+                        <button id="delete-chord-btn" class="utility-btn delete-btn hidden" data-translate="Delete">Delete</button>
                     </div>
                 </div>
             </div>
@@ -189,22 +191,22 @@
             <div class="modal-overlay"></div>
             <div class="modal-content modal-large">
                 <button id="close-songs-modal" class="close-btn">×</button>
-                <h2>Songs</h2>
+                <h2 data-translate="Songs">Songs</h2>
                 
                 <!-- Folders View -->
                 <div id="folders-view">
                     <div class="folders-actions">
-                        <button id="create-new-folder-btn" class="download-btn">Create Folder</button>
-                        <button id="create-new-song-btn" class="download-btn">Create New Song</button>
+                        <button id="create-new-folder-btn" class="download-btn" data-translate="Create Folder">Create Folder</button>
+                        <button id="create-new-song-btn" class="download-btn" data-translate="Create New Song">Create New Song</button>
                         <div class="sort-control">
-                            <label for="folder-sort-select">Sort by:</label>
+                            <label for="folder-sort-select" data-translate="Sort by:">Sort by:</label>
                             <select id="folder-sort-select">
-                                <option value="date-asc">Date (Oldest First)</option>
-                                <option value="date-desc">Date (Newest First)</option>
-                                <option value="name-asc">Name (A-Z)</option>
-                                <option value="name-desc">Name (Z-A)</option>
-                                <option value="songs-desc">Songs (Most First)</option>
-                                <option value="songs-asc">Songs (Least First)</option>
+                                <option value="date-asc" data-translate="Date (Oldest First)">Date (Oldest First)</option>
+                                <option value="date-desc" data-translate="Date (Newest First)">Date (Newest First)</option>
+                                <option value="name-asc" data-translate="Name (A-Z)">Name (A-Z)</option>
+                                <option value="name-desc" data-translate="Name (Z-A)">Name (Z-A)</option>
+                                <option value="songs-desc" data-translate="Songs (Most First)">Songs (Most First)</option>
+                                <option value="songs-asc" data-translate="Songs (Least First)">Songs (Least First)</option>
                             </select>
                         </div>
                     </div>
@@ -213,7 +215,7 @@
                 
                 <!-- Songs List View -->
                 <div id="songs-list-view" class="hidden">
-                    <button id="back-to-folders-btn" class="back-btn">← Back to Folders</button>
+                    <button id="back-to-folders-btn" class="back-btn" data-translate="Back to Folders">← Back to Folders</button>
                     <h3 id="folder-title"></h3>
                     <div id="songs-list" class="songs-list"></div>
                 </div>
@@ -225,39 +227,39 @@
             <div class="modal-overlay"></div>
             <div class="modal-content modal-large modal-song-editor">
                 <button id="close-song-editor-modal" class="close-btn">×</button>
-                <h2>Create/Edit Song</h2>
+                <h2 data-translate="Create/Edit Song">Create/Edit Song</h2>
                 
                 <div class="song-editor-container">
                     <!-- Metadata -->
                     <div class="song-metadata">
-                        <h3>Metadata</h3>
+                        <h3 data-translate="Metadata">Metadata</h3>
                         <table class="metadata-table">
                             <tr>
-                                <td>Title:</td>
+                                <td data-translate="Title:">Title:</td>
                                 <td><input type="text" id="song-title-input" required></td>
                             </tr>
                             <tr>
-                                <td>Date:</td>
+                                <td data-translate="Date:">Date:</td>
                                 <td><input type="text" id="song-date-input"></td>
                             </tr>
                             <tr>
-                                <td>Notes:</td>
+                                <td data-translate="Notes:">Notes:</td>
                                 <td><input type="text" id="song-notes-input"></td>
                             </tr>
                             <tr>
-                                <td>Key:</td>
+                                <td data-translate="Key:">Key:</td>
                                 <td><input type="text" id="song-key-input"></td>
                             </tr>
                             <tr>
-                                <td>Capo:</td>
+                                <td data-translate="Capo:">Capo:</td>
                                 <td><input type="text" id="song-capo-input"></td>
                             </tr>
                             <tr>
-                                <td>BPM:</td>
+                                <td data-translate="BPM:">BPM:</td>
                                 <td><input type="text" id="song-bpm-input"></td>
                             </tr>
                             <tr>
-                                <td>Effects:</td>
+                                <td data-translate="Effects:">Effects:</td>
                                 <td><input type="text" id="song-effects-input"></td>
                             </tr>
                         </table>
@@ -266,29 +268,33 @@
                     <!-- Content Editor -->
                     <div class="song-content-editor">
                         <div class="content-header">
-                            <h3>Song Content</h3>
+                            <h3 data-translate="Song Content">Song Content</h3>
                             <div class="column-guides-control">
-                                <label for="column-guides-select">Column Guides:</label>
+                                <label for="column-guides-select" data-translate="Column Guides:">Column Guides:</label>
                                 <select id="column-guides-select">
-                                    <option value="none" selected>None</option>
-                                    <option value="personalized">Personalized</option>
-                                    <option value="two">2 Columns</option>
-                                    <option value="three">3 Columns</option>
+                                    <option value="none" selected data-translate="None">None</option>
+                                    <option value="personalized" data-translate="Personalized">Personalized</option>
+                                    <option value="two" data-translate="2 Columns">2 Columns</option>
+                                    <option value="three" data-translate="3 Columns">3 Columns</option>
                                 </select>
                             </div>
                         </div>
                         <div class="textarea-wrapper">
-                            <textarea id="song-content-textarea" placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."></textarea>
+                            <textarea id="song-content-textarea" 
+                                      placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."
+                                      data-translate-placeholder-1="Paste or type your song here..."
+                                      data-translate-placeholder-2="Chords go on the line above lyrics."
+                                      data-translate-placeholder-3="Double line break separates sections."></textarea>
                             <div id="column-guides" class="column-guides"></div>
                         </div>
                     </div>
                     
                     <!-- Diagram Selector -->
                     <div class="song-diagram-selector">
-                        <h3>Selected Chords (up to 8)</h3>
+                        <h3 data-translate="Selected Chords (up to 8)">Selected Chords (up to 8)</h3>
                         <div id="selected-chords-list" class="selected-chords-list"></div>
                         
-                        <h3>Available Chords</h3>
+                        <h3 data-translate="Available Chords">Available Chords</h3>
                         <div id="chord-selector-grid" class="chord-selector-grid"></div>
                     </div>
                     
@@ -297,14 +303,15 @@
                     
                     <!-- Actions -->
                     <div class="song-editor-actions">
-                        <button id="save-song-btn" class="download-btn">Save Song</button>
-                        <button id="cancel-song-edit-btn" class="utility-btn">Cancel</button>
+                        <button id="save-song-btn" class="download-btn" data-translate="Save Song">Save Song</button>
+                        <button id="cancel-song-edit-btn" class="utility-btn" data-translate="Cancel">Cancel</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="scripts/translation.js"></script>
     <script src="scripts/guitar-pattern.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

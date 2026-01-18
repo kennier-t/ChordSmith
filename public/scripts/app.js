@@ -90,7 +90,7 @@ async function showFamilyView(family) {
         return;
     }
     
-    document.getElementById('family-title').textContent = `${family} Family`;
+    document.getElementById('family-title').textContent = translations[currentLanguage][`${family} Family`] || `${family} Family`;
     
     // Render chord gallery
     const gallery = document.getElementById('chords-gallery');

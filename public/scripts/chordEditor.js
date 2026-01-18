@@ -135,7 +135,8 @@
         container.innerHTML = '';
         
         if (customChords.length === 0) {
-            container.innerHTML = '<div class="empty-chords-message">No custom chords yet. Click "Create New Chord" to get started!</div>';
+            container.innerHTML = '<div class="empty-chords-message" data-translate="No custom chords yet. Create one!"></div>';
+            translatePage();
             return;
         }
         

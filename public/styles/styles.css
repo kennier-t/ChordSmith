@@ -42,6 +42,10 @@ body {
     margin: auto;
 }
 
+/* Language Toggle Button - styles in translation.css */
+
+
+
 .view {
     width: 100%;
     background: rgba(255, 255, 255, 0.65);
@@ -529,7 +533,7 @@ h2::after {
 
 /* Modal Gen Song Chords */
 .modal-large {
-    max-width: 700px !important;
+    max-width: 900px !important;
 }
 
 .modal-description {
