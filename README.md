@@ -35,12 +35,19 @@ A web application for visualizing, creating, and downloading guitar chord diagra
 - **Complete families**: Downloads as ZIP file
 - **Song sequences**: Export your chord progressions
 
+### 📄 PDF to Text Converter
+- **Extract text from PDFs**: Convert PDF files to plain text preserving layout and spacing
+- **Preserves formatting**: Uses `pdftotext -layout` to maintain alignment and tabulation
+- **Copy ready**: Perfect for copying song lyrics and chords without losing spacing
+- **Standalone tool**: Quick access from main menu
+
 ## Getting Started
 
 ### Prerequisites
 - Node.js (v14 or higher)
 - SQL Server with ODBC Driver 17 installed
 - Windows Authentication configured for SQL Server
+- `pdftotext` (from poppler-utils) installed and in system PATH (for PDF to Text feature)
 
 ### Installation
 
@@ -66,6 +73,7 @@ A web application for visualizing, creating, and downloading guitar chord diagra
 2. Click "Create Chord" to build your own custom chords
 3. Click "Songs" to manage your song library and folders
 4. Use "Gen Song Chords" to create chord sequences
+5. Click "PDF → Text" to convert PDFs to text (preserving layout)
 
 ## Technologies
 
@@ -79,6 +87,8 @@ A web application for visualizing, creating, and downloading guitar chord diagra
 - Node.js + Express for API server
 - SQL Server for data persistence
 - msnodesqlv8 for Windows Authentication
+- multer for file uploads
+- pdftotext (poppler) for PDF conversion
 
 
 ## How It Works
@@ -110,6 +120,7 @@ A web application for visualizing, creating, and downloading guitar chord diagra
 - `chordRenderer.js`: SVG/PNG rendering engine
 - `songPDFGenerator.js`: PDF generation for songs
 - `songChords.js`: Chord sequence generator
+- `pdf-to-text.js`: PDF to text conversion functionality
 - `app.js`: Main application logic
 
 ## Project Structure
@@ -118,6 +129,7 @@ A web application for visualizing, creating, and downloading guitar chord diagra
 Chord-Families/
 ├── public/                 # Frontend files
 │   ├── index.html          # Main page
+│   ├── pdf-to-text.html    # PDF to text converter page
 │   ├── debug.html          # Debug page
 │   ├── scripts/            # JavaScript files
 │   │   ├── app.js          # Core application
@@ -130,9 +142,11 @@ Chord-Families/
 │   │   ├── songsManager.js # Songs/folders manager
 │   │   ├── songPDFGenerator.js # PDF generator
 │   │   ├── songChords.js   # Chord sequences
+│   │   ├── pdf-to-text.js  # PDF to text conversion
 │   │   └── guitar-pattern.js # Background pattern
 │   └── styles/             # CSS files
 │       ├── styles.css      # Main styles
+│       ├── pdf-to-text.css # PDF converter styles
 │       └── guitar-pattern.css # Pattern styles
 ├── server/                 # Backend files
 │   └── server.js           # Express API server

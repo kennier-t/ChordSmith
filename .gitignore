@@ -18,6 +18,7 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+.vscode/
 
 # Logs
 logs/
@@ -38,6 +39,10 @@ out/
 *.tmp
 *.temp
 .cache/
+temp/
+
+# PDF conversion temp files
+*.pdf.txt
 
 # Testing
 coverage/
@@ -48,6 +53,10 @@ coverage/
 
 # Optional eslint cache
 .eslintcache
+
+# OS files
+.DS_Store
+Thumbs.db
 
 # Database files (if storing locally)
 *.db
