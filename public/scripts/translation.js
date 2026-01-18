@@ -217,7 +217,7 @@ const translations = {
                         'Error saving song: ': 'Error guardando canción: ',
                         'song': 'canción',
                         'songs': 'canciones',
-                        'All': 'Todas',
+                        'All': 'TODAS',
                         'Unknown': 'Desconocida',
                         'Uncategorized': 'Sin categoría',
                         'Key': 'Tonalidad',

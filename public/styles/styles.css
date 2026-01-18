@@ -1044,6 +1044,31 @@ h2::after {
     color: white;
 }
 
+/* Song Group Headers */
+.song-group-header {
+    background: var(--background-light);
+    border: 1px solid var(--border);
+    padding: 12px 20px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.song-group-header h4 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.group-count {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
 /* Song Editor Modal */
 .modal-song-editor {
     max-width: 1000px !important;
