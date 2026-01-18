@@ -1,6 +1,6 @@
-// Renderizador de diagramas de acordes
-// Tamaño físico: 3.5cm alto × 3.0cm ancho
-// Conversión: 1cm ≈ 37.8 pixels (96 DPI)
+// Chord Diagram Renderer
+// Physical size: 3.5cm high × 3.0cm wide
+// Conversion: 1cm ≈ 37.8 pixels (96 DPI)
 const DIAGRAM_WIDTH_CM = 3.0;
 const DIAGRAM_HEIGHT_CM = 3.5;
 const CM_TO_PX = 37.8;
@@ -15,45 +15,45 @@ class ChordRenderer {
         this.width = DIAGRAM_WIDTH;
         this.height = DIAGRAM_HEIGHT;
         
-        // Espacios y márgenes
+        // Spacing and margins
         this.titleHeight = 20;
         this.topMargin = 8;
         this.bottomMargin = 5;
         this.sideMargin = 15;
         
-        // Área del diagrama - SIEMPRE en la misma posición y tamaño
+        // Diagram area - ALWAYS in same position and size
         this.diagramTop = this.titleHeight + this.topMargin;
         this.diagramHeight = this.height - this.diagramTop - this.bottomMargin;
         this.diagramLeft = this.sideMargin;
         this.diagramWidth = this.width - (this.sideMargin * 2);
         
-        // Determinar si necesita mostrar número de traste
+        // Determine if fret number needs to be displayed
         this.showFretNumber = this.chord.baseFret > 1;
         
         // Espaciado
         this.stringSpacing = this.diagramWidth / (this.strings - 1);
         this.fretSpacing = this.diagramHeight / this.frets;
         
-        // Tamaños de elementos
+        // Element sizes
         this.dotRadius = Math.min(this.stringSpacing, this.fretSpacing) * 0.3;
         this.nutThickness = 3;
         this.fretThickness = 1;
         this.stringThickness = 1;
     }
     
-    // Renderizar a SVG
+    // Render to SVG
     renderSVG(transparent = false) {
         const bgColor = transparent ? 'none' : 'white';
         
         let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${this.width}" height="${this.height}" viewBox="0 0 ${this.width} ${this.height}">`;
         
-        // Fondo
+        // Background
         svg += `<rect width="${this.width}" height="${this.height}" fill="${bgColor}"/>`;
         
-        // Título del acorde
+        // Chord title
         svg += `<text x="${this.width / 2}" y="15" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="black">${this.chord.name}</text>`;
         
-        // Dibujar cuerdas no tocadas (X)
+        // Draw unplayed strings (X)
         for (let i = 0; i < this.strings; i++) {
             if (this.chord.frets[i] === -1) {
                 const x = this.diagramLeft + i * this.stringSpacing;
@@ -62,27 +62,27 @@ class ChordRenderer {
             }
         }
         
-        // Número de traste base (si es necesario)
+        // Base fret number (if needed)
         if (this.showFretNumber) {
             const x = this.diagramLeft - 8;
             const y = this.diagramTop + this.fretSpacing / 2 + 4;
             svg += `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="black">${this.chord.baseFret}</text>`;
         }
         
-        // Dibujar cuerdas (verticales)
+        // Draw strings (vertical)
         for (let i = 0; i < this.strings; i++) {
             const x = this.diagramLeft + i * this.stringSpacing;
             svg += `<line x1="${x}" y1="${this.diagramTop}" x2="${x}" y2="${this.diagramTop + this.diagramHeight}" stroke="black" stroke-width="${this.stringThickness}"/>`;
         }
         
-        // Dibujar trastes (horizontales)
+        // Draw frets (horizontal)
         for (let i = 0; i <= this.frets; i++) {
             const y = this.diagramTop + i * this.fretSpacing;
             const thickness = (i === 0 && this.chord.baseFret === 1) ? this.nutThickness : this.fretThickness;
             svg += `<line x1="${this.diagramLeft}" y1="${y}" x2="${this.diagramLeft + this.diagramWidth}" y2="${y}" stroke="black" stroke-width="${thickness}"/>`;
         }
         
-        // Dibujar cejillas (barres) - dos círculos conectados por una línea delgada
+        // Draw barres (bars) - two circles connected by thin line
         if (this.chord.barres && this.chord.barres.length > 0) {
             this.chord.barres.forEach(barreFret => {
                 const stringPositions = [];
@@ -100,16 +100,16 @@ class ChordRenderer {
                     const fretPos = barreFret - this.chord.baseFret;
                     const y = this.diagramTop + (fretPos + 0.5) * this.fretSpacing;
                     
-                    // Línea conectando los dos círculos
+                    // Line connecting two circles
                     svg += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="black" stroke-width="3.5" stroke-linecap="round"/>`;
                     
-                    // Círculo en el inicio
+                    // Circle at start
                     svg += `<circle cx="${x1}" cy="${y}" r="${this.dotRadius}" fill="black"/>`;
                     
-                    // Círculo en el final
+                    // Circle at end
                     svg += `<circle cx="${x2}" cy="${y}" r="${this.dotRadius}" fill="black"/>`;
                     
-                    // Número del dedo (1) en ambos círculos
+                    // Finger number (1) in both circles
                     const finger = this.chord.fingers[minString];
                     if (finger > 0) {
                         svg += `<text x="${x1}" y="${y + 4}" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="white">${finger}</text>`;
@@ -119,7 +119,7 @@ class ChordRenderer {
             });
         }
         
-        // Dibujar puntos (dedos)
+        // Draw dots (fingers)
         for (let i = 0; i < this.strings; i++) {
             const fret = this.chord.frets[i];
             const finger = this.chord.fingers[i];
@@ -134,10 +134,10 @@ class ChordRenderer {
                     const fretPos = fret - this.chord.baseFret;
                     const y = this.diagramTop + (fretPos + 0.5) * this.fretSpacing;
                     
-                    // Círculo
+                    // Circle
                     svg += `<circle cx="${x}" cy="${y}" r="${this.dotRadius}" fill="black"/>`;
                     
-                    // Número del dedo
+                    // Finger number
                     svg += `<text x="${x}" y="${y + 4}" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" fill="white">${finger}</text>`;
                 }
             }
@@ -147,14 +147,14 @@ class ChordRenderer {
         return svg;
     }
     
-    // Renderizar a Canvas (para PNG)
+    // Render to Canvas (for PNG)
     renderCanvas(transparent = false) {
         const canvas = document.createElement('canvas');
         canvas.width = this.width;
         canvas.height = this.height;
         const ctx = canvas.getContext('2d');
         
-        // Fondo
+        // Background
         if (!transparent) {
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, this.width, this.height);
@@ -166,10 +166,10 @@ class ChordRenderer {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Título
+        // Title
         ctx.fillText(this.chord.name, this.width / 2, 15);
         
-        // Cuerdas no tocadas (X)
+        // Unplayed strings (X)
         ctx.font = 'bold 12px Arial';
         for (let i = 0; i < this.strings; i++) {
             if (this.chord.frets[i] === -1) {
@@ -179,7 +179,7 @@ class ChordRenderer {
             }
         }
         
-        // Número de traste base
+        // Base fret number
         if (this.showFretNumber) {
             ctx.font = '10px Arial';
             const x = this.diagramLeft - 8;
@@ -187,7 +187,7 @@ class ChordRenderer {
             ctx.fillText(this.chord.baseFret.toString(), x, y);
         }
         
-        // Cuerdas (verticales)
+        // Strings (vertical)
         ctx.lineWidth = this.stringThickness;
         for (let i = 0; i < this.strings; i++) {
             const x = this.diagramLeft + i * this.stringSpacing;
@@ -197,7 +197,7 @@ class ChordRenderer {
             ctx.stroke();
         }
         
-        // Trastes (horizontales)
+        // Frets (horizontal)
         for (let i = 0; i <= this.frets; i++) {
             const y = this.diagramTop + i * this.fretSpacing;
             const thickness = (i === 0 && this.chord.baseFret === 1) ? this.nutThickness : this.fretThickness;
@@ -208,7 +208,7 @@ class ChordRenderer {
             ctx.stroke();
         }
         
-        // Cejillas (barres) - dos círculos conectados por una línea delgada
+        // Barres (bars) - two circles connected by thin line
         if (this.chord.barres && this.chord.barres.length > 0) {
             this.chord.barres.forEach(barreFret => {
                 const stringPositions = [];
@@ -226,7 +226,7 @@ class ChordRenderer {
                     const fretPos = barreFret - this.chord.baseFret;
                     const y = this.diagramTop + (fretPos + 0.5) * this.fretSpacing;
                     
-                    // Línea conectando los dos círculos
+                    // Line connecting two circles
                     ctx.lineWidth = 3.5;
                     ctx.lineCap = 'round';
                     ctx.beginPath();
@@ -234,17 +234,17 @@ class ChordRenderer {
                     ctx.lineTo(x2, y);
                     ctx.stroke();
                     
-                    // Círculo en el inicio
+                    // Circle at start
                     ctx.beginPath();
                     ctx.arc(x1, y, this.dotRadius, 0, 2 * Math.PI);
                     ctx.fill();
                     
-                    // Círculo en el final
+                    // Circle at end
                     ctx.beginPath();
                     ctx.arc(x2, y, this.dotRadius, 0, 2 * Math.PI);
                     ctx.fill();
                     
-                    // Número del dedo (1) en ambos círculos
+                    // Finger number (1) in both circles
                     const finger = this.chord.fingers[minString];
                     if (finger > 0) {
                         ctx.font = 'bold 10px Arial';
@@ -257,7 +257,7 @@ class ChordRenderer {
             });
         }
         
-        // Puntos (dedos)
+        // Dots (fingers)
         ctx.font = 'bold 10px Arial';
         for (let i = 0; i < this.strings; i++) {
             const fret = this.chord.frets[i];
@@ -272,12 +272,12 @@ class ChordRenderer {
                     const fretPos = fret - this.chord.baseFret;
                     const y = this.diagramTop + (fretPos + 0.5) * this.fretSpacing;
                     
-                    // Círculo
+                    // Circle
                     ctx.beginPath();
                     ctx.arc(x, y, this.dotRadius, 0, 2 * Math.PI);
                     ctx.fill();
                     
-                    // Número
+                    // Number
                     ctx.fillStyle = 'white';
                     ctx.fillText(finger.toString(), x, y);
                     ctx.fillStyle = 'black';

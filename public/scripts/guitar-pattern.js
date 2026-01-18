@@ -1,12 +1,12 @@
 // Guitar Pattern Generator - Apple-like Minimal Style
-// Crea un patrón seamless de guitarras con rotaciones individuales
+// Creates a seamless pattern of guitars with individual rotations
 
 (function() {
     'use strict';
     
-    // Configuración del patrón
+    // Pattern configuration
     const config = {
-        guitarCount: 40, // Número total de guitarras (aumentado)
+        guitarCount: 40, // Total number of guitars (increased)
         minSize: 120,
         maxSize: 260,
         minRotation: -45,
@@ -16,15 +16,15 @@
         animationDuration: 180 // segundos
     };
     
-    // Función para generar número aleatorio en un rango
+    // Function to generate random number in range
     function random(min, max) {
         return Math.random() * (max - min) + min;
     }
     
-    // Función para generar distribución orgánica (evita clusters)
+    // Function to generate organic distribution (avoids clusters)
     function generatePositions(count) {
         const positions = [];
-        const minDistance = 15; // Distancia mínima entre guitarras (en %)
+        const minDistance = 15; // Minimum distance between guitars (%)
         let attempts = 0;
         const maxAttempts = count * 50;
         
@@ -33,7 +33,7 @@
             const x = random(0, 100);
             const y = random(0, 100);
             
-            // Verificar distancia mínima con otras guitarras
+            // Check minimum distance with other guitars
             let tooClose = false;
             for (const pos of positions) {
                 const dx = x - pos.x;
@@ -53,7 +53,7 @@
         return positions;
     }
     
-    // Crear contenedor del patrón
+    // Create pattern container
     function createPatternContainer() {
         const container = document.createElement('div');
         container.id = 'guitar-pattern-container';
@@ -70,7 +70,7 @@
         return container;
     }
     
-    // Crear elemento de guitarra individual
+    // Create individual guitar element
     function createGuitar(position, index) {
         const size = random(config.minSize, config.maxSize);
         const rotation = random(config.minRotation, config.maxRotation);
@@ -103,7 +103,7 @@
         return guitar;
     }
     
-    // Crear animaciones CSS
+    // Create CSS animations
     function createAnimationStyles() {
         const style = document.createElement('style');
         style.textContent = `
@@ -150,31 +150,31 @@
         return style;
     }
     
-    // Inicializar patrón
+    // Initialize pattern
     function initPattern() {
-        // Añadir estilos de animación
+        // Add animation styles
         document.head.appendChild(createAnimationStyles());
         
         // Crear contenedor
         const container = createPatternContainer();
         
-        // Generar posiciones orgánicas
+        // Generate organic positions
         const positions = generatePositions(config.guitarCount);
         
         // Crear guitarras
         positions.forEach((position, index) => {
             const guitar = createGuitar(position, index);
-            // Guardar rotación como variable CSS
+            // Store rotation as CSS variable
             const rotation = parseFloat(guitar.style.transform.match(/rotate\(([-\d.]+)deg\)/)[1]);
             guitar.style.setProperty('--rotation', `${rotation}deg`);
             container.appendChild(guitar);
         });
         
-        // Añadir al documento
+        // Add to document
         document.body.insertBefore(container, document.body.firstChild);
     }
     
-    // Ejecutar cuando el DOM esté listo
+    // Execute when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initPattern);
     } else {

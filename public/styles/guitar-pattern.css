@@ -1,7 +1,7 @@
 /* Guitar Pattern Background - Apple-like Minimal Style */
-/* El patrón principal se genera mediante JavaScript (guitar-pattern.js) */
+/* The main pattern is generated via JavaScript (guitar-pattern.js) */
 
-/* El patrón se mantiene consistente en toda la página */
+/* The pattern remains consistent across the entire page */
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -50,7 +50,7 @@
     }
 }
 
-/* Optimización de rendimiento */
+/* Performance optimization */
 body::before,
 body::after,
 .view::after {

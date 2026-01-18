@@ -1,13 +1,13 @@
-// Estado de la aplicación
+// Application state
 let currentFamily = null;
 let currentChord = null;
 
-// Elementos del DOM
+// DOM elements
 const familiesView = document.getElementById('families-view');
 const familyView = document.getElementById('family-view');
 const chordModal = document.getElementById('chord-modal');
 
-// Inicializar la aplicación
+// Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     initializeFamilyButtons();
     initializeBackButtons();
@@ -15,39 +15,39 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeUtilityButtons();
 });
 
-// Inicializar botones de familias
+// Initialize family buttons
 function initializeFamilyButtons() {
     const familyButtons = document.querySelectorAll('.family-btn');
-    console.log('Botones encontrados:', familyButtons.length);
+    console.log('Buttons found:', familyButtons.length);
     familyButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const family = btn.dataset.family;
-            console.log('Click en familia:', family);
+            console.log('Click on family:', family);
             showFamilyView(family);
         });
     });
 }
 
-// Inicializar botones de navegación
+// Initialize navigation buttons
 function initializeBackButtons() {
     document.getElementById('back-to-families').addEventListener('click', () => {
         showView('families');
     });
     
-    // Cerrar modal
+    // Close modal
     document.getElementById('close-modal').addEventListener('click', () => {
         closeModal();
     });
     
-    // Cerrar modal al hacer click en el overlay
+    // Close modal when clicking on overlay
     document.querySelector('.modal-overlay').addEventListener('click', () => {
         closeModal();
     });
 }
 
-// Inicializar botones de descarga
+// Initialize download buttons
 function initializeDownloadButtons() {
-    // Descargar familia completa
+    // Download complete family
     document.getElementById('download-family-png').addEventListener('click', () => {
         downloadFamily(currentFamily, 'png');
     });
@@ -56,7 +56,7 @@ function initializeDownloadButtons() {
         downloadFamily(currentFamily, 'svg');
     });
     
-    // Descargar acorde individual desde modal
+    // Download individual chord from modal
     document.getElementById('download-modal-chord-png').addEventListener('click', () => {
         downloadChord(currentChord, 'png');
     });
@@ -66,7 +66,7 @@ function initializeDownloadButtons() {
     });
 }
 
-// Mostrar vista específica
+// Show specific view
 function showView(view) {
     familiesView.classList.add('hidden');
     familyView.classList.add('hidden');
@@ -78,12 +78,12 @@ function showView(view) {
     }
 }
 
-// Mostrar vista de familia
+// Show family view
 async function showFamilyView(family) {
-    console.log('showFamilyView llamado con:', family);
+    console.log('showFamilyView called with:', family);
     currentFamily = family;
     const chords = await DB_SERVICE.getChordsForFamily(family);
-    console.log('Acordes encontrados:', chords.length, chords);
+    console.log('Chords found:', chords.length, chords);
     
     if (chords.length === 0) {
         alert(`Family ${family} is not yet implemented.`);
@@ -92,7 +92,7 @@ async function showFamilyView(family) {
     
     document.getElementById('family-title').textContent = `${family} Family`;
     
-    // Renderizar galería de acordes
+    // Render chord gallery
     const gallery = document.getElementById('chords-gallery');
     gallery.innerHTML = '';
     
@@ -104,7 +104,7 @@ async function showFamilyView(family) {
     showView('family');
 }
 
-// Crear tarjeta de acorde para la galería
+// Create chord card for gallery
 function createChordCard(chord) {
     const card = document.createElement('div');
     card.className = 'chord-card';
@@ -114,7 +114,7 @@ function createChordCard(chord) {
     title.textContent = chord.name;
     card.appendChild(title);
     
-    // Renderizar thumbnail
+    // Render thumbnail
     const renderer = new ChordRenderer(chord);
     const img = document.createElement('img');
     img.className = 'chord-thumbnail';
@@ -124,12 +124,12 @@ function createChordCard(chord) {
     return card;
 }
 
-// Mostrar modal de acorde individual
+// Show individual chord modal
 function showChordView(chord) {
     currentChord = chord;
     document.getElementById('modal-chord-title').textContent = chord.name;
     
-    // Renderizar preview grande
+    // Render large preview
     const preview = document.getElementById('modal-chord-preview');
     preview.innerHTML = '';
     
@@ -137,16 +137,16 @@ function showChordView(chord) {
     const svgString = renderer.getSVGString(false);
     preview.innerHTML = svgString;
     
-    // Mostrar modal
+    // Show modal
     chordModal.classList.remove('hidden');
 }
 
-// Cerrar modal
+// Close modal
 function closeModal() {
     chordModal.classList.add('hidden');
 }
 
-// Descargar acorde individual
+// Download individual chord
 async function downloadChord(chord, format) {
     const renderer = new ChordRenderer(chord);
     const filename = `${chord.name}.${format}`;
@@ -161,7 +161,7 @@ async function downloadChord(chord, format) {
     }
 }
 
-// Descargar familia completa
+// Download complete family
 async function downloadFamily(family, format) {
     const chords = await DB_SERVICE.getChordsForFamily(family);
     
@@ -173,7 +173,7 @@ async function downloadFamily(family, format) {
     const zip = new JSZip();
     const folder = zip.folder(family);
     
-    // Agregar cada acorde al ZIP
+    // Add each chord to ZIP
     for (const chord of chords) {
         const renderer = new ChordRenderer(chord);
         const filename = `${chord.name}.${format}`;
@@ -187,12 +187,12 @@ async function downloadFamily(family, format) {
         }
     }
     
-    // Generar y descargar el ZIP
+    // Generate and download ZIP
     const content = await zip.generateAsync({ type: 'blob' });
     downloadBlob(content, `${family}.zip`);
 }
 
-// Función auxiliar para descargar blob
+// Helper function to download blob
 function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -204,7 +204,7 @@ function downloadBlob(blob, filename) {
     URL.revokeObjectURL(url);
 }
 
-// Inicializar botones de utilidad
+// Initialize utility buttons
 function initializeUtilityButtons() {
     const pdfToTextBtn = document.getElementById('pdf-to-text-btn');
     if (pdfToTextBtn) {

@@ -277,7 +277,7 @@ h2::after {
     transform: translateY(0);
 }
 
-/* Botones de navegación */
+/* Navigation buttons */
 .back-btn {
     padding: 10px 0;
     margin-bottom: 20px;
@@ -356,7 +356,7 @@ h2::after {
     transform: translateY(0);
 }
 
-/* Galería de acordes */
+/* Chord gallery */
 .chords-gallery {
     display: flex;
     flex-wrap: wrap;

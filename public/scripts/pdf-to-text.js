@@ -59,7 +59,7 @@ function initializeEventListeners() {
 
     // Back button
     backBtn.addEventListener('click', () => {
-        // Si hay historial, retroceder. Si no, cerrar la ventana
+        // If there's history, go back. Otherwise, close window
         if (window.history.length > 1) {
             window.history.back();
         } else {

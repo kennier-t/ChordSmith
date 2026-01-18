@@ -1,43 +1,43 @@
-// Song Chords Generator - Genera una imagen horizontal de acordes para canciones
-// Mantiene las mismas dimensiones que los acordes individuales: 3.5cm alto × 3cm ancho por acorde
-// Imagen final: 3.5cm alto × 18cm ancho (6 acordes)
+// Song Chords Generator - Generates a horizontal image of chords for songs
+// Maintains same dimensions as individual chords: 3.5cm high × 3cm wide per chord
+// Final image: 3.5cm high × 18cm wide (6 chords)
 
 const SONG_DIAGRAM_WIDTH_CM = 3.0;
 const SONG_DIAGRAM_HEIGHT_CM = 3.5;
 const SONG_CHORDS_BASE_COUNT = 6;
 const SONG_CHORDS_MAX_COUNT = 8;
 
-// Variables globales
+// Global variables
 let selectedChords = [];
 let allChordsData = [];
 
-// Inicializar funcionalidad de Song Chords
+// Initialize Song Chords functionality
 async function initializeSongChords() {
-    // Obtener todos los acordes disponibles
+    // Get all available chords
     allChordsData = await getAllAvailableChords();
     
-    // Poblar los selectores
+    // Populate the selectors
     populateChordSelectors();
     
-    // Event listeners para botones
+    // Event listeners for buttons
     document.getElementById('gen-song-chords-btn').addEventListener('click', openGenSongModal);
     document.getElementById('close-gen-song-modal').addEventListener('click', closeGenSongModal);
     document.getElementById('create-chord-btn').addEventListener('click', openCreateChordModal);
     document.getElementById('close-create-chord-modal').addEventListener('click', closeCreateChordModal);
     
-    // Cerrar modales con overlay
+    // Close modals with overlay
     document.querySelector('#gen-song-modal .modal-overlay').addEventListener('click', closeGenSongModal);
     document.querySelector('#create-chord-modal .modal-overlay').addEventListener('click', closeCreateChordModal);
     
-    // Generar acordes de canción
+    // Generate song chords
     document.getElementById('generate-song-chords-btn').addEventListener('click', generateSongChords);
     
-    // Descargar acordes de canción
+    // Download song chords
     document.getElementById('download-song-chords-png').addEventListener('click', () => downloadSongChords('png'));
     document.getElementById('download-song-chords-svg').addEventListener('click', () => downloadSongChords('svg'));
 }
 
-// Obtener todos los acordes disponibles de todas las familias (originales + custom)
+// Get all available chords from all families (original + custom)
 async function getAllAvailableChords() {
     const chordMap = new Map();
     
@@ -66,32 +66,32 @@ async function getAllAvailableChords() {
         }
     });
     
-    // Convertir map a array y ordenar alfabéticamente
+    // Convert map to array and sort alphabetically
     const uniqueChords = Array.from(chordMap.values());
     uniqueChords.sort((a, b) => a.name.localeCompare(b.name));
     
     return uniqueChords;
 }
 
-// Poblar los selectores de acordes
+// Populate chord selectors
 function populateChordSelectors() {
     const selects = document.querySelectorAll('.chord-select');
     
     selects.forEach(select => {
-        // Agregar event listener para validar duplicados
+        // Add event listener to validate duplicates
         select.addEventListener('change', handleChordSelection);
     });
     
-    // Poblar inicialmente
+    // Populate initially
     updateAllSelectors();
 }
 
-// Actualizar todos los selectores basándose en las selecciones actuales
+// Update all selectors based on current selections
 function updateAllSelectors() {
     const selects = document.querySelectorAll('.chord-select');
     const selectedValues = [];
     
-    // Obtener todos los valores seleccionados
+    // Get all selected values
     selects.forEach(select => {
         if (select.value !== '') {
             selectedValues.push(select.value);
@@ -110,7 +110,7 @@ function updateAllSelectors() {
             option.value = index;
             option.textContent = chord.displayName;
             
-            // Deshabilitar si ya está seleccionado en otro selector
+            // Disable if already selected in another selector
             if (selectedValues.includes(index.toString()) && currentValue !== index.toString()) {
                 option.disabled = true;
                 option.textContent += ' (already selected)';
@@ -124,19 +124,19 @@ function updateAllSelectors() {
     });
 }
 
-// Manejar selección de acorde
+// Handle chord selection
 function handleChordSelection(event) {
     updateAllSelectors();
     checkAndToggleSeventhChord();
 }
 
-// Verificar si los primeros 6 acordes están llenos y habilitar/deshabilitar el séptimo y octavo
+// Check if first 6 chords are filled and enable/disable seventh and eighth
 function checkAndToggleSeventhChord() {
     const selects = document.querySelectorAll('.chord-select:not(.chord-select-extra):not(.chord-select-extra-2)');
     const seventhSelect = document.querySelector('.chord-select-extra');
     const eighthSelect = document.querySelector('.chord-select-extra-2');
     
-    // Contar cuántos de los primeros 6 están seleccionados
+    // Count how many of the first 6 are selected
     let filledCount = 0;
     selects.forEach(select => {
         if (select.value !== '') {
@@ -144,14 +144,14 @@ function checkAndToggleSeventhChord() {
         }
     });
     
-    // Habilitar séptimo acorde solo si los 6 primeros están llenos
+    // Enable seventh chord only if first 6 are filled
     if (filledCount === 6) {
         seventhSelect.disabled = false;
         if (seventhSelect.options[0].text.includes('Fill first')) {
             seventhSelect.options[0].text = '-- Select Chord --';
         }
         
-        // Habilitar octavo acorde solo si el séptimo está seleccionado
+        // Enable eighth chord only if seventh is selected
         if (seventhSelect.value !== '') {
             eighthSelect.disabled = false;
             if (eighthSelect.options[0].text.includes('Fill chord')) {
@@ -173,77 +173,77 @@ function checkAndToggleSeventhChord() {
     }
 }
 
-// Abrir modal de Gen Song Chords
+// Open Gen Song Chords modal
 function openGenSongModal() {
     document.getElementById('gen-song-modal').classList.remove('hidden');
     document.getElementById('song-chords-preview').classList.add('hidden');
-    // Limpiar selecciones
+    // Clear selections
     document.querySelectorAll('.chord-select').forEach(select => {
         select.value = '';
     });
-    // Actualizar selectores para reflejar que no hay selecciones
+    // Update selectors to reflect no selections
     updateAllSelectors();
-    // Resetear estado del séptimo acorde
+    // Reset seventh chord state
     checkAndToggleSeventhChord();
 }
 
-// Cerrar modal de Gen Song Chords
+// Close Gen Song Chords modal
 function closeGenSongModal() {
     document.getElementById('gen-song-modal').classList.add('hidden');
 }
 
-// Abrir modal de Create Chord
+// Open Create Chord modal
 function openCreateChordModal() {
     document.getElementById('create-chord-modal').classList.remove('hidden');
 }
 
-// Cerrar modal de Create Chord
+// Close Create Chord modal
 function closeCreateChordModal() {
     document.getElementById('create-chord-modal').classList.add('hidden');
 }
 
-// Generar imagen de acordes de canción
+// Generate song chords image
 function generateSongChords() {
-    // Obtener acordes seleccionados (solo los primeros 6 o incluir extras si están seleccionados)
+    // Get selected chords (only first 6 or include extras if selected)
     selectedChords = [];
     const selects = document.querySelectorAll('.chord-select:not(.chord-select-extra):not(.chord-select-extra-2)');
     const seventhSelect = document.querySelector('.chord-select-extra');
     const eighthSelect = document.querySelector('.chord-select-extra-2');
     
-    // Procesar primeros 6 acordes
+    // Process first 6 chords
     selects.forEach(select => {
         if (select.value !== '') {
             const chordIndex = parseInt(select.value);
             selectedChords.push(allChordsData[chordIndex]);
         } else {
-            selectedChords.push(null); // Espacio vacío
+            selectedChords.push(null); // Empty space
         }
     });
     
-    // Agregar séptimo acorde solo si está seleccionado
+    // Add seventh chord only if selected
     if (seventhSelect.value !== '') {
         const chordIndex = parseInt(seventhSelect.value);
         selectedChords.push(allChordsData[chordIndex]);
         
-        // Agregar octavo acorde solo si está seleccionado
+        // Add eighth chord only if selected
         if (eighthSelect.value !== '') {
             const chordIndex = parseInt(eighthSelect.value);
             selectedChords.push(allChordsData[chordIndex]);
         }
     }
     
-    // Generar y mostrar preview
+    // Generate and show preview
     const previewContainer = document.getElementById('song-chords-image');
     previewContainer.innerHTML = '';
     
     const svgString = generateSongChordsSVG();
     previewContainer.innerHTML = svgString;
     
-    // Mostrar sección de preview
+    // Show preview section
     document.getElementById('song-chords-preview').classList.remove('hidden');
 }
 
-// Generar SVG de acordes de canción (6 o 7 acordes horizontales)
+// Generate SVG of song chords (6 or 7 or 8 horizontal chords)
 function generateSongChordsSVG(transparent = false) {
     const bgColor = transparent ? 'none' : 'white';
     const chordCount = selectedChords.length;
@@ -264,7 +264,7 @@ function generateSongChordsSVG(transparent = false) {
             // Dibujar acorde real
             svg += renderChordInSVG(chord, xOffset);
         } else {
-            // Dibujar diagrama vacío
+            // Draw empty diagram
             svg += renderEmptyChordDiagram(xOffset);
         }
     }
@@ -298,7 +298,7 @@ function renderChordInSVG(chord, xOffset) {
 
 // Aplicar offset a un elemento SVG y sus hijos
 function offsetSVGElement(element, xOffset, yOffset) {
-    // Atributos de posición
+    // Position attributes
     if (element.hasAttribute('x')) {
         element.setAttribute('x', parseFloat(element.getAttribute('x')) + xOffset);
     }
@@ -330,7 +330,7 @@ function offsetSVGElement(element, xOffset, yOffset) {
     });
 }
 
-// Renderizar diagrama vacío (solo estructura de cuerdas y trastes)
+// Render empty diagram (only strings and frets structure)
 function renderEmptyChordDiagram(xOffset) {
     const strings = 6;
     const frets = 4;
@@ -362,7 +362,7 @@ function renderEmptyChordDiagram(xOffset) {
         svg += `<line x1="${x}" y1="${diagramTop}" x2="${x}" y2="${diagramTop + diagramHeight}" stroke="black" stroke-width="${stringThickness}"/>`;
     }
     
-    // Dibujar trastes (horizontales) - primera línea más gruesa
+    // Draw frets (horizontal) - first line thicker
     for (let i = 0; i <= frets; i++) {
         const y = diagramTop + i * fretSpacing;
         const thickness = (i === 0) ? nutThickness : fretThickness;
@@ -400,7 +400,7 @@ function generateSongChordsCanvas(transparent = false) {
             const chordCanvas = renderer.renderCanvas(false);
             ctx.drawImage(chordCanvas, xOffset, 0);
         } else {
-            // Dibujar diagrama vacío
+            // Draw empty diagram
             renderEmptyChordDiagramCanvas(ctx, xOffset);
         }
     }
@@ -408,7 +408,7 @@ function generateSongChordsCanvas(transparent = false) {
     return canvas;
 }
 
-// Renderizar diagrama vacío en canvas
+// Render empty diagram on canvas
 function renderEmptyChordDiagramCanvas(ctx, xOffset) {
     const strings = 6;
     const frets = 4;
@@ -444,7 +444,7 @@ function renderEmptyChordDiagramCanvas(ctx, xOffset) {
         ctx.stroke();
     }
     
-    // Dibujar trastes (horizontales) - primera línea más gruesa
+    // Draw frets (horizontal) - first line thicker
     for (let i = 0; i <= frets; i++) {
         const y = diagramTop + i * fretSpacing;
         const thickness = (i === 0) ? nutThickness : fretThickness;
@@ -456,7 +456,7 @@ function renderEmptyChordDiagramCanvas(ctx, xOffset) {
     }
 }
 
-// Descargar acordes de canción
+// Download song chords
 async function downloadSongChords(format) {
     const filename = `song-chords.${format}`;
     
@@ -472,7 +472,7 @@ async function downloadSongChords(format) {
     }
 }
 
-// Inicializar cuando el DOM esté listo
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     initializeSongChords();
 });
