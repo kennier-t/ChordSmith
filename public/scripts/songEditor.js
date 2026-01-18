@@ -3,6 +3,8 @@ const SongEditor = (function() {
     
     let currentSongId = null;
     let selectedChordIds = [];
+    let personalizedLinePosition = 50; // Porcentaje por defecto
+    let isDraggingLine = false;
     
     function initialize() {
         const closeBtn = document.getElementById('close-song-editor-modal');
@@ -60,16 +62,72 @@ const SongEditor = (function() {
         const paddingRight = parseInt(window.getComputedStyle(textarea).paddingRight);
         const contentWidth = textareaWidth - paddingLeft - paddingRight;
         
-        const columns = mode === 'two' ? 2 : 3;
-        const columnWidth = contentWidth / columns;
-        
-        // Create guide lines
-        for (let i = 1; i < columns; i++) {
+        if (mode === 'personalized') {
+            // Create single draggable line at personalized position
             const line = document.createElement('div');
-            line.className = 'column-guide-line';
-            line.style.left = `${paddingLeft + (columnWidth * i)}px`;
+            line.className = 'column-guide-line draggable';
+            const linePosition = paddingLeft + (contentWidth * personalizedLinePosition / 100);
+            line.style.left = `${linePosition}px`;
+            
+            // Add drag functionality
+            line.addEventListener('mousedown', startDraggingLine);
+            
             guidesContainer.appendChild(line);
+        } else {
+            // Original functionality for two/three columns
+            const columns = mode === 'two' ? 2 : 3;
+            const columnWidth = contentWidth / columns;
+            
+            // Create guide lines
+            for (let i = 1; i < columns; i++) {
+                const line = document.createElement('div');
+                line.className = 'column-guide-line';
+                line.style.left = `${paddingLeft + (columnWidth * i)}px`;
+                guidesContainer.appendChild(line);
+            }
         }
+    }
+    
+    function startDraggingLine(e) {
+        isDraggingLine = true;
+        document.body.style.userSelect = 'none';
+        e.target.classList.add('dragging');
+        
+        const handleMouseMove = (moveEvent) => {
+            if (!isDraggingLine) return;
+            
+            const textarea = document.getElementById('song-content-textarea');
+            const guidesContainer = document.getElementById('column-guides');
+            const textareaRect = textarea.getBoundingClientRect();
+            const containerRect = guidesContainer.getBoundingClientRect();
+            
+            const paddingLeft = parseInt(window.getComputedStyle(textarea).paddingLeft);
+            const paddingRight = parseInt(window.getComputedStyle(textarea).paddingRight);
+            const contentWidth = textarea.offsetWidth - paddingLeft - paddingRight;
+            
+            // Calculate mouse position relative to the textarea
+            let newLeft = moveEvent.clientX - containerRect.left;
+            
+            // Constrain to content area
+            newLeft = Math.max(paddingLeft, Math.min(newLeft, paddingLeft + contentWidth));
+            
+            // Update line position
+            e.target.style.left = `${newLeft}px`;
+            
+            // Update personalized position percentage
+            personalizedLinePosition = ((newLeft - paddingLeft) / contentWidth) * 100;
+        };
+        
+        const handleMouseUp = () => {
+            isDraggingLine = false;
+            document.body.style.userSelect = '';
+            e.target.classList.remove('dragging');
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+        
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
     }
     
     async function openEditor(songId = null) {
