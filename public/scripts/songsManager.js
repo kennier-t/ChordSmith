@@ -113,6 +113,9 @@ const SongsManager = (function() {
             const item = document.createElement('div');
             item.className = 'folder-item';
             item.onclick = () => showSongsListView(folder.id);
+            const songWord = songCount !== 1
+                ? (translations[currentLanguage]['songs'] || 'songs')
+                : (translations[currentLanguage]['song'] || 'song');
             item.innerHTML = `
                 <div class="folder-icon">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -121,7 +124,7 @@ const SongsManager = (function() {
                 </div>
                 <div class="folder-info">
                     <h3>${folder.name}</h3>
-                    <span class="song-count">${songCount} song${songCount !== 1 ? 's' : ''}</span>
+                    <span class="song-count">${songCount} ${songWord}</span>
                 </div>
             `;
             container.appendChild(item);

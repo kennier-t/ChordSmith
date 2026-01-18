@@ -801,7 +801,7 @@ h2::after {
 .editor-actions {
     display: flex;
     gap: 12px;
-    margin-top: auto;
+    margin-top: 24px;
     padding-top: 20px;
     border-top: 1px solid var(--border);
     justify-content: flex-start;

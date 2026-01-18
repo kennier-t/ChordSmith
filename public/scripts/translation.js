@@ -98,6 +98,8 @@ const translations = {
                         'Copy': 'Copy',
                         'Clear': 'Clear',
                         'Ready': 'Ready',
+                        'song': 'song',
+                        'songs': 'songs',
                     },
                     es: {
                         'Gen Song Chords': 'Generar Acordes',
@@ -207,7 +209,9 @@ const translations = {
                         'Song not found': 'Canción no encontrada',
                         'Song updated successfully!': '¡Canción actualizada exitosamente!',
                         'Song created successfully!': '¡Canción creada exitosamente!',
-                        'Error saving song: ': 'Error guardando canción: '
+                        'Error saving song: ': 'Error guardando canción: ',
+                        'song': 'canción',
+                        'songs': 'canciones',
                     }};
 
 let currentLanguage = localStorage.getItem('language') || 'es';
