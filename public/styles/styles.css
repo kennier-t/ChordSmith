@@ -804,10 +804,11 @@ h2::after {
     margin-top: auto;
     padding-top: 20px;
     border-top: 1px solid var(--border);
+    justify-content: flex-start;
 }
 
-.editor-actions .utility-btn {
-    flex: 1;
+.editor-actions .editor-action-btn {
+    flex: none;
 }
 
 .delete-btn {
@@ -1326,6 +1327,109 @@ h2::after {
     justify-content: center;
     padding-top: 20px;
     border-top: 1px solid var(--border);
+}
+
+/* Editor Action Buttons - Consistent styling for Save/Cancel/Delete buttons */
+.editor-action-btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: 'Helvetica Neue', 'Arial', sans-serif;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+}
+
+.editor-action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s, height 0.5s;
+}
+
+.editor-action-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Primary action (Save) */
+.editor-action-btn.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(139, 111, 71, 0.25);
+}
+
+.editor-action-btn.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary) 100%);
+    box-shadow: 0 4px 16px rgba(139, 111, 71, 0.35);
+    transform: translateY(-2px);
+}
+
+.editor-action-btn.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(139, 111, 71, 0.25);
+}
+
+/* Secondary action (Cancel) */
+.editor-action-btn.btn-secondary {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    box-shadow: none;
+}
+
+.editor-action-btn.btn-secondary::before {
+    background: rgba(139, 111, 71, 0.1);
+}
+
+.editor-action-btn.btn-secondary:hover {
+    color: var(--text-primary);
+    border-color: var(--primary);
+    background: rgba(139, 111, 71, 0.05);
+    transform: translateY(-2px);
+}
+
+.editor-action-btn.btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* Danger action (Delete) */
+.editor-action-btn.btn-danger {
+    background: transparent;
+    color: #d32f2f;
+    border: 1px solid #d32f2f;
+    box-shadow: none;
+}
+
+.editor-action-btn.btn-danger::before {
+    background: rgba(211, 47, 47, 0.1);
+}
+
+.editor-action-btn.btn-danger:hover {
+    background: #d32f2f;
+    color: white;
+    box-shadow: 0 4px 16px rgba(211, 47, 47, 0.3);
+    transform: translateY(-2px);
+}
+
+.editor-action-btn.btn-danger:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(211, 47, 47, 0.25);
 }
 
 .empty-message {
