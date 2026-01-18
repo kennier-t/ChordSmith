@@ -59,7 +59,12 @@ function initializeEventListeners() {
 
     // Back button
     backBtn.addEventListener('click', () => {
-        window.history.back();
+        // Si hay historial, retroceder. Si no, cerrar la ventana
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.close();
+        }
     });
 
     // Keyboard accessibility
