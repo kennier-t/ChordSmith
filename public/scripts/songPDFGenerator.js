@@ -144,40 +144,67 @@ const SongPDFGenerator = (function() {
             });
         });
         
-        const chordDiagramsImage = await generateChordDiagramsImage(chordIds || []);
-        
+        const numDiagrams = Math.min(8, Math.max(6, (chordIds || []).length));
+        const chordDiagramsImage = await generateChordDiagramsImage(chordIds || [], numDiagrams);
+
         if (chordDiagramsImage) {
+            const page_width_cm = pageWidth / 10;
+            const initial_margin_cm = 0.5; // 5 mm
+            let margin_cm = initial_margin_cm;
+            let usable_width_cm = page_width_cm - 2 * margin_cm;
+            const spacing_cm = 0.2;
+            const diagram_width_cm = 3.0;
+            const group_width_cm = numDiagrams * diagram_width_cm + (numDiagrams - 1) * spacing_cm;
+            let scale = group_width_cm <= usable_width_cm ? 1 : usable_width_cm / group_width_cm;
+            let warning = false;
+            if (scale < 0.6) {
+                const required_usable_cm = group_width_cm * 0.6;
+                const required_margin_cm = (page_width_cm - required_usable_cm) / 2;
+                if (required_margin_cm >= 0.5) {
+                    margin_cm = required_margin_cm;
+                    usable_width_cm = required_usable_cm;
+                    scale = 0.6;
+                } else {
+                    scale = 0.6;
+                    warning = true;
+                }
+            }
+            const diagramWidthMm = 30 * scale;
+            const diagramHeightMm = 35 * scale;
+            const totalWidthMm = scale * group_width_cm * 10;
+            const margin_mm = margin_cm * 10;
+            const usable_width_mm = usable_width_cm * 10;
+            const xPosition = margin_mm + (usable_width_mm - totalWidthMm) / 2;
+
             if (yPosition > pageHeight - 40) {
                 doc.addPage();
                 yPosition = 15;
             } else {
                 yPosition += 3;
             }
-            
-            const diagramWidthMm = 30;
-            const diagramHeightMm = 35;
-            const numDiagrams = Math.max(6, (chordIds || []).length);
-            
-            const totalWidthMm = diagramWidthMm * numDiagrams;
-            
-            const xPosition = (pageWidth - totalWidthMm) / 2;
-            
+
             doc.addImage(chordDiagramsImage, 'PNG', xPosition, yPosition, totalWidthMm, diagramHeightMm);
+
+            if (warning) {
+                doc.setFont('courier', 'normal');
+                doc.setFontSize(10);
+                doc.text('Note: Chord diagrams scaled to minimum readable size due to page width constraints.', margin_mm, yPosition + diagramHeightMm + 5);
+                yPosition += 10;
+            }
         }
         
         return doc;
     }
     
-    async function generateChordDiagramsImage(chordIds) {
-        const minChords = 6;
+    async function generateChordDiagramsImage(chordIds, numDiagrams) {
         const selectedChords = [];
-        
+
         for (let i = 0; i < chordIds.length; i++) {
             const chord = await DB_SERVICE.getChordById(chordIds[i]);
             selectedChords.push(chord || null);
         }
-        
-        while (selectedChords.length < minChords) {
+
+        while (selectedChords.length < numDiagrams) {
             selectedChords.push(null);
         }
         
