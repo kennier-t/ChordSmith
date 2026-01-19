@@ -40,6 +40,14 @@ const config = {
     }
 };
 
+// Extract database and server from connectionString for logging
+const connectionParts = config.connectionString.split(';');
+const serverPart = connectionParts.find(part => part.startsWith('Server='));
+const databasePart = connectionParts.find(part => part.startsWith('Database='));
+
+const server = serverPart ? serverPart.split('=')[1] : 'undefined';
+const database = databasePart ? databasePart.split('=')[1] : 'undefined';
+
 let pool;
 
 // Normalize text to remove problematic Unicode characters (like Cyrillic look-alikes)
@@ -825,8 +833,8 @@ initializeDB().then(() => {
         console.log(`🎸 Chord Families API Server`);
         console.log(`========================================`);
         console.log(`Server running on: http://localhost:${PORT}`);
-        console.log(`Database: ${config.database}`);
-        console.log(`Server: ${config.server}`);
+        console.log(`Database: ${database}`);
+        console.log(`Server: ${server}`);
         console.log(`========================================\n`);
     });
 });
