@@ -1585,3 +1585,75 @@ h2::after {
         grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     }
 }
+
+/* Chord Variation UI */
+.chord-card .variation-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    background: rgba(139, 111, 71, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 24px;
+    text-align: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.chord-card:hover .variation-btn {
+    opacity: 1;
+}
+
+.chord-card .variation-btn:hover {
+    background: var(--primary);
+    transform: scale(1.1);
+}
+
+.variation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+    margin-bottom: 24px;
+    max-height: 40vh;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.variation-item {
+    cursor: pointer;
+    border: 2px solid transparent;
+    padding: 8px;
+    transition: all 0.3s ease;
+    background: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+}
+
+.variation-item:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+}
+
+.variation-item.is-default {
+    border: 2px solid var(--primary);
+}
+
+.variation-item.selected {
+    border-color: var(--primary-hover);
+    box-shadow: var(--shadow-lg);
+    transform: scale(1.05);
+}
+
+.variation-item h4 {
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 400;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}

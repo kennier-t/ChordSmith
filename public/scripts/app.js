@@ -1,11 +1,17 @@
 // Application state
 let currentFamily = null;
 let currentChord = null;
+let selectedVariationId = null;
+let activeChordNameForVariation = null;
+
 
 // DOM elements
 const familiesView = document.getElementById('families-view');
 const familyView = document.getElementById('family-view');
 const chordModal = document.getElementById('chord-modal');
+const chordVariationModal = document.getElementById('chord-variation-modal');
+const variationGrid = document.getElementById('variation-grid');
+
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,7 +19,27 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeBackButtons();
     initializeDownloadButtons();
     initializeUtilityButtons();
+    initializeVariationModal();
+
 });
+
+function initializeVariationModal() {
+    // Close modal
+    document.getElementById('close-variation-modal').addEventListener('click', closeVariationModal);
+    document.getElementById('cancel-variation-btn').addEventListener('click', closeVariationModal);
+    
+    // Close modal when clicking on overlay
+    chordVariationModal.querySelector('.modal-overlay').addEventListener('click', closeVariationModal);
+
+    // Add selected variation to song
+    document.getElementById('add-variation-btn').addEventListener('click', () => {
+        if (selectedVariationId) {
+            SongEditor.addChordToSelection(selectedVariationId);
+        }
+        closeVariationModal();
+    });
+}
+
 
 // Initialize family buttons
 function initializeFamilyButtons() {
@@ -82,21 +108,35 @@ function showView(view) {
 async function showFamilyView(family) {
     console.log('showFamilyView called with:', family);
     currentFamily = family;
-    const chords = await DB_SERVICE.getChordsForFamily(family);
-    console.log('Chords found:', chords.length, chords);
+    const allChordsInFamily = await DB_SERVICE.getChordsForFamily(family);
     
-    if (chords.length === 0) {
+    if (allChordsInFamily.length === 0) {
         alert(`Family ${family} is not yet implemented.`);
         return;
     }
-    
+
+    // Group chords by name to handle variations
+    const chordGroups = allChordsInFamily.reduce((acc, chord) => {
+        if (!acc[chord.name]) {
+            acc[chord.name] = [];
+        }
+        acc[chord.name].push(chord);
+        return acc;
+    }, {});
+
+    // Determine the chord to display for each name (default or first)
+    const chordsToDisplay = Object.values(chordGroups).map(group => {
+        const defaultChord = group.find(c => c.isDefault);
+        return defaultChord || group[0]; // Fallback to the first one if no default
+    });
+
     document.getElementById('family-title').textContent = translations[currentLanguage][`${family} Family`] || `${family} Family`;
     
     // Render chord gallery
     const gallery = document.getElementById('chords-gallery');
     gallery.innerHTML = '';
     
-    chords.forEach(chord => {
+    chordsToDisplay.forEach(chord => {
         const card = createChordCard(chord);
         gallery.appendChild(card);
     });
@@ -104,11 +144,22 @@ async function showFamilyView(family) {
     showView('family');
 }
 
+
 // Create chord card for gallery
 function createChordCard(chord) {
     const card = document.createElement('div');
     card.className = 'chord-card';
-    card.addEventListener('click', () => showChordView(chord));
+    
+    // Main card click adds the default chord to the song editor
+    card.addEventListener('click', (e) => {
+        // Prevent firing when the variation button is clicked
+        if (e.target.classList.contains('variation-btn')) return;
+        SongEditor.addChordToSelection(chord.id);
+        // Optional: add visual feedback
+        card.style.transition = 'transform 0.1s ease';
+        card.style.transform = 'scale(0.95)';
+        setTimeout(() => card.style.transform = 'scale(1)', 100);
+    });
     
     const title = document.createElement('h3');
     title.textContent = chord.name;
@@ -120,9 +171,21 @@ function createChordCard(chord) {
     img.className = 'chord-thumbnail';
     img.src = renderer.getDataURL('svg', false);
     card.appendChild(img);
+
+    // Add variation button
+    const variationBtn = document.createElement('button');
+    variationBtn.className = 'variation-btn';
+    variationBtn.textContent = '...';
+    variationBtn.title = 'Choose variation';
+    variationBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent card click event
+        showVariationModal(chord.name);
+    });
+    card.appendChild(variationBtn);
     
     return card;
 }
+
 
 // Show individual chord modal
 function showChordView(chord) {
@@ -141,10 +204,67 @@ function showChordView(chord) {
     chordModal.classList.remove('hidden');
 }
 
+// Show modal with all variations for a chord name
+async function showVariationModal(chordName) {
+    activeChordNameForVariation = chordName;
+    document.getElementById('variation-modal-title').textContent = `Variations for ${chordName}`;
+    
+    const variations = await DB_SERVICE.getChordVariations(chordName);
+    variationGrid.innerHTML = '';
+
+    if (variations.length === 0) {
+        variationGrid.innerHTML = '<p>No variations found.</p>';
+        return;
+    }
+
+    variations.forEach(variation => {
+        const item = document.createElement('div');
+        item.className = 'variation-item';
+        if (variation.isDefault) {
+            item.classList.add('is-default');
+        }
+        item.dataset.chordId = variation.id;
+
+        const title = document.createElement('h4');
+        title.textContent = variation.name;
+
+        const renderer = new ChordRenderer(variation);
+        const svgString = renderer.getSVGString(false);
+
+        item.appendChild(title);
+        item.innerHTML += svgString;
+
+        item.addEventListener('click', () => {
+            // Remove 'selected' from any other item
+            const currentSelected = variationGrid.querySelector('.selected');
+            if (currentSelected) {
+                currentSelected.classList.remove('selected');
+            }
+            // Add 'selected' to the clicked item
+            item.classList.add('selected');
+            selectedVariationId = variation.id;
+        });
+
+        variationGrid.appendChild(item);
+    });
+
+    chordVariationModal.classList.remove('hidden');
+}
+
+
 // Close modal
 function closeModal() {
     chordModal.classList.add('hidden');
 }
+
+
+function closeVariationModal() {
+    chordVariationModal.classList.add('hidden');
+    selectedVariationId = null;
+    activeChordNameForVariation = null;
+    variationGrid.innerHTML = '';
+}
+
 
 // Download individual chord
 async function downloadChord(chord, format) {

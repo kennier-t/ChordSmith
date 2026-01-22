@@ -64,11 +64,15 @@ const DB_SERVICE = (function() {
             return null;
         }
     }
-    
-    // Check if chord name is unique
-    async function isChordNameUnique(name, excludeId = null) {
-        const allChords = await getAllChords();
-        return !allChords.some(c => c.name === name && c.id !== excludeId);
+
+    // Get all variations for a chord name
+    async function getChordVariations(name) {
+        try {
+            return await apiCall(`/chords/variations/${encodeURIComponent(name)}`);
+        } catch (error) {
+            console.error(`Error getting variations for ${name}:`, error);
+            return []; // Return empty array on error
+        }
     }
     
     // Create a new custom chord
@@ -105,10 +109,10 @@ const DB_SERVICE = (function() {
         getChordsForFamily,
         getCustomChords,
         getChordById,
+        getChordVariations,
         createChord,
         updateChord,
-        deleteChord,
-        isChordNameUnique
+        deleteChord
     };
 })();
 

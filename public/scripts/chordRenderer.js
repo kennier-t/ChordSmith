@@ -41,8 +41,24 @@ class ChordRenderer {
         this.stringThickness = 1;
     }
     
+    // SVG for the variation icon
+    getVariationIconSVG() {
+        const iconSize = 18;
+        const iconMargin = 2;
+        const x = this.width - iconSize - iconMargin;
+        const y = iconMargin;
+        
+        return `
+            <g class="variation-icon" style="cursor: pointer;" onclick="SongEditor.openVariationModal('${this.chord.name}')">
+                <rect x="${x}" y="${y}" width="${iconSize}" height="${iconSize}" rx="3" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
+                <path d="M ${x + 9} ${y + 5} L ${x + 9} ${y + 13}" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                <path d="M ${x + 5} ${y + 9} L ${x + 13} ${y + 9}" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+            </g>
+        `;
+    }
+
     // Render to SVG
-    renderSVG(transparent = false) {
+    renderSVG(transparent = false, showVariationIcon = false) {
         const bgColor = transparent ? 'none' : 'white';
         
         let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${this.width}" height="${this.height}" viewBox="0 0 ${this.width} ${this.height}">`;
@@ -53,6 +69,11 @@ class ChordRenderer {
         // Chord title
         svg += `<text x="${this.width / 2}" y="15" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="black">${this.chord.name}</text>`;
         
+        // Variation Icon
+        if (showVariationIcon) {
+            svg += this.getVariationIconSVG();
+        }
+
         // Draw unplayed strings (X)
         for (let i = 0; i < this.strings; i++) {
             if (this.chord.frets[i] === -1) {
@@ -289,8 +310,8 @@ class ChordRenderer {
     }
     
     // Get SVG as string
-    getSVGString(transparent = false) {
-        return this.renderSVG(transparent);
+    getSVGString(transparent = false, showVariationIcon = false) {
+        return this.renderSVG(transparent, showVariationIcon);
     }
     
     // Get PNG as blob

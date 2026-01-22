@@ -106,7 +106,7 @@ app.get('/api/families', async (req, res) => {
 // GET all chords
 app.get('/api/chords', async (req, res) => {
     try {
-        const chords = await pool.request().query('SELECT Id as id, Name as name, BaseFret as baseFret, IsOriginal as isOriginal FROM Chords ORDER BY Id');
+        const chords = await pool.request().query('SELECT Id as id, Name as name, BaseFret as baseFret, IsOriginal as isOriginal, IsDefault as isDefault FROM Chords ORDER BY Id');
         
         const result = [];
         
@@ -136,6 +136,7 @@ app.get('/api/chords', async (req, res) => {
                 name: chord.name,
                 baseFret: chord.baseFret,
                 isOriginal: chord.isOriginal,
+                isDefault: chord.isDefault,
                 frets: frets,
                 fingers: fingers,
                 barres: barres.recordset.map(b => b.FretNumber)
@@ -170,7 +171,7 @@ app.get('/api/families/:familyName/chords', async (req, res) => {
         for (const record of chordIds.recordset) {
             const chord = await pool.request()
                 .input('chordId', sql.Int, record.Id)
-                .query('SELECT Id as id, Name as name, BaseFret as baseFret, IsOriginal as isOriginal FROM Chords WHERE Id = @chordId');
+                .query('SELECT Id as id, Name as name, BaseFret as baseFret, IsOriginal as isOriginal, IsDefault as isDefault FROM Chords WHERE Id = @chordId');
             
             if (chord.recordset.length === 0) continue;
             
@@ -198,6 +199,7 @@ app.get('/api/families/:familyName/chords', async (req, res) => {
                 name: chordData.name,
                 baseFret: chordData.baseFret,
                 isOriginal: chordData.isOriginal,
+                isDefault: chordData.isDefault,
                 frets: frets,
                 fingers: fingers,
                 barres: barres.recordset.map(b => b.FretNumber)
@@ -218,7 +220,7 @@ app.get('/api/chords/:id', async (req, res) => {
         
         const chord = await pool.request()
             .input('chordId', sql.Int, id)
-            .query('SELECT Id as id, Name as name, BaseFret as baseFret, IsOriginal as isOriginal FROM Chords WHERE Id = @chordId');
+            .query('SELECT Id as id, Name as name, BaseFret as baseFret, IsOriginal as isOriginal, IsDefault as isDefault FROM Chords WHERE Id = @chordId');
         
         if (chord.recordset.length === 0) {
             return res.status(404).json({ error: 'Chord not found' });
@@ -248,6 +250,7 @@ app.get('/api/chords/:id', async (req, res) => {
             name: chordData.name,
             baseFret: chordData.baseFret,
             isOriginal: chordData.isOriginal,
+            isDefault: chordData.isDefault,
             frets: frets,
             fingers: fingers,
             barres: barres.recordset.map(b => b.FretNumber)
@@ -258,60 +261,105 @@ app.get('/api/chords/:id', async (req, res) => {
     }
 });
 
+// GET all chord variations for a given name
+app.get('/api/chords/variations/:name', async (req, res) => {
+    try {
+        const { name } = req.params;
+        
+        const chords = await pool.request()
+            .input('name', sql.NVarChar, name)
+            .query('SELECT Id as id, Name as name, BaseFret as baseFret, IsOriginal as isOriginal, IsDefault as isDefault FROM Chords WHERE Name = @name ORDER BY Id');
+
+        if (chords.recordset.length === 0) {
+            return res.status(404).json({ error: 'No chords found with that name' });
+        }
+        
+        const result = [];
+        for (const chordData of chords.recordset) {
+            const fingerings = await pool.request()
+                .input('chordId', sql.Int, chordData.id)
+                .query('SELECT StringNumber, FretNumber, FingerNumber FROM ChordFingerings WHERE ChordId = @chordId ORDER BY StringNumber');
+            
+            const barres = await pool.request()
+                .input('chordId', sql.Int, chordData.id)
+                .query('SELECT FretNumber FROM ChordBarres WHERE ChordId = @chordId');
+
+            const frets = [];
+            const fingers = [];
+            for (let i = 1; i <= 6; i++) {
+                const fingering = fingerings.recordset.find(f => f.StringNumber === i);
+                frets.push(fingering ? fingering.FretNumber : 0);
+                fingers.push(fingering ? fingering.FingerNumber : 0);
+            }
+
+            result.push({
+                id: chordData.id,
+                name: chordData.name,
+                baseFret: chordData.baseFret,
+                isOriginal: chordData.isOriginal,
+                isDefault: chordData.isDefault,
+                frets: frets,
+                fingers: fingers,
+                barres: barres.recordset.map(b => b.FretNumber)
+            });
+        }
+
+        res.json(result);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // POST create new chord
 app.post('/api/chords', async (req, res) => {
+    const { name, baseFret, frets, fingers, barres, isDefault } = req.body;
+    const transaction = new sql.Transaction(pool);
+
     try {
-        const { name, baseFret, frets, fingers, barres } = req.body;
-        
-        // Check if name exists
-        const existing = await pool.request()
-            .input('name', sql.NVarChar, name)
-            .query('SELECT Id FROM Chords WHERE Name = @name');
-        
-        if (existing.recordset.length > 0) {
-            return res.status(400).json({ error: 'Chord name already exists' });
-        }
-        
-        const transaction = new sql.Transaction(pool);
         await transaction.begin();
         
-        try {
-            // Insert chord
-            const chordResult = await new sql.Request(transaction)
+        // If the new chord is set as default, unset other defaults for the same name
+        if (isDefault) {
+            await new sql.Request(transaction)
                 .input('name', sql.NVarChar, name)
-                .input('baseFret', sql.Int, baseFret || 1)
-                .query('INSERT INTO Chords (Name, BaseFret, IsOriginal) OUTPUT INSERTED.Id VALUES (@name, @baseFret, 0)');
-            
-            const chordId = chordResult.recordset[0].Id;
-            
-            // Insert fingerings
-            for (let i = 0; i < 6; i++) {
+                .query('UPDATE Chords SET IsDefault = 0 WHERE Name = @name');
+        }
+
+        // Insert new chord
+        const chordResult = await new sql.Request(transaction)
+            .input('name', sql.NVarChar, name)
+            .input('baseFret', sql.Int, baseFret || 1)
+            .input('isDefault', sql.Bit, isDefault || false)
+            .query('INSERT INTO Chords (Name, BaseFret, IsOriginal, IsDefault) OUTPUT INSERTED.Id VALUES (@name, @baseFret, 0, @isDefault)');
+        
+        const chordId = chordResult.recordset[0].Id;
+        
+        // Insert fingerings
+        for (let i = 0; i < 6; i++) {
+            await new sql.Request(transaction)
+                .input('chordId', sql.Int, chordId)
+                .input('stringNumber', sql.Int, i + 1)
+                .input('fretNumber', sql.Int, frets[i])
+                .input('fingerNumber', sql.Int, fingers[i])
+                .query('INSERT INTO ChordFingerings (ChordId, StringNumber, FretNumber, FingerNumber) VALUES (@chordId, @stringNumber, @fretNumber, @fingerNumber)');
+        }
+        
+        // Insert barres
+        if (barres && barres.length > 0) {
+            for (const barreFret of barres) {
                 await new sql.Request(transaction)
                     .input('chordId', sql.Int, chordId)
-                    .input('stringNumber', sql.Int, i + 1)
-                    .input('fretNumber', sql.Int, frets[i])
-                    .input('fingerNumber', sql.Int, fingers[i])
-                    .query('INSERT INTO ChordFingerings (ChordId, StringNumber, FretNumber, FingerNumber) VALUES (@chordId, @stringNumber, @fretNumber, @fingerNumber)');
+                    .input('fretNumber', sql.Int, barreFret)
+                    .query('INSERT INTO ChordBarres (ChordId, FretNumber) VALUES (@chordId, @fretNumber)');
             }
-            
-            // Insert barres
-            if (barres && barres.length > 0) {
-                for (const barreFret of barres) {
-                    await new sql.Request(transaction)
-                        .input('chordId', sql.Int, chordId)
-                        .input('fretNumber', sql.Int, barreFret)
-                        .query('INSERT INTO ChordBarres (ChordId, FretNumber) VALUES (@chordId, @fretNumber)');
-                }
-            }
-            
-            await transaction.commit();
-            
-            res.json({ id: chordId, message: 'Chord created successfully' });
-        } catch (err) {
-            await transaction.rollback();
-            throw err;
         }
+
+        await transaction.commit();
+        res.status(201).json({ id: chordId, message: 'Chord created successfully' });
+
     } catch (err) {
+        await transaction.rollback();
         console.error(err);
         res.status(500).json({ error: err.message });
     }
@@ -319,81 +367,94 @@ app.post('/api/chords', async (req, res) => {
 
 // PUT update chord
 app.put('/api/chords/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, baseFret, frets, fingers, barres, isDefault } = req.body;
+    const transaction = new sql.Transaction(pool);
+
     try {
-        const { id } = req.params;
-        const { name, baseFret, frets, fingers, barres } = req.body;
-        
         // Check if chord exists and is not original
-        const chord = await pool.request()
+        const chordCheck = await pool.request()
             .input('id', sql.Int, id)
-            .query('SELECT IsOriginal FROM Chords WHERE Id = @id');
-        
-        if (chord.recordset.length === 0) {
+            .query('SELECT IsOriginal, IsDefault, Name FROM Chords WHERE Id = @id');
+
+        if (chordCheck.recordset.length === 0) {
             return res.status(404).json({ error: 'Chord not found' });
         }
-        
-        if (chord.recordset[0].IsOriginal) {
+        if (chordCheck.recordset[0].IsOriginal) {
             return res.status(403).json({ error: 'Cannot edit original chords' });
         }
-        
-        // Check if name exists (excluding current chord)
-        const existing = await pool.request()
-            .input('name', sql.NVarChar, name)
+
+        await transaction.begin();
+
+        // If setting this chord as the default, unset any other default for the same name
+        if (isDefault) {
+            await new sql.Request(transaction)
+                .input('name', sql.NVarChar, name)
+                .input('id', sql.Int, id)
+                .query('UPDATE Chords SET IsDefault = 0 WHERE Name = @name AND Id != @id');
+        }
+
+        // Update the chord
+        await new sql.Request(transaction)
             .input('id', sql.Int, id)
-            .query('SELECT Id FROM Chords WHERE Name = @name AND Id != @id');
-        
-        if (existing.recordset.length > 0) {
-            return res.status(400).json({ error: 'Chord name already exists' });
+            .input('name', sql.NVarChar, name)
+            .input('baseFret', sql.Int, baseFret || 1)
+            .input('isDefault', sql.Bit, isDefault || false)
+            .query('UPDATE Chords SET Name = @name, BaseFret = @baseFret, IsDefault = @isDefault WHERE Id = @id');
+
+        // Handle case where a default chord is being made non-default
+        const wasDefault = chordCheck.recordset[0].IsDefault;
+        if (wasDefault && !isDefault) {
+            // Check if any other variations exist for this chord name
+            const otherVariations = await new sql.Request(transaction)
+                .input('name', sql.NVarChar, chordCheck.recordset[0].Name)
+                .input('id', sql.Int, id)
+                .query('SELECT Id FROM Chords WHERE Name = @name AND Id != @id');
+
+            // If other variations exist, promote one to be the new default
+            if (otherVariations.recordset.length > 0) {
+                // Find the one with the lowest ID to be the new default
+                const newDefaultId = otherVariations.recordset.reduce((min, v) => v.Id < min ? v.Id : min, otherVariations.recordset[0].Id);
+                await new sql.Request(transaction)
+                    .input('newDefaultId', sql.Int, newDefaultId)
+                    .query('UPDATE Chords SET IsDefault = 1 WHERE Id = @newDefaultId');
+            }
         }
         
-        const transaction = new sql.Transaction(pool);
-        await transaction.begin();
+        // Delete old fingerings and barres
+        await new sql.Request(transaction)
+            .input('chordId', sql.Int, id)
+            .query('DELETE FROM ChordFingerings WHERE ChordId = @chordId');
         
-        try {
-            // Update chord
-            await new sql.Request(transaction)
-                .input('id', sql.Int, id)
-                .input('name', sql.NVarChar, name)
-                .input('baseFret', sql.Int, baseFret || 1)
-                .query('UPDATE Chords SET Name = @name, BaseFret = @baseFret WHERE Id = @id');
-            
-            // Delete old fingerings and barres
+        await new sql.Request(transaction)
+            .input('chordId', sql.Int, id)
+            .query('DELETE FROM ChordBarres WHERE ChordId = @chordId');
+        
+        // Insert new fingerings
+        for (let i = 0; i < 6; i++) {
             await new sql.Request(transaction)
                 .input('chordId', sql.Int, id)
-                .query('DELETE FROM ChordFingerings WHERE ChordId = @chordId');
-            
-            await new sql.Request(transaction)
-                .input('chordId', sql.Int, id)
-                .query('DELETE FROM ChordBarres WHERE ChordId = @chordId');
-            
-            // Insert new fingerings
-            for (let i = 0; i < 6; i++) {
+                .input('stringNumber', sql.Int, i + 1)
+                .input('fretNumber', sql.Int, frets[i])
+                .input('fingerNumber', sql.Int, fingers[i])
+                .query('INSERT INTO ChordFingerings (ChordId, StringNumber, FretNumber, FingerNumber) VALUES (@chordId, @stringNumber, @fretNumber, @fingerNumber)');
+        }
+        
+        // Insert new barres
+        if (barres && barres.length > 0) {
+            for (const barreFret of barres) {
                 await new sql.Request(transaction)
                     .input('chordId', sql.Int, id)
-                    .input('stringNumber', sql.Int, i + 1)
-                    .input('fretNumber', sql.Int, frets[i])
-                    .input('fingerNumber', sql.Int, fingers[i])
-                    .query('INSERT INTO ChordFingerings (ChordId, StringNumber, FretNumber, FingerNumber) VALUES (@chordId, @stringNumber, @fretNumber, @fingerNumber)');
+                    .input('fretNumber', sql.Int, barreFret)
+                    .query('INSERT INTO ChordBarres (ChordId, FretNumber) VALUES (@chordId, @fretNumber)');
             }
-            
-            // Insert new barres
-            if (barres && barres.length > 0) {
-                for (const barreFret of barres) {
-                    await new sql.Request(transaction)
-                        .input('chordId', sql.Int, id)
-                        .input('fretNumber', sql.Int, barreFret)
-                        .query('INSERT INTO ChordBarres (ChordId, FretNumber) VALUES (@chordId, @fretNumber)');
-                }
-            }
-            
-            await transaction.commit();
-            
-            res.json({ message: 'Chord updated successfully' });
-        } catch (err) {
-            await transaction.rollback();
-            throw err;
         }
+        
+        await transaction.commit();
+        res.json({ message: 'Chord updated successfully' });
+
     } catch (err) {
+        await transaction.rollback();
         console.error(err);
         res.status(500).json({ error: err.message });
     }

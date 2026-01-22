@@ -49,7 +49,6 @@
         canvas.addEventListener('mouseup', handleCanvasMouseUp);
         
         // Input listeners
-        document.getElementById('chord-name-input').addEventListener('input', validateChordName);
         document.getElementById('base-fret-input').addEventListener('change', (e) => {
             editorState.baseFret = parseInt(e.target.value);
             drawChordDiagram();
@@ -100,6 +99,7 @@
         
         document.getElementById('chord-name-input').value = '';
         document.getElementById('base-fret-input').value = '1';
+        document.getElementById('is-default-checkbox').checked = false;
         document.getElementById('name-error').textContent = '';
     }
     
@@ -125,6 +125,7 @@
         
         document.getElementById('chord-name-input').value = chord.name;
         document.getElementById('base-fret-input').value = chord.baseFret;
+        document.getElementById('is-default-checkbox').checked = chord.isDefault;
         document.getElementById('name-error').textContent = '';
     }
     
@@ -140,13 +141,22 @@
             return;
         }
         
+        // Sort by name, then by ID to group variations
+        customChords.sort((a, b) => {
+            if (a.name < b.name) return -1;
+            if (a.name > b.name) return 1;
+            if (a.id < b.id) return -1;
+            if (a.id > b.id) return 1;
+            return 0;
+        });
+
         customChords.forEach(chord => {
             const item = document.createElement('div');
             item.className = 'custom-chord-item';
             item.onclick = () => showEditorView(chord.id);
             
             const title = document.createElement('h4');
-            title.textContent = chord.name;
+            title.textContent = chord.isDefault ? `${chord.name} (Default)` : chord.name;
             
             const renderer = new ChordRenderer(chord);
             const svgString = renderer.getSVGString(false);
@@ -418,35 +428,13 @@
         drawChordDiagram();
     }
     
-    function validateChordName() {
-        const nameInput = document.getElementById('chord-name-input');
-        const errorSpan = document.getElementById('name-error');
-        const name = nameInput.value.trim();
-        
-        errorSpan.textContent = '';
-        
-        if (!name) {
-            return false;
-        }
-        
-        if (!DB_SERVICE.isChordNameUnique(name, editorState.chordId)) {
-            errorSpan.textContent = 'This chord name already exists';
-            return false;
-        }
-        
-        return true;
-    }
-    
     function saveChord() {
         const name = document.getElementById('chord-name-input').value.trim();
-        
+        const isDefault = document.getElementById('is-default-checkbox').checked;
+
         // Validation
         if (!name) {
             alert('Please enter a chord name');
-            return;
-        }
-        
-        if (!validateChordName()) {
             return;
         }
         
@@ -462,7 +450,8 @@
             baseFret: editorState.baseFret,
             frets: editorState.frets,
             fingers: editorState.fingers,
-            barres: editorState.barres
+            barres: editorState.barres,
+            isDefault: isDefault
         };
         
         try {
