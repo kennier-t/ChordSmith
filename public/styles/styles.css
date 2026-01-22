@@ -1497,7 +1497,8 @@ h2::after {
     cursor: pointer;
 }
 
-.is-default-checkbox:checked {
+.is-default-checkbox:checked,
+.folder-checkbox:checked {
     accent-color: var(--primary);
 }
 
