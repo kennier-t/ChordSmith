@@ -428,7 +428,7 @@
         drawChordDiagram();
     }
     
-    function saveChord() {
+    async function saveChord() {
         const name = document.getElementById('chord-name-input').value.trim();
         const isDefault = document.getElementById('is-default-checkbox').checked;
 
@@ -437,34 +437,46 @@
             alert('Please enter a chord name');
             return;
         }
-        
+
         // Check if at least one finger is placed
         const hasFingers = editorState.fingers.some(f => f > 0);
         if (!hasFingers) {
             alert('Please place at least one finger on the diagram');
             return;
         }
-        
+
+        let finalIsDefault = isDefault;
+
+        if (!editorState.chordId) {
+            // For new chords, check if name is unique
+            const customChords = await DB_SERVICE.getCustomChords();
+            const existingWithName = customChords.filter(c => c.name === name);
+            if (existingWithName.length === 0) {
+                finalIsDefault = true;
+            }
+            // If duplicates exist, keep the checkbox value
+        }
+
         const chordData = {
             name: name,
             baseFret: editorState.baseFret,
             frets: editorState.frets,
             fingers: editorState.fingers,
             barres: editorState.barres,
-            isDefault: isDefault
+            isDefault: finalIsDefault
         };
-        
+
         try {
             if (editorState.chordId) {
                 // Update existing
-                DB_SERVICE.updateChord(editorState.chordId, chordData);
+                await DB_SERVICE.updateChord(editorState.chordId, chordData);
                 alert('Chord updated successfully!');
             } else {
                 // Create new
-                DB_SERVICE.createChord(chordData);
+                await DB_SERVICE.createChord(chordData);
                 alert('Chord created successfully!');
             }
-            
+
             // Refresh song chords selector
             if (typeof populateChordSelectors === 'function') {
                 populateChordSelectors();
@@ -472,7 +484,7 @@
             if (typeof updateAllSelectors === 'function') {
                 updateAllSelectors();
             }
-            
+
             showListView();
         } catch (error) {
             alert('Error saving chord: ' + error.message);
