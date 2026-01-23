@@ -193,7 +193,7 @@ async function openPracticeModal() {
 
     const chords = await DB_SERVICE.getChordsForFamily(currentFamily);
     if (chords.length === 0) {
-        alert('No chords available for practice in this family.');
+        alert(translations[currentLanguage]['No chords available for practice in this family.'] || 'No chords available for practice in this family.');
         return;
     }
 
@@ -219,7 +219,7 @@ function showPracticeView(chords) {
         modalBody.appendChild(chordView);
     });
 
-    document.getElementById('practice-modal-title').textContent = `${currentFamily} Family Practice`;
+    document.getElementById('practice-modal-title').textContent = `${currentFamily}${translations[currentLanguage][' Family Practice'] || ' Family Practice'}`;
     practiceModal.classList.remove('hidden');
 }
 

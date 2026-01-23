@@ -117,6 +117,12 @@ const translations = {
                         'Set as Default': 'Set as Default',
                         'Default variation updated successfully': 'Default variation updated successfully',
                         'Variations for': 'Variations for',
+                        'Please create at least one folder before creating a song.': 'Please create at least one folder before creating a song.',
+                        'Practice': 'Practice',
+                        'Practice Session': 'Practice Session',
+                        'Randomize': 'Randomize',
+                        'No chords available for practice in this family.': 'No chords available for practice in this family.',
+                        ' Family Practice': ' Family Practice',
                     },
                     es: {
                         'Gen Song Chords': 'Generar Acordes',
@@ -246,6 +252,12 @@ const translations = {
                         'Set as Default': 'Establecer como Predeterminado',
                         'Default variation updated successfully': 'Variación predeterminada actualizada exitosamente',
                         'Variations for': 'Variaciones para',
+                        'Please create at least one folder before creating a song.': 'Por favor, crea al menos una carpeta antes de crear una canción.',
+                        'Practice': 'Practicar',
+                        'Practice Session': 'Sesión de Práctica',
+                        'Randomize': 'Aleatorizar',
+                        'No chords available for practice in this family.': 'No hay acordes disponibles para practicar en esta familia.',
+                        ' Family Practice': ' Práctica de Familia',
                     }};
 
 let currentLanguage = localStorage.getItem('language') || 'es';

@@ -11,7 +11,12 @@ const SongsManager = (function() {
         document.getElementById('open-songs-btn').addEventListener('click', openSongsView);
         document.getElementById('close-songs-modal').addEventListener('click', closeSongsModal);
         document.getElementById('create-new-folder-btn').addEventListener('click', createNewFolder);
-        document.getElementById('create-new-song-btn').addEventListener('click', () => {
+        document.getElementById('create-new-song-btn').addEventListener('click', async () => {
+            const folders = await SONGS_SERVICE.getAllFolders();
+            if (folders.length === 0) {
+                alert(translations[currentLanguage]['Please create at least one folder before creating a song.'] || 'Please create at least one folder before creating a song.');
+                return;
+            }
             SongEditor.openEditor();
         });
         document.getElementById('back-to-folders-btn').addEventListener('click', showFoldersView);
