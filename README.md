@@ -8,18 +8,21 @@ A web application for visualizing, creating, and downloading guitar chord diagra
 - **7 Musical Families**: C, D, E, F, G, A, B
 - Each family displays its related chords in an organized gallery
 - Click any chord to view it in detail
+- **Practice Mode**: Practice chords within each family with randomized selection
 
 ### ✏️ Create Custom Chords
 - **Interactive Canvas Editor**: Draw chords visually without traditional forms
 - **Click on fret**: Add finger positions (cycles 1→2→3→4→remove)
 - **Click above string**: Mark strings as not played (X)
 - **Drag horizontally**: Create barre chords automatically
+- **Chord Variants**: Create multiple variations of the same chord name with different fingerings
 - **Unique names**: Validates chord names in real-time
 - **Edit & Delete**: Full CRUD functionality for custom chords
 
 ### 🎼 Create and Manage Songs
 - **Song Editor**: Create songs with metadata (Title, Date, Notes, Key, Capo, BPM, Effects)
 - **Text Editor**: Paste or type song lyrics and chords (preserves formatting)
+- **Column Guides**: Visual guides to align chords and lyrics in columns (none, 2-column, 3-column, or personalized)
 - **Chord Diagrams**: Select up to 8 chord diagrams to include with each song
 - **Folders**: Organize songs into folders (many-to-many relationship)
 - **PDF Export**: Download songs as formatted PDF documents
