@@ -129,7 +129,7 @@ A web application for visualizing, creating, and downloading guitar chord diagra
 ## Project Structure
 
 ```
-Chord-Families/
+ChordSmith/
 ├── public/                 # Frontend files
 │   ├── index.html          # Main page
 │   ├── pdf-to-text.html    # PDF to text converter page
