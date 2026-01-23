@@ -1,0 +1,99 @@
+/* Practice Modal Styles */
+.practice-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001; /* Above other modals */
+}
+
+.practice-modal .modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    width: 95%;
+    height: 95%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.practice-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.practice-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.practice-modal .close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #888;
+}
+
+.practice-modal .modal-body {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.practice-modal .chord-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.practice-modal .chord-view svg {
+    width: 100%;
+    height: auto;
+    max-width: 200px;
+}
+
+.practice-modal .modal-footer {
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.practice-modal .randomize-btn {
+    padding: 10px 20px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.practice-modal .randomize-btn:hover {
+    background-color: #0056b3;
+}
+
+.hidden {
+    display: none;
+}

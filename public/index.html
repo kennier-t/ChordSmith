@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="styles/styles.css">
     <link rel="stylesheet" href="styles/guitar-pattern.css">
     <link rel="stylesheet" href="styles/translation.css">
+    <link rel="stylesheet" href="styles/practice-modal.css">
 </head>
 <body>
     <div id="app">
@@ -40,6 +41,7 @@
             <div class="download-options">
                 <button id="download-family-png" class="download-btn" data-translate="Download Full Family (PNG)">Download Full Family (PNG)</button>
                 <button id="download-family-svg" class="download-btn" data-translate="Download Full Family (SVG)">Download Full Family (SVG)</button>
+                <button id="practice-family-btn" class="download-btn" data-translate="Practice">Practice</button>
             </div>
             <div id="chords-gallery" class="chords-gallery"></div>
         </div>
@@ -54,6 +56,22 @@
                 <div class="download-options">
                     <button id="download-modal-chord-png" class="download-btn" data-translate="Download PNG">Download PNG</button>
                     <button id="download-modal-chord-svg" class="download-btn" data-translate="Download SVG">Download SVG</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Practice Modal -->
+        <div id="practice-modal" class="practice-modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="practice-modal-title" data-translate="Practice Session">Practice Session</h2>
+                    <button id="close-practice-modal" class="close-btn">×</button>
+                </div>
+                <div id="practice-modal-body" class="modal-body">
+                    <!-- Chords will be injected here -->
+                </div>
+                <div class="modal-footer">
+                    <button id="randomize-chords-btn" class="randomize-btn" data-translate="Randomize">Randomize</button>
                 </div>
             </div>
         </div>

@@ -6,6 +6,7 @@ let currentChord = null;
 const familiesView = document.getElementById('families-view');
 const familyView = document.getElementById('family-view');
 const chordModal = document.getElementById('chord-modal');
+const practiceModal = document.getElementById('practice-modal');
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeDownloadButtons();
     initializeUtilityButtons();
     initializeVariationIconHandler();
+    initializePracticeButton();
 });
 
 // Initialize variation icon click handler
@@ -80,6 +82,13 @@ function initializeDownloadButtons() {
     document.getElementById('download-modal-chord-svg').addEventListener('click', () => {
         downloadChord(currentChord, 'svg');
     });
+}
+
+// Initialize practice button
+function initializePracticeButton() {
+    document.getElementById('practice-family-btn').addEventListener('click', openPracticeModal);
+    document.getElementById('close-practice-modal').addEventListener('click', closePracticeModal);
+    document.getElementById('randomize-chords-btn').addEventListener('click', openPracticeModal);
 }
 
 // Show specific view
@@ -176,6 +185,47 @@ function showChordView(chord) {
 // Close modal
 function closeModal() {
     chordModal.classList.add('hidden');
+}
+
+// Open practice modal
+async function openPracticeModal() {
+    if (!currentFamily) return;
+
+    const chords = await DB_SERVICE.getChordsForFamily(currentFamily);
+    if (chords.length === 0) {
+        alert('No chords available for practice in this family.');
+        return;
+    }
+
+    // Shuffle chords
+    const shuffledChords = chords.sort(() => Math.random() - 0.5);
+
+    showPracticeView(shuffledChords);
+}
+
+// Show practice view
+function showPracticeView(chords) {
+    const modalBody = document.getElementById('practice-modal-body');
+    modalBody.innerHTML = ''; // Clear previous chords
+
+    chords.forEach(chord => {
+        const chordView = document.createElement('div');
+        chordView.className = 'chord-view';
+
+        const renderer = new ChordRenderer(chord);
+        const svgString = renderer.getSVGString(false); // Get full-size SVG
+        
+        chordView.innerHTML = svgString;
+        modalBody.appendChild(chordView);
+    });
+
+    document.getElementById('practice-modal-title').textContent = `${currentFamily} Family Practice`;
+    practiceModal.classList.remove('hidden');
+}
+
+// Close practice modal
+function closePracticeModal() {
+    practiceModal.classList.add('hidden');
 }
 
 // Download individual chord
