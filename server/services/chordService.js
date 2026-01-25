@@ -60,7 +60,35 @@ async function getChordById(chordId, userId) {
         LEFT JOIN UserChords uc ON c.id = uc.chord_id AND uc.user_id = @userId
         WHERE c.id = @chordId
     `, { userId, chordId });
-    return result.recordset[0];
+
+    const chord = result.recordset[0];
+    if (!chord) return null;
+
+    // Get fingerings
+    const fingeringResult = await db.query(`
+        SELECT StringNumber, FretNumber, FingerNumber
+        FROM ChordFingerings
+        WHERE ChordId = @chordId
+        ORDER BY StringNumber
+    `, { chordId });
+
+    // Get barres
+    const barreResult = await db.query(`
+        SELECT FretNumber
+        FROM ChordBarres
+        WHERE ChordId = @chordId
+        ORDER BY FretNumber
+    `, { chordId });
+
+    chord.frets = new Array(6).fill(0);
+    chord.fingers = new Array(6).fill(0);
+    fingeringResult.recordset.forEach(f => {
+        chord.frets[f.StringNumber - 1] = f.FretNumber;
+        chord.fingers[f.StringNumber - 1] = f.FingerNumber;
+    });
+    chord.barres = barreResult.recordset.map(b => b.FretNumber);
+
+    return chord;
 }
 
 async function getChordsByUserId(userId) {
@@ -69,7 +97,54 @@ async function getChordsByUserId(userId) {
         LEFT JOIN UserChords uc ON c.id = uc.chord_id AND uc.user_id = @userId
         WHERE c.IsOriginal = 1 OR uc.user_id IS NOT NULL
     `, { userId });
-    return result.recordset;
+
+    const chords = result.recordset;
+    if (chords.length === 0) return chords;
+
+    const chordIds = chords.map(c => c.Id);
+
+    // Get fingerings
+    const fingeringResult = await db.query(`
+        SELECT ChordId, StringNumber, FretNumber, FingerNumber
+        FROM ChordFingerings
+        WHERE ChordId IN (${chordIds.join(',')})
+        ORDER BY ChordId, StringNumber
+    `);
+
+    // Get barres
+    const barreResult = await db.query(`
+        SELECT ChordId, FretNumber
+        FROM ChordBarres
+        WHERE ChordId IN (${chordIds.join(',')})
+        ORDER BY ChordId, FretNumber
+    `);
+
+    // Map fingerings
+    const fingeringMap = {};
+    fingeringResult.recordset.forEach(f => {
+        if (!fingeringMap[f.ChordId]) {
+            fingeringMap[f.ChordId] = { frets: new Array(6).fill(0), fingers: new Array(6).fill(0) };
+        }
+        fingeringMap[f.ChordId].frets[f.StringNumber - 1] = f.FretNumber;
+        fingeringMap[f.ChordId].fingers[f.StringNumber - 1] = f.FingerNumber;
+    });
+
+    // Map barres
+    const barreMap = {};
+    barreResult.recordset.forEach(b => {
+        if (!barreMap[b.ChordId]) barreMap[b.ChordId] = [];
+        barreMap[b.ChordId].push(b.FretNumber);
+    });
+
+    // Attach to chords
+    chords.forEach(c => {
+        const data = fingeringMap[c.Id];
+        c.frets = data ? data.frets : [];
+        c.fingers = data ? data.fingers : [];
+        c.barres = barreMap[c.Id] || [];
+    });
+
+    return chords;
 }
 
 async function updateChord(chordId, chord, userId) {
@@ -203,6 +278,70 @@ async function rejectShare(shareId, userId) {
     await db.query('UPDATE ChordShares SET status = \'rejected\' WHERE id = @shareId AND recipient_user_id = @userId', { shareId, userId });
 }
 
+async function getAllFamilies() {
+    const result = await db.query('SELECT * FROM Families ORDER BY Name');
+    return result.recordset;
+}
+
+async function getChordsForFamily(familyName, userId) {
+    const result = await db.query(`
+        SELECT DISTINCT c.* FROM Chords c
+        INNER JOIN ChordFamilyMapping cfm ON c.Id = cfm.ChordId
+        INNER JOIN Families f ON cfm.FamilyId = f.Id
+        WHERE f.Name = @familyName AND (c.IsOriginal = 1 OR EXISTS (
+            SELECT 1 FROM UserChords uc WHERE uc.chord_id = c.Id AND uc.user_id = @userId
+        ))
+    `, { familyName, userId });
+
+    const chords = result.recordset;
+    if (chords.length === 0) return chords;
+
+    const chordIds = chords.map(c => c.Id);
+
+    // Get fingerings
+    const fingeringResult = await db.query(`
+        SELECT ChordId, StringNumber, FretNumber, FingerNumber
+        FROM ChordFingerings
+        WHERE ChordId IN (${chordIds.join(',')})
+        ORDER BY ChordId, StringNumber
+    `);
+
+    // Get barres
+    const barreResult = await db.query(`
+        SELECT ChordId, FretNumber
+        FROM ChordBarres
+        WHERE ChordId IN (${chordIds.join(',')})
+        ORDER BY ChordId, FretNumber
+    `);
+
+    // Map fingerings
+    const fingeringMap = {};
+    fingeringResult.recordset.forEach(f => {
+        if (!fingeringMap[f.ChordId]) {
+            fingeringMap[f.ChordId] = { frets: new Array(6).fill(0), fingers: new Array(6).fill(0) };
+        }
+        fingeringMap[f.ChordId].frets[f.StringNumber - 1] = f.FretNumber;
+        fingeringMap[f.ChordId].fingers[f.StringNumber - 1] = f.FingerNumber;
+    });
+
+    // Map barres
+    const barreMap = {};
+    barreResult.recordset.forEach(b => {
+        if (!barreMap[b.ChordId]) barreMap[b.ChordId] = [];
+        barreMap[b.ChordId].push(b.FretNumber);
+    });
+
+    // Attach to chords
+    chords.forEach(c => {
+        const data = fingeringMap[c.Id];
+        c.frets = data ? data.frets : [];
+        c.fingers = data ? data.fingers : [];
+        c.barres = barreMap[c.Id] || [];
+    });
+
+    return chords;
+}
+
 module.exports = {
     createChord,
     getChordById,
@@ -213,5 +352,7 @@ module.exports = {
     getIncomingShares,
     acceptShare,
     rejectShare,
-    forkChord
+    forkChord,
+    getAllFamilies,
+    getChordsForFamily
 };

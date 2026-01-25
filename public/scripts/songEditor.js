@@ -190,8 +190,8 @@ const SongEditor = (function() {
         container.innerHTML = '';
 
         const chordGroups = allChords.reduce((acc, chord) => {
-            if (!acc[chord.name]) acc[chord.name] = [];
-            acc[chord.name].push(chord);
+            if (!acc[chord.Name]) acc[chord.Name] = [];
+            acc[chord.Name].push(chord);
             return acc;
         }, {});
 
@@ -469,7 +469,7 @@ const SongEditor = (function() {
         item.dataset.index = index;
         const info = document.createElement('div');
         info.className = 'selected-chord-info';
-        info.innerHTML = `<span>${index + 1}. ${chord.name}</span>`;
+        info.innerHTML = `<span>${index + 1}. ${chord.Name}</span>`;
         const actions = document.createElement('div');
         actions.className = 'selected-chord-actions';
         actions.innerHTML = `
@@ -510,7 +510,7 @@ const SongEditor = (function() {
         const chordNames = [];
         for (const chordId of selectedChordIds) {
             const chord = await DB_SERVICE.getChordById(chordId);
-            if (chord) chordNames.push(chord.name);
+            if (chord) chordNames.push(chord.Name);
         }
         const detectedKey = detectKey(chordNames);
         const keyInput = document.getElementById('song-key-input');

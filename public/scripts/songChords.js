@@ -58,17 +58,17 @@ async function getAllAvailableChords() {
     
     // Remove duplicates based on chord name
     allChords.forEach(chord => {
-        if (!chordMap.has(chord.name)) {
-            chordMap.set(chord.name, {
+        if (!chordMap.has(chord.Name)) {
+            chordMap.set(chord.Name, {
                 ...chord,
-                displayName: chord.name
+                displayName: chord.Name
             });
         }
     });
     
     // Convert map to array and sort alphabetically
     const uniqueChords = Array.from(chordMap.values());
-    uniqueChords.sort((a, b) => a.name.localeCompare(b.name));
+    uniqueChords.sort((a, b) => a.Name.localeCompare(b.Name));
     
     return uniqueChords;
 }

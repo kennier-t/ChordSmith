@@ -3,6 +3,26 @@ const router = express.Router();
 const chordService = require('../services/chordService');
 const { authMiddleware } = require('./users');
 
+router.get('/families', authMiddleware, async (req, res) => {
+    try {
+        const families = await chordService.getAllFamilies();
+        res.json(families);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.get('/families/:familyName/chords', authMiddleware, async (req, res) => {
+    try {
+        const chords = await chordService.getChordsForFamily(req.params.familyName, req.user.id);
+        res.json(chords);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 router.post('/', authMiddleware, async (req, res) => {
     try {
         const chord = await chordService.createChord(req.body, req.user.id);

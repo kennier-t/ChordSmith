@@ -28,7 +28,7 @@ class ChordRenderer {
         this.diagramWidth = this.width - (this.sideMargin * 2);
         
         // Determine if fret number needs to be displayed
-        this.showFretNumber = this.chord.baseFret > 1;
+        this.showFretNumber = this.chord.BaseFret > 1;
         
         // Spacing
         this.stringSpacing = this.diagramWidth / (this.strings - 1);
@@ -50,7 +50,7 @@ class ChordRenderer {
 
         return `
             <foreignObject x="${x}" y="${y}" width="${iconSize}" height="${iconSize}">
-                <button class="variation-icon-trigger" data-chord-id="${this.chord.id}" data-chord-name="${this.chord.name}" aria-label="Choose variation" style="width: 100%; height: 100%; border: none; background: none; padding: 0; cursor: pointer;">
+                <button class="variation-icon-trigger" data-chord-id="${this.chord.id}" data-chord-name="${this.chord.Name}" aria-label="Choose variation" style="width: 100%; height: 100%; border: none; background: none; padding: 0; cursor: pointer;">
                     <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 ${iconSize} ${iconSize}">
                         <rect x="0" y="0" width="${iconSize}" height="${iconSize}" rx="3" fill="#f0f0f0" stroke="#ccc" stroke-width="1"/>
                         <path d="M 9 5 L 9 13" stroke="#333" stroke-width="2" stroke-linecap="round"/>
@@ -71,7 +71,7 @@ class ChordRenderer {
         svg += `<rect width="${this.width}" height="${this.height}" fill="${bgColor}"/>`;
         
         // Chord title
-        svg += `<text x="${this.width / 2}" y="15" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="black">${this.chord.name}</text>`;
+        svg += `<text x="${this.width / 2}" y="15" font-family="Arial, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="black">${this.chord.Name}</text>`;
         
         // Variation Icon
         if (showVariationIcon) {
@@ -122,7 +122,7 @@ class ChordRenderer {
                     const maxString = Math.max(...stringPositions);
                     const x1 = this.diagramLeft + minString * this.stringSpacing;
                     const x2 = this.diagramLeft + maxString * this.stringSpacing;
-                    const fretPos = barreFret - this.chord.baseFret;
+                    const fretPos = barreFret - this.chord.BaseFret;
                     const y = this.diagramTop + (fretPos + 0.5) * this.fretSpacing;
                     
                     // Line connecting two circles
@@ -156,7 +156,7 @@ class ChordRenderer {
                 
                 if (!isBarre) {
                     const x = this.diagramLeft + i * this.stringSpacing;
-                    const fretPos = fret - this.chord.baseFret;
+                    const fretPos = fret - this.chord.BaseFret;
                     const y = this.diagramTop + (fretPos + 0.5) * this.fretSpacing;
                     
                     // Circle
@@ -192,7 +192,7 @@ class ChordRenderer {
         ctx.textBaseline = 'middle';
         
         // Title
-        ctx.fillText(this.chord.name, this.width / 2, 15);
+        ctx.fillText(this.chord.Name, this.width / 2, 15);
         
         // Unplayed strings (X)
         ctx.font = 'bold 12px Arial';
@@ -225,7 +225,7 @@ class ChordRenderer {
         // Frets (horizontal)
         for (let i = 0; i <= this.frets; i++) {
             const y = this.diagramTop + i * this.fretSpacing;
-            const thickness = (i === 0 && this.chord.baseFret === 1) ? this.nutThickness : this.fretThickness;
+            const thickness = (i === 0 && this.chord.BaseFret === 1) ? this.nutThickness : this.fretThickness;
             ctx.lineWidth = thickness;
             ctx.beginPath();
             ctx.moveTo(this.diagramLeft, y);

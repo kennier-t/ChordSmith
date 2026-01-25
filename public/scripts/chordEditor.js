@@ -123,7 +123,7 @@
         editorState.barres = [...chord.barres];
         editorState.baseFret = chord.baseFret;
         
-        document.getElementById('chord-name-input').value = chord.name;
+        document.getElementById('chord-name-input').value = chord.Name;
         document.getElementById('base-fret-input').value = chord.baseFret;
         document.getElementById('is-default-checkbox').checked = chord.isDefault;
         document.getElementById('name-error').textContent = '';
@@ -156,7 +156,7 @@
             item.onclick = () => showEditorView(chord.id);
             
             const title = document.createElement('h4');
-            title.textContent = chord.isDefault ? `${chord.name} (Default)` : chord.name;
+            title.textContent = chord.isDefault ? `${chord.Name} (Default)` : chord.Name;
             
             const renderer = new ChordRenderer(chord);
             const svgString = renderer.getSVGString(false);

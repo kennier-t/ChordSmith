@@ -8,12 +8,17 @@ const DB_SERVICE = (function() {
     
     // Helper function for API calls
     async function apiCall(endpoint, options = {}) {
+        const token = localStorage.getItem('token');
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                },
+                headers,
                 ...options
             });
             
@@ -36,17 +41,17 @@ const DB_SERVICE = (function() {
     
     // Get all families
     async function getAllFamilies() {
-        return await apiCall('/families');
+        return await apiCall('/chords/families');
     }
-    
+
     // Get all chords
     async function getAllChords() {
         return await apiCall('/chords');
     }
-    
+
     // Get chords for a specific family
     async function getChordsForFamily(familyName) {
-        return await apiCall(`/families/${encodeURIComponent(familyName)}/chords`);
+        return await apiCall(`/chords/families/${encodeURIComponent(familyName)}/chords`);
     }
     
     // Get only custom chords (not original)

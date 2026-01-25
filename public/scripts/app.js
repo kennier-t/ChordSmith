@@ -209,7 +209,7 @@ async function showFamilyView(family) {
     // Create variation count map
     const variationCount = {};
     chords.forEach(chord => {
-        variationCount[chord.name] = (variationCount[chord.name] || 0) + 1;
+        variationCount[chord.Name] = (variationCount[chord.Name] || 0) + 1;
     });
 
     // Render chord gallery
@@ -217,7 +217,7 @@ async function showFamilyView(family) {
     gallery.innerHTML = '';
 
     chords.forEach(chord => {
-        const hasVariations = variationCount[chord.name] > 1;
+        const hasVariations = variationCount[chord.Name] > 1;
         const card = createChordCard(chord, hasVariations);
         gallery.appendChild(card);
     });
@@ -233,7 +233,7 @@ function createChordCard(chord, hasVariations) {
     card.addEventListener('click', () => showChordView(chord));
 
     const title = document.createElement('h3');
-    title.textContent = chord.name;
+    title.textContent = chord.Name;
     card.appendChild(title);
 
     // Render thumbnail
@@ -257,7 +257,7 @@ function createChordCard(chord, hasVariations) {
 // Show individual chord modal
 function showChordView(chord) {
     currentChord = chord;
-    document.getElementById('modal-chord-title').textContent = chord.name;
+    document.getElementById('modal-chord-title').textContent = chord.Name;
     
     // Render large preview
     const preview = document.getElementById('modal-chord-preview');
@@ -321,7 +321,7 @@ function closePracticeModal() {
 // Download individual chord
 async function downloadChord(chord, format) {
     const renderer = new ChordRenderer(chord);
-    const filename = `${chord.name}.${format}`;
+    const filename = `${chord.Name}.${format}`;
     
     if (format === 'svg') {
         const svgString = renderer.getSVGString(false);
@@ -348,7 +348,7 @@ async function downloadFamily(family, format) {
     // Add each chord to ZIP
     for (const chord of chords) {
         const renderer = new ChordRenderer(chord);
-        const filename = `${chord.name}.${format}`;
+        const filename = `${chord.Name}.${format}`;
         
         if (format === 'svg') {
             const svgString = renderer.getSVGString(false);
