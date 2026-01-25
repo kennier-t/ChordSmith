@@ -692,8 +692,8 @@ const SongsManager = (function() {
             return;
         }
         
-        const chordIds = await SONGS_SERVICE.getSongChordDiagrams(songId);
-        await SongPDFGenerator.downloadPDF(song, chordIds, `${song.Title}.pdf`);
+        const chords = await SONGS_SERVICE.getSongChordDiagrams(songId);
+        await SongPDFGenerator.downloadPDF(song, chords, `${song.Title}.pdf`);
     }
     
     async function deleteSong(songId) {

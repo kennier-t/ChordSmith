@@ -299,7 +299,34 @@ async function getSongChordDiagrams(songId, userId) {
         WHERE scd.SongId = @songId
         ORDER BY scd.DisplayOrder
     `, { songId: parsedSongId });
-    // Add frets etc. if needed, but for now basic
+
+    // Add fingerings for each chord
+    for (const chord of result.recordset) {
+        // Get fingerings
+        const fingeringResult = await db.query(`
+            SELECT StringNumber, FretNumber, FingerNumber
+            FROM ChordFingerings
+            WHERE ChordId = @chordId
+            ORDER BY StringNumber
+        `, { chordId: chord.Id });
+
+        // Get barres
+        const barreResult = await db.query(`
+            SELECT FretNumber
+            FROM ChordBarres
+            WHERE ChordId = @chordId
+            ORDER BY FretNumber
+        `, { chordId: chord.Id });
+
+        chord.frets = new Array(6).fill(0);
+        chord.fingers = new Array(6).fill(0);
+        fingeringResult.recordset.forEach(f => {
+            chord.frets[f.StringNumber - 1] = f.FretNumber;
+            chord.fingers[f.StringNumber - 1] = f.FingerNumber;
+        });
+        chord.barres = barreResult.recordset.map(b => b.FretNumber);
+    }
+
     return result.recordset;
 }
 

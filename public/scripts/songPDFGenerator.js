@@ -8,7 +8,7 @@ const SongPDFGenerator = (function() {
         return text.normalize('NFC');
     }
     
-    async function generatePDF(song, chordIds) {
+    async function generatePDF(song, chords) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
             putOnlyUsedFonts: true,
@@ -145,8 +145,8 @@ const SongPDFGenerator = (function() {
             });
         });
         
-        const numDiagrams = Math.min(8, Math.max(6, (chordIds || []).length));
-        const chordDiagramsImage = await generateChordDiagramsImage(chordIds || [], numDiagrams);
+        const numDiagrams = Math.min(8, Math.max(6, (chords || []).length));
+        const chordDiagramsImage = await generateChordDiagramsImage(chords || [], numDiagrams);
 
         if (chordDiagramsImage) {
             const page_width_cm = pageWidth / 10;
@@ -197,11 +197,11 @@ const SongPDFGenerator = (function() {
         return doc;
     }
     
-    async function generateChordDiagramsImage(chordIds, numDiagrams) {
+    async function generateChordDiagramsImage(chords, numDiagrams) {
         const selectedChords = [];
 
-        for (let i = 0; i < chordIds.length; i++) {
-            const chord = await DB_SERVICE.getChordById(chordIds[i]);
+        for (let i = 0; i < chords.length; i++) {
+            const chord = chords[i];
             selectedChords.push(chord || null);
         }
 
@@ -294,9 +294,9 @@ const SongPDFGenerator = (function() {
         }
     }
     
-    async function downloadPDF(song, chordIds, filename) {
-        const doc = await generatePDF(song, chordIds);
-        doc.save(filename || `${song.title}.pdf`);
+    async function downloadPDF(song, chords, filename) {
+        const doc = await generatePDF(song, chords);
+        doc.save(filename || `${song.Title}.pdf`);
     }
     
     return {
