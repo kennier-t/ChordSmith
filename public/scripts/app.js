@@ -22,27 +22,69 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeShareButton();
 });
 
-function checkAuth() {
-    const token = localStorage.getItem('token');
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+async function checkAuth() {
+    let token = getCookie('authToken');
+    if (token) {
+        localStorage.setItem('token', token);
+        document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    } else {
+        token = localStorage.getItem('token');
+    }
+    // alert('Token: ' + token + '\nCookie: ' + document.cookie);
     if (!token) {
         window.location.href = '/login.html';
     } else {
         // You can also verify the token with the server here if needed
-        fetch('/api/users/me', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
+        try {
+            const res = await fetch('/api/users/me', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await res.json();
             if (data.message === 'Unauthorized') {
-                logout();
+                // Try to refresh token
+                const refreshRes = await fetch('/api/auth/refresh', {
+                    method: 'POST'
+                });
+                if (refreshRes.ok) {
+                    // Refresh successful, get new token
+                    const newToken = getCookie('authToken');
+                    if (newToken) {
+                        localStorage.setItem('token', newToken);
+                        document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                        // Retry fetching user data
+                        const retryRes = await fetch('/api/users/me', {
+                            headers: {
+                                'Authorization': `Bearer ${newToken}`
+                            }
+                        });
+                        const retryData = await retryRes.json();
+                        if (retryData.message === 'Unauthorized') {
+                            logout();
+                        } else {
+                            user = retryData;
+                            displayUserProfile();
+                        }
+                    } else {
+                        logout();
+                    }
+                } else {
+                    logout();
+                }
             } else {
                 user = data;
                 displayUserProfile();
             }
-        })
-        .catch(() => logout());
+        } catch (error) {
+            logout();
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret'; // Use an environment variable in production
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 function generateAuthToken(userId) {
   return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: '1h' });

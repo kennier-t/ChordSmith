@@ -5,10 +5,10 @@ async function createUser(user) {
   const { username, email, first_name, last_name, password } = user;
   const password_hash = await bcrypt.hash(password, 10);
   const result = await db.query(
-    'INSERT INTO Users (username, email, first_name, last_name, password_hash) VALUES (@username, @email, @first_name, @last_name, @password_hash)',
+    'INSERT INTO Users (username, email, first_name, last_name, password_hash) OUTPUT INSERTED.id VALUES (@username, @email, @first_name, @last_name, @password_hash)',
     { username, email, first_name, last_name, password_hash }
   );
-  return result;
+  return { id: result.recordset[0].id };
 }
 
 async function findUserByEmail(email) {

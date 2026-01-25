@@ -1,23 +1,28 @@
-Migration: 2026-01-23_add-multiuser-and-sharing.sql
-Read files: README.md and sql_request.pdf. :contentReference[oaicite:2]{index=2} :contentReference[oaicite:3]{index=3}
+-- =============================================
+-- Migration: 2026-01-23_add-multiuser-and-sharing.sql
+-- Read files: README.md and sql_request.pdf.
+--
+-- Purpose:
+-- - Add Users, mapping tables (UserSongs, UserChords), share/audit tables (SongShares, ChordShares),
+--   verification and password reset token tables.
+-- - Add creator_id, created_at, updated_at to Songs and Chords (if those tables exist).
+-- - Assign existing non-default chords (IsOriginal = 0) to initial user "kennier" (id = 1 if safe).
+-- - Keep default chords (IsOriginal = 1) unchanged and visible to everyone.
+-- - Script is idempotent and safe to re-run; checks object/column existence before changes.
+-- - IMPORTANT: setup-complete.sql was not available to this script. If your actual table/column names differ
+--   from dbo.Songs / dbo.Chords / IsOriginal etc., edit the sections marked with -- REVIEW/ADJUST.
+--
+-- Assumptions / notes:
+-- - Database is Microsoft SQL Server (per README). Using T-SQL.
+-- - Password hashing uses HASHBYTES('SHA2_256', ...) to store a hex string. Best practice: application should
+--   handle password hashing with salt/argon2/bcrypt; this DB-level hash is a fallback for the initial user only.
+-- - If Users table already contains rows such that id = 1 is taken, the script inserts the user normally and
+--   documents that manual resequencing would be needed if you require id = 1.
+-- - Do not run if you expect other migrations to run concurrently (use your deployment process).
+-- =============================================
 
-Purpose:
-- Add Users, mapping tables (UserSongs, UserChords), share/audit tables (SongShares, ChordShares),
-  verification and password reset token tables.
-- Add creator_id, created_at, updated_at to Songs and Chords (if those tables exist).
-- Assign existing non-default chords (IsOriginal = 0) to initial user "kennier" (id = 1 if safe).
-- Keep default chords (IsOriginal = 1) unchanged and visible to everyone.
-- Script is idempotent and safe to re-run; checks object/column existence before changes.
-- IMPORTANT: setup-complete.sql was not available to this script. If your actual table/column names differ
-  from dbo.Songs / dbo.Chords / IsOriginal etc., edit the sections marked with -- REVIEW/ADJUST.
-
-Assumptions / notes:
-- Database is Microsoft SQL Server (per README). Using T-SQL.
-- Password hashing uses HASHBYTES('SHA2_256', ...) to store a hex string. Best practice: application should
-  handle password hashing with salt/argon2/bcrypt; this DB-level hash is a fallback for the initial user only.
-- If Users table already contains rows such that id = 1 is taken, the script inserts the user normally and
-  documents that manual resequencing would be needed if you require id = 1.
-- Do not run if you expect other migrations to run concurrently (use your deployment process).
+USE ChordSmith;
+GO
 
 -- Wrap changes in a transaction and try/catch for safety
 SET XACT_ABORT ON;
@@ -27,9 +32,9 @@ BEGIN TRY
     ------------------------------------------------------------------------
     -- 1) Create Users table (id numeric identity)
     ------------------------------------------------------------------------
-    IF OBJECT_ID('dbo.Users','U') IS NULL
+    IF OBJECT_ID('Users','U') IS NULL
     BEGIN
-        CREATE TABLE dbo.Users (
+        CREATE TABLE Users (
             id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
             username VARCHAR(100) NOT NULL,
             email VARCHAR(255) NOT NULL,
@@ -43,21 +48,21 @@ BEGIN TRY
         );
 
 
-        CREATE UNIQUE INDEX UX_Users_username ON dbo.Users(username);
-        CREATE UNIQUE INDEX UX_Users_email ON dbo.Users(email);
+        CREATE UNIQUE INDEX UX_Users_username ON Users(username);
+        CREATE UNIQUE INDEX UX_Users_email ON Users(email);
     END;
 
     ------------------------------------------------------------------------
     -- 2) Insert initial user "kennier" (attempt id = 1 if safe)
     ------------------------------------------------------------------------
-    IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE username = 'kennier')
+    IF NOT EXISTS (SELECT 1 FROM Users WHERE username = 'kennier')
     BEGIN
-        DECLARE @users_count INT = (SELECT COUNT(1) FROM dbo.Users);
+        DECLARE @users_count INT = (SELECT COUNT(1) FROM Users);
         IF @users_count = 0
         BEGIN
             -- safe to insert with id = 1
-            SET IDENTITY_INSERT dbo.Users ON;
-            INSERT INTO dbo.Users (id, username, email, first_name, last_name, password_hash, is_verified, user_type)
+            SET IDENTITY_INSERT Users ON;
+            INSERT INTO Users (id, username, email, first_name, last_name, password_hash, is_verified, user_type)
             VALUES (
                 1,
                 'kennier',
@@ -68,13 +73,13 @@ BEGIN TRY
                 1,
                 'admin'
             );
-            SET IDENTITY_INSERT dbo.Users OFF;
+            SET IDENTITY_INSERT Users OFF;
         END
         ELSE
         BEGIN
             -- Cannot safely force id = 1 because Users contains data.
             -- Insert normally and the application can re-map if id=1 is required.
-            INSERT INTO dbo.Users (username, email, first_name, last_name, password_hash, is_verified, user_type)
+            INSERT INTO Users (username, email, first_name, last_name, password_hash, is_verified, user_type)
             VALUES (
                 'kennier',
                 'kennier.trejos@gmail.com',
@@ -88,7 +93,7 @@ BEGIN TRY
     END;
 
     -- Get Kennier's id for subsequent operations
-    DECLARE @kennier_id INT = (SELECT TOP (1) id FROM dbo.Users WHERE username = 'kennier');
+    DECLARE @kennier_id INT = (SELECT TOP (1) id FROM Users WHERE username = 'kennier');
 
     ------------------------------------------------------------------------
     -- 3) Add creator_id, created_at, updated_at to Songs table if present
@@ -141,45 +146,45 @@ BEGIN TRY
     ------------------------------------------------------------------------
     -- 5) Create mapping tables: UserSongs and UserChords
     ------------------------------------------------------------------------
-    IF OBJECT_ID('dbo.UserSongs','U') IS NULL
+    IF OBJECT_ID('UserSongs','U') IS NULL
     BEGIN
-        CREATE TABLE dbo.UserSongs (
+        CREATE TABLE UserSongs (
             id INT IDENTITY(1,1) PRIMARY KEY,
             user_id INT NOT NULL,
             song_id INT NOT NULL,
             assigned_at DATETIME2 DEFAULT SYSUTCDATETIME(),
             is_creator BIT DEFAULT 0
         );
-        CREATE UNIQUE INDEX UX_UserSongs_user_song ON dbo.UserSongs(user_id, song_id);
+        CREATE UNIQUE INDEX UX_UserSongs_user_song ON UserSongs(user_id, song_id);
         -- add FK constraints if referenced tables exist
-        IF OBJECT_ID('dbo.Users','U') IS NOT NULL
-            ALTER TABLE dbo.UserSongs ADD CONSTRAINT FK_UserSongs_User FOREIGN KEY (user_id) REFERENCES dbo.Users(id);
-        IF OBJECT_ID('dbo.Songs','U') IS NOT NULL
-            ALTER TABLE dbo.UserSongs ADD CONSTRAINT FK_UserSongs_Song FOREIGN KEY (song_id) REFERENCES dbo.Songs(id);
+        IF OBJECT_ID('Users','U') IS NOT NULL
+            ALTER TABLE UserSongs ADD CONSTRAINT FK_UserSongs_User FOREIGN KEY (user_id) REFERENCES Users(id);
+        IF OBJECT_ID('Songs','U') IS NOT NULL
+            ALTER TABLE UserSongs ADD CONSTRAINT FK_UserSongs_Song FOREIGN KEY (song_id) REFERENCES Songs(id);
     END;
 
-    IF OBJECT_ID('dbo.UserChords','U') IS NULL
+    IF OBJECT_ID('UserChords','U') IS NULL
     BEGIN
-        CREATE TABLE dbo.UserChords (
+        CREATE TABLE UserChords (
             id INT IDENTITY(1,1) PRIMARY KEY,
             user_id INT NOT NULL,
             chord_id INT NOT NULL,
             assigned_at DATETIME2 DEFAULT SYSUTCDATETIME(),
             is_creator BIT DEFAULT 0
         );
-        CREATE UNIQUE INDEX UX_UserChords_user_chord ON dbo.UserChords(user_id, chord_id);
-        IF OBJECT_ID('dbo.Users','U') IS NOT NULL
-            ALTER TABLE dbo.UserChords ADD CONSTRAINT FK_UserChords_User FOREIGN KEY (user_id) REFERENCES dbo.Users(id);
-        IF OBJECT_ID('dbo.Chords','U') IS NOT NULL
-            ALTER TABLE dbo.UserChords ADD CONSTRAINT FK_UserChords_Chord FOREIGN KEY (chord_id) REFERENCES dbo.Chords(id);
+        CREATE UNIQUE INDEX UX_UserChords_user_chord ON UserChords(user_id, chord_id);
+        IF OBJECT_ID('Users','U') IS NOT NULL
+            ALTER TABLE UserChords ADD CONSTRAINT FK_UserChords_User FOREIGN KEY (user_id) REFERENCES Users(id);
+        IF OBJECT_ID('Chords','U') IS NOT NULL
+            ALTER TABLE UserChords ADD CONSTRAINT FK_UserChords_Chord FOREIGN KEY (chord_id) REFERENCES Chords(id);
     END;
 
     ------------------------------------------------------------------------
     -- 6) Create Share/Audit tables: SongShares, ChordShares
     ------------------------------------------------------------------------
-    IF OBJECT_ID('dbo.SongShares','U') IS NULL
+    IF OBJECT_ID('SongShares','U') IS NULL
     BEGIN
-        CREATE TABLE dbo.SongShares (
+        CREATE TABLE SongShares (
             id INT IDENTITY(1,1) PRIMARY KEY,
             song_id INT NOT NULL,
             sender_user_id INT NULL,       -- FK to Users.id when available
@@ -189,15 +194,15 @@ BEGIN TRY
             status VARCHAR(20) DEFAULT 'pending', -- pending|accepted|rejected
             payload NVARCHAR(MAX) NULL     -- includes full ContentText and metadata
         );
-        IF OBJECT_ID('dbo.Songs','U') IS NOT NULL
-            ALTER TABLE dbo.SongShares ADD CONSTRAINT FK_SongShares_Song FOREIGN KEY (song_id) REFERENCES dbo.Songs(id);
-        IF OBJECT_ID('dbo.Users','U') IS NOT NULL
-            ALTER TABLE dbo.SongShares ADD CONSTRAINT FK_SongShares_Sender FOREIGN KEY (sender_user_id) REFERENCES dbo.Users(id);
+        IF OBJECT_ID('Songs','U') IS NOT NULL
+            ALTER TABLE SongShares ADD CONSTRAINT FK_SongShares_Song FOREIGN KEY (song_id) REFERENCES Songs(id);
+        IF OBJECT_ID('Users','U') IS NOT NULL
+            ALTER TABLE SongShares ADD CONSTRAINT FK_SongShares_Sender FOREIGN KEY (sender_user_id) REFERENCES Users(id);
     END;
 
-    IF OBJECT_ID('dbo.ChordShares','U') IS NULL
+    IF OBJECT_ID('ChordShares','U') IS NULL
     BEGIN
-        CREATE TABLE dbo.ChordShares (
+        CREATE TABLE ChordShares (
             id INT IDENTITY(1,1) PRIMARY KEY,
             chord_id INT NOT NULL,
             sender_user_id INT NULL,
@@ -207,18 +212,18 @@ BEGIN TRY
             status VARCHAR(20) DEFAULT 'pending',
             payload NVARCHAR(MAX) NULL -- full chord details except DB id
         );
-        IF OBJECT_ID('dbo.Chords','U') IS NOT NULL
-            ALTER TABLE dbo.ChordShares ADD CONSTRAINT FK_ChordShares_Chord FOREIGN KEY (chord_id) REFERENCES dbo.Chords(id);
-        IF OBJECT_ID('dbo.Users','U') IS NOT NULL
-            ALTER TABLE dbo.ChordShares ADD CONSTRAINT FK_ChordShares_Sender FOREIGN KEY (sender_user_id) REFERENCES dbo.Users(id);
+        IF OBJECT_ID('Chords','U') IS NOT NULL
+            ALTER TABLE ChordShares ADD CONSTRAINT FK_ChordShares_Chord FOREIGN KEY (chord_id) REFERENCES Chords(id);
+        IF OBJECT_ID('Users','U') IS NOT NULL
+            ALTER TABLE ChordShares ADD CONSTRAINT FK_ChordShares_Sender FOREIGN KEY (sender_user_id) REFERENCES Users(id);
     END;
 
     ------------------------------------------------------------------------
     -- 7) Verification & Password reset token tables
     ------------------------------------------------------------------------
-    IF OBJECT_ID('dbo.UserVerificationTokens','U') IS NULL
+    IF OBJECT_ID('UserVerificationTokens','U') IS NULL
     BEGIN
-        CREATE TABLE dbo.UserVerificationTokens (
+        CREATE TABLE UserVerificationTokens (
             id INT IDENTITY(1,1) PRIMARY KEY,
             user_id INT NOT NULL,
             token VARCHAR(256) NOT NULL,
@@ -226,13 +231,13 @@ BEGIN TRY
             used_at DATETIME2 NULL,
             created_at DATETIME2 DEFAULT SYSUTCDATETIME()
         );
-        IF OBJECT_ID('dbo.Users','U') IS NOT NULL
-            ALTER TABLE dbo.UserVerificationTokens ADD CONSTRAINT FK_UserVerificationTokens_User FOREIGN KEY (user_id) REFERENCES dbo.Users(id);
+        IF OBJECT_ID('Users','U') IS NOT NULL
+            ALTER TABLE UserVerificationTokens ADD CONSTRAINT FK_UserVerificationTokens_User FOREIGN KEY (user_id) REFERENCES Users(id);
     END;
 
-    IF OBJECT_ID('dbo.PasswordResetTokens','U') IS NULL
+    IF OBJECT_ID('PasswordResetTokens','U') IS NULL
     BEGIN
-        CREATE TABLE dbo.PasswordResetTokens (
+        CREATE TABLE PasswordResetTokens (
             id INT IDENTITY(1,1) PRIMARY KEY,
             user_id INT NOT NULL,
             token VARCHAR(256) NOT NULL,
@@ -240,8 +245,8 @@ BEGIN TRY
             used_at DATETIME2 NULL,
             created_at DATETIME2 DEFAULT SYSUTCDATETIME()
         );
-        IF OBJECT_ID('dbo.Users','U') IS NOT NULL
-            ALTER TABLE dbo.PasswordResetTokens ADD CONSTRAINT FK_PasswordResetTokens_User FOREIGN KEY (user_id) REFERENCES dbo.Users(id);
+        IF OBJECT_ID('Users','U') IS NOT NULL
+            ALTER TABLE PasswordResetTokens ADD CONSTRAINT FK_PasswordResetTokens_User FOREIGN KEY (user_id) REFERENCES Users(id);
     END;
 
     ------------------------------------------------------------------------
@@ -276,31 +281,26 @@ BEGIN TRY
     END;
 
     ------------------------------------------------------------------------
-    -- 9) Songs migration: set creator_id for songs that belong to "you"
-    --    NOTE: Because we don't have the exact "owner" column name from setup-complete.sql,
-    --    we only alter schema and provide a commented example update below for manual use.
+    -- 9) Songs migration: set creator_id for existing songs to Kennier (since single-user before)
     ------------------------------------------------------------------------
-    IF OBJECT_ID('dbo.Songs','U') IS NOT NULL AND COL_LENGTH('dbo.Songs','creator_id') IS NOT NULL
+    IF OBJECT_ID('Songs','U') IS NOT NULL AND COL_LENGTH('Songs','creator_id') IS NOT NULL
     BEGIN
-        -- Example: if setup-complete.sql had a column "owner_username" or "owner_id" you could map:
-        -- UPDATE dbo.Songs SET creator_id = @kennier_id WHERE owner_username = 'legacy-username' OR owner_email = '...';
-        -- Because exact owner column name is unknown, we DO NOT run a blanket update here.
-        -- REVIEW/ADJUST: If your setup-complete.sql contains 'owner_id' or 'user_id' pointing to previous single-user,
-        -- uncomment and adapt the update below:
-        --
-        -- -- Example manual update (edit to match your column names):
-        -- -- UPDATE dbo.Songs
-        -- -- SET creator_id = @kennier_id
-        -- -- WHERE owner_id = <legacy_owner_value>;
-        --
-        -- After mapping song creators, create UserSongs rows for Kennier:
-        IF OBJECT_ID('dbo.UserSongs','U') IS NOT NULL
+        -- Set creator_id for existing songs to Kennier
+        UPDATE Songs SET creator_id = @kennier_id WHERE creator_id IS NULL;
+
+        -- Set created_at and updated_at from existing CreatedDate and ModifiedDate if available
+        IF COL_LENGTH('Songs','CreatedDate') IS NOT NULL
+            UPDATE Songs SET created_at = CreatedDate WHERE created_at IS NULL;
+        IF COL_LENGTH('Songs','ModifiedDate') IS NOT NULL
+            UPDATE Songs SET updated_at = ModifiedDate WHERE updated_at IS NULL;
+
+        -- Create UserSongs mappings for Kennier
+        IF OBJECT_ID('UserSongs','U') IS NOT NULL
         BEGIN
-            -- This will insert mappings for songs where creator_id = @kennier_id
-            INSERT INTO dbo.UserSongs (user_id, song_id, is_creator)
+            INSERT INTO UserSongs (user_id, song_id, is_creator)
             SELECT DISTINCT @kennier_id, s.id, 1
-            FROM dbo.Songs s
-            LEFT JOIN dbo.UserSongs us ON us.user_id = @kennier_id AND us.song_id = s.id
+            FROM Songs s
+            LEFT JOIN UserSongs us ON us.user_id = @kennier_id AND us.song_id = s.id
             WHERE s.creator_id = @kennier_id AND us.id IS NULL;
         END;
     END;
@@ -313,10 +313,10 @@ BEGIN TRY
         IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.Chords') AND name = 'IX_Chords_creator')
             CREATE INDEX IX_Chords_creator ON dbo.Chords(creator_id);
     END;
-    IF OBJECT_ID('dbo.Songs','U') IS NOT NULL AND COL_LENGTH('dbo.Songs','creator_id') IS NOT NULL
+    IF OBJECT_ID('Songs','U') IS NOT NULL AND COL_LENGTH('Songs','creator_id') IS NOT NULL
     BEGIN
-        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('dbo.Songs') AND name = 'IX_Songs_creator')
-            CREATE INDEX IX_Songs_creator ON dbo.Songs(creator_id);
+        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID('Songs') AND name = 'IX_Songs_creator')
+            CREATE INDEX IX_Songs_creator ON Songs(creator_id);
     END;
 
     -- commit

@@ -15,8 +15,6 @@ form.addEventListener('submit', async (e) => {
         });
         const data = await res.json();
         if (res.ok) {
-            const token = res.headers.get('Authorization').split(' ')[1];
-            localStorage.setItem('token', token);
             window.location.href = '/';
         } else {
             alert(data.message);

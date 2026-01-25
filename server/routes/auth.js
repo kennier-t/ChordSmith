@@ -33,8 +33,9 @@ router.get('/verify', async (req, res) => {
         await userService.verifyUser(tokenRecord.user_id);
         const authToken = token.generateAuthToken(tokenRecord.user_id);
         const refreshToken = token.generateRefreshToken(tokenRecord.user_id);
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
-        res.header('Authorization', `Bearer ${authToken}`).redirect('/');
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: false });
+        res.cookie('authToken', authToken, { secure: false });
+        res.redirect('/');
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
@@ -53,7 +54,8 @@ router.post('/login', async (req, res) => {
     }
     const authToken = token.generateAuthToken(user.id);
     const refreshToken = token.generateRefreshToken(user.id);
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: false });
+    res.cookie('authToken', authToken, { secure: false });
     res.header('Authorization', `Bearer ${authToken}`).json({ message: 'Logged in successfully' });
   } catch (error) {
     console.error(error);
@@ -63,6 +65,22 @@ router.post('/login', async (req, res) => {
 
 router.post('/logout', (req, res) => {
     res.clearCookie('refreshToken').json({ message: 'Logged out successfully' });
+});
+
+router.post('/refresh', (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'Refresh token not found' });
+    }
+    const decoded = token.verifyToken(refreshToken);
+    if (!decoded) {
+        return res.status(401).json({ message: 'Invalid refresh token' });
+    }
+    const newAuthToken = token.generateAuthToken(decoded.id);
+    const newRefreshToken = token.generateRefreshToken(decoded.id);
+    res.cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: false });
+    res.cookie('authToken', newAuthToken, { secure: false });
+    res.json({ message: 'Tokens refreshed successfully' });
 });
 
 router.post('/forgot-password', async (req, res) => {
@@ -92,7 +110,7 @@ router.post('/reset-password', async (req, res) => {
         await userService.updateUserPassword(tokenRecord.user_id, password);
         const authToken = token.generateAuthToken(tokenRecord.user_id);
         const refreshToken = token.generateRefreshToken(tokenRecord.user_id);
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict' });
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: false });
         res.header('Authorization', `Bearer ${authToken}`).json({ message: 'Password reset successfully' });
     } catch (error) {
         console.error(error);

@@ -65,9 +65,9 @@ async function getChordById(chordId, userId) {
 
 async function getChordsByUserId(userId) {
     const result = await db.query(`
-        SELECT c.*, uc.is_creator FROM Chords c
-        JOIN UserChords uc ON c.id = uc.chord_id
-        WHERE uc.user_id = @userId
+        SELECT c.*, ISNULL(uc.is_creator, 0) as is_creator FROM Chords c
+        LEFT JOIN UserChords uc ON c.id = uc.chord_id AND uc.user_id = @userId
+        WHERE c.IsOriginal = 1 OR uc.user_id IS NOT NULL
     `, { userId });
     return result.recordset;
 }
