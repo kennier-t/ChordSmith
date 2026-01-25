@@ -358,7 +358,7 @@ const SongEditor = (function() {
             updateContentFontSize();
             selectedChordIds = await SONGS_SERVICE.getSongChordDiagrams(songId);
             await updateSelectedChordsList();
-            const folderIds = (await SONGS_SERVICE.getSongFolders(songId)).map(f => f.id);
+            const folderIds = (await SONGS_SERVICE.getSongFolders(songId)).map(f => f.Id);
             document.querySelectorAll('.folder-checkbox').forEach(cb => {
                 cb.checked = folderIds.includes(parseInt(cb.value));
             });
@@ -559,7 +559,7 @@ const SongEditor = (function() {
         folders.forEach(folder => {
             const label = document.createElement('label');
             label.className = 'folder-checkbox-label';
-            label.innerHTML = `<input type="checkbox" class="folder-checkbox" value="${folder.id}"> <span>${folder.name}</span>`;
+            label.innerHTML = `<input type="checkbox" class="folder-checkbox" value="${folder.Id}"> <span>${folder.name}</span>`;
             container.appendChild(label);
         });
     }

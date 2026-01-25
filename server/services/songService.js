@@ -32,20 +32,24 @@ async function createSong(song, userId) {
 
         if (chordIds && chordIds.length > 0) {
             for (let i = 0; i < chordIds.length; i++) {
-                await new sql.Request(transaction)
-                    .input('songId', sql.Int, songId)
-                    .input('chordId', sql.Int, chordIds[i])
-                    .input('displayOrder', sql.Int, i)
-                    .query('INSERT INTO SongChordDiagrams (SongId, ChordId, DisplayOrder) VALUES (@songId, @chordId, @displayOrder)');
+                if (chordIds[i] && chordIds[i] !== 'undefined' && !isNaN(parseInt(chordIds[i]))) {
+                    await new sql.Request(transaction)
+                        .input('songId', sql.Int, songId)
+                        .input('chordId', sql.Int, parseInt(chordIds[i]))
+                        .input('displayOrder', sql.Int, i)
+                        .query('INSERT INTO SongChordDiagrams (SongId, ChordId, DisplayOrder) VALUES (@songId, @chordId, @displayOrder)');
+                }
             }
         }
 
         if (folderIds && folderIds.length > 0) {
             for (const folderId of folderIds) {
-                await new sql.Request(transaction)
-                    .input('songId', sql.Int, songId)
-                    .input('folderId', sql.Int, folderId)
-                    .query('INSERT INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)');
+                if (folderId && folderId !== 'undefined' && !isNaN(parseInt(folderId))) {
+                    await new sql.Request(transaction)
+                        .input('songId', sql.Int, songId)
+                        .input('folderId', sql.Int, parseInt(folderId))
+                        .query('INSERT INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)');
+                }
             }
         }
 
@@ -120,20 +124,24 @@ async function updateSong(songId, song, userId) {
 
         if (chordIds && chordIds.length > 0) {
             for (let i = 0; i < chordIds.length; i++) {
-                await new sql.Request(transaction)
-                    .input('songId', sql.Int, songId)
-                    .input('chordId', sql.Int, chordIds[i])
-                    .input('displayOrder', sql.Int, i)
-                    .query('INSERT INTO SongChordDiagrams (SongId, ChordId, DisplayOrder) VALUES (@songId, @chordId, @displayOrder)');
+                if (chordIds[i] && chordIds[i] !== 'undefined' && !isNaN(parseInt(chordIds[i]))) {
+                    await new sql.Request(transaction)
+                        .input('songId', sql.Int, songId)
+                        .input('chordId', sql.Int, parseInt(chordIds[i]))
+                        .input('displayOrder', sql.Int, i)
+                        .query('INSERT INTO SongChordDiagrams (SongId, ChordId, DisplayOrder) VALUES (@songId, @chordId, @displayOrder)');
+                }
             }
         }
         
         if (folderIds && folderIds.length > 0) {
             for (const folderId of folderIds) {
-                await new sql.Request(transaction)
-                    .input('songId', sql.Int, songId)
-                    .input('folderId', sql.Int, folderId)
-                    .query('INSERT INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)');
+                if (folderId && folderId !== 'undefined' && !isNaN(parseInt(folderId))) {
+                    await new sql.Request(transaction)
+                        .input('songId', sql.Int, songId)
+                        .input('folderId', sql.Int, parseInt(folderId))
+                        .query('INSERT INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)');
+                }
             }
         }
         
@@ -223,6 +231,62 @@ async function rejectShare(shareId, userId) {
     await db.query('UPDATE SongShares SET status = \'rejected\' WHERE id = @shareId AND recipient_user_id = @userId', { shareId, userId });
 }
 
+async function getAllFolders() {
+    const result = await db.query('SELECT * FROM Folders ORDER BY Name');
+    return result.recordset;
+}
+
+async function createFolder(folder, userId) {
+    const { name } = folder;
+    const result = await db.query('INSERT INTO Folders (Name) OUTPUT INSERTED.Id VALUES (@name)', { name });
+    return { id: result.recordset[0].Id };
+}
+
+async function updateFolder(folderId, folder, userId) {
+    const { name } = folder;
+    await db.query('UPDATE Folders SET Name = @name WHERE Id = @folderId', { folderId, name });
+    return { id: folderId };
+}
+
+async function deleteFolder(folderId, userId) {
+    await db.query('DELETE FROM Folders WHERE Id = @folderId', { folderId });
+}
+
+async function getSongsByFolder(folderId, userId) {
+    const parsedFolderId = parseInt(folderId);
+    if (isNaN(parsedFolderId)) return [];
+    const result = await db.query(`
+        SELECT s.*, us.is_creator FROM Songs s
+        JOIN UserSongs us ON s.id = us.song_id
+        JOIN SongFolderMapping sfm ON s.id = sfm.SongId
+        WHERE sfm.FolderId = @folderId AND us.user_id = @userId
+    `, { folderId: parsedFolderId, userId });
+    return result.recordset;
+}
+
+async function getSongChordDiagrams(songId, userId) {
+    const parsedSongId = parseInt(songId);
+    if (isNaN(parsedSongId)) return [];
+    const result = await db.query(`
+        SELECT scd.DisplayOrder, c.* FROM SongChordDiagrams scd
+        JOIN Chords c ON scd.ChordId = c.Id
+        WHERE scd.SongId = @songId
+        ORDER BY scd.DisplayOrder
+    `, { songId: parsedSongId });
+    // Add frets etc. if needed, but for now basic
+    return result.recordset;
+}
+
+async function getSongFolders(songId, userId) {
+    const parsedSongId = parseInt(songId);
+    if (isNaN(parsedSongId)) return [];
+    const result = await db.query(`
+        SELECT f.* FROM Folders f
+        JOIN SongFolderMapping sfm ON f.Id = sfm.FolderId
+        WHERE sfm.SongId = @songId
+    `, { songId: parsedSongId });
+    return result.recordset;
+}
 
 module.exports = {
     createSong,
@@ -233,7 +297,14 @@ module.exports = {
     shareSong,
     getIncomingShares,
     acceptShare,
-    rejectShare
+    rejectShare,
+    getAllFolders,
+    createFolder,
+    updateFolder,
+    deleteFolder,
+    getSongsByFolder,
+    getSongChordDiagrams,
+    getSongFolders
 };
 const userService = require('./userService');
 const sql = require('mssql/msnodesqlv8');

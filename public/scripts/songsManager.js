@@ -77,14 +77,14 @@ const SongsManager = (function() {
         } else {
             // Regular folder view
             const folders = await SONGS_SERVICE.getAllFolders();
-            const folder = folders.find(f => f.id === folderId);
+            const folder = folders.find(f => f.Id === folderId);
             
             if (folder) {
                 folderTitleElement.innerHTML = `
-                    ${folder.name}
+                    ${folder.Name}
                     <div class="folder-header-actions">
-                        <button class="action-btn" onclick="SongsManager.renameFolder(${folder.id}, '${folder.name.replace(/'/g, "\\'")}')" data-translate="Rename"></button>
-                        <button class="action-btn delete-btn" onclick="SongsManager.deleteFolder(${folder.id})" data-translate="Delete"></button>
+                        <button class="action-btn" onclick="SongsManager.renameFolder(${folder.Id}, '${folder.Name.replace(/'/g, "\\'")}')" data-translate="Rename"></button>
+                        <button class="action-btn delete-btn" onclick="SongsManager.deleteFolder(${folder.Id})" data-translate="Delete"></button>
                     </div>
                 `;
                 translatePage();
@@ -114,10 +114,10 @@ const SongsManager = (function() {
                 sorted.sort((a, b) => new Date(b.folder.createdDate) - new Date(a.folder.createdDate));
                 break;
             case 'name-asc':
-                sorted.sort((a, b) => a.folder.name.localeCompare(b.folder.name));
+                sorted.sort((a, b) => a.folder.Name.localeCompare(b.folder.Name));
                 break;
             case 'name-desc':
-                sorted.sort((a, b) => b.folder.name.localeCompare(a.folder.name));
+                sorted.sort((a, b) => b.folder.Name.localeCompare(a.folder.Name));
                 break;
             case 'songs-desc':
                 sorted.sort((a, b) => b.songCount - a.songCount);
@@ -149,7 +149,7 @@ const SongsManager = (function() {
         // Get song counts for all folders
         const foldersWithSongCounts = [];
         for (const folder of folders) {
-            const songs = await SONGS_SERVICE.getSongsByFolder(folder.id);
+            const songs = await SONGS_SERVICE.getSongsByFolder(folder.Id);
             foldersWithSongCounts.push({
                 folder: folder,
                 songCount: songs.length
@@ -162,7 +162,7 @@ const SongsManager = (function() {
         for (const { folder, songCount } of sortedFolders) {
             const item = document.createElement('div');
             item.className = 'folder-item';
-            item.onclick = () => showSongsListView(folder.id);
+            item.onclick = () => showSongsListView(folder.Id);
             const songWord = songCount !== 1
                 ? (translations[currentLanguage]['songs'] || 'songs')
                 : (translations[currentLanguage]['song'] || 'song');
@@ -173,7 +173,7 @@ const SongsManager = (function() {
                     </svg>
                 </div>
                 <div class="folder-info">
-                    <h3>${folder.name}</h3>
+                    <h3>${folder.Name}</h3>
                     <span class="song-count">${songCount} ${songWord}</span>
                 </div>
             `;
@@ -265,16 +265,16 @@ const SongsManager = (function() {
             const folderNames = new Set();
             const folderMap = {};
             for (const folder of folders) {
-                folderMap[folder.id] = folder.name;
+                folderMap[folder.Id] = folder.Name;
             }
 
             for (const song of songs) {
-                const songFolders = await SONGS_SERVICE.getSongFolders(song.id);
+                const songFolders = await SONGS_SERVICE.getSongFolders(song.Id);
                 if (songFolders.length === 0) {
                     folderNames.add(translations[currentLanguage]['Uncategorized'] || 'Uncategorized');
                 } else {
                     for (const folder of songFolders) {
-                        const folderName = folderMap[folder.id] || folder.name;
+                        const folderName = folderMap[folder.Id] || folder.Name;
                         folderNames.add(folderName);
                     }
                 }
@@ -284,7 +284,7 @@ const SongsManager = (function() {
             // Get unique artists
             const artists = new Set();
             for (const song of songs) {
-                const titleParts = song.title.split(' - ');
+                const titleParts = song.Title.split(' - ');
                 const artist = titleParts.length > 1 && titleParts[1].trim()
                     ? titleParts[1].trim()
                     : (translations[currentLanguage]['Unknown'] || 'Unknown');
@@ -424,8 +424,8 @@ const SongsManager = (function() {
         const seenIds = new Set();
         
         for (const song of songs) {
-            if (seenIds.has(song.id)) continue;
-            seenIds.add(song.id);
+            if (seenIds.has(song.Id)) continue;
+            seenIds.add(song.Id);
             
             const key = song.songKey && song.songKey.trim() 
                 ? song.songKey.trim() 
@@ -478,7 +478,7 @@ const SongsManager = (function() {
         // Create a map of folder id to folder name
         const folderMap = {};
         for (const folder of folders) {
-            folderMap[folder.id] = folder.name;
+            folderMap[folder.Id] = folder.Name;
         }
         
         // Group songs by folder
@@ -487,13 +487,13 @@ const SongsManager = (function() {
         const uncategorizedSongs = [];
         
         for (const song of songs) {
-            const songFolders = await SONGS_SERVICE.getSongFolders(song.id);
+            const songFolders = await SONGS_SERVICE.getSongFolders(song.Id);
             
             if (songFolders.length === 0) {
                 uncategorizedSongs.push(song);
             } else {
                 for (const folder of songFolders) {
-                    const folderName = folderMap[folder.id] || folder.name;
+                    const folderName = folderMap[folder.Id] || folder.Name;
                     if (!songsByFolder[folderName]) {
                         songsByFolder[folderName] = [];
                     }
@@ -566,11 +566,11 @@ const SongsManager = (function() {
         const seenIds = new Set();
 
         for (const song of songs) {
-            if (seenIds.has(song.id)) continue;
-            seenIds.add(song.id);
+            if (seenIds.has(song.Id)) continue;
+            seenIds.add(song.Id);
 
             // Extract artist from title: "Song Name - Artist"
-            const titleParts = song.title.split(' - ');
+            const titleParts = song.Title.split(' - ');
             const artist = titleParts.length > 1 && titleParts[1].trim()
                 ? titleParts[1].trim()
                 : (translations[currentLanguage]['Unknown'] || 'Unknown');
@@ -623,7 +623,7 @@ const SongsManager = (function() {
         item.className = 'song-item';
         item.innerHTML = `
             <div class="song-info">
-                <h3>${song.title}</h3>
+                <h3>${song.Title}</h3>
                 <div class="song-meta">
                     ${song.songKey ? `Key: ${song.songKey}` : ''} 
                     ${song.capo ? `• Capo: ${song.capo}` : ''}
@@ -631,9 +631,9 @@ const SongsManager = (function() {
                 </div>
             </div>
             <div class="song-actions">
-                <button class="action-btn" onclick="SongsManager.editSong(${song.id})" data-translate="Edit"></button>
-                <button class="action-btn" onclick="SongsManager.downloadSongPDF(${song.id})">PDF</button>
-                <button class="action-btn delete-btn" onclick="SongsManager.deleteSong(${song.id})" data-translate="Delete"></button>
+                <button class="action-btn" onclick="SongsManager.editSong(${song.Id})" data-translate="Edit"></button>
+                <button class="action-btn" onclick="SongsManager.downloadSongPDF(${song.Id})">PDF</button>
+                <button class="action-btn delete-btn" onclick="SongsManager.deleteSong(${song.Id})" data-translate="Delete"></button>
             </div>
         `;
         return item;
@@ -693,12 +693,12 @@ const SongsManager = (function() {
         }
         
         const chordIds = await SONGS_SERVICE.getSongChordDiagrams(songId);
-        await SongPDFGenerator.downloadPDF(song, chordIds, `${song.title}.pdf`);
+        await SongPDFGenerator.downloadPDF(song, chordIds, `${song.Title}.pdf`);
     }
     
     async function deleteSong(songId) {
         const song = await SONGS_SERVICE.getSongById(songId);
-        if (confirm(`${translations[currentLanguage]['Delete song'] || 'Delete song'} "${song.title}"?`)) {
+        if (confirm(`${translations[currentLanguage]['Delete song'] || 'Delete song'} "${song.Title}"?`)) {
             await SONGS_SERVICE.deleteSong(songId);
             // Refresh the appropriate view
             if (currentFolderId === ALL_FOLDER_ID) {

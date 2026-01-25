@@ -8,12 +8,17 @@ const SONGS_SERVICE = (function() {
     
     // Helper function for API calls
     async function apiCall(endpoint, options = {}) {
+        const token = localStorage.getItem('token');
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
         try {
             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                },
+                headers,
                 ...options
             });
             
@@ -39,25 +44,25 @@ const SONGS_SERVICE = (function() {
     // =============================================
     
     async function getAllFolders() {
-        return await apiCall('/folders');
+        return await apiCall('/songs/folders');
     }
-    
+
     async function createFolder(name) {
-        return await apiCall('/folders', {
+        return await apiCall('/songs/folders', {
             method: 'POST',
             body: JSON.stringify({ name })
         });
     }
-    
+
     async function renameFolder(folderId, newName) {
-        return await apiCall(`/folders/${folderId}`, {
+        return await apiCall(`/songs/folders/${folderId}`, {
             method: 'PUT',
             body: JSON.stringify({ name: newName })
         });
     }
-    
+
     async function deleteFolder(folderId) {
-        await apiCall(`/folders/${folderId}`, {
+        await apiCall(`/songs/folders/${folderId}`, {
             method: 'DELETE'
         });
     }
@@ -69,7 +74,7 @@ const SONGS_SERVICE = (function() {
     async function getAllSongs() {
         return await apiCall('/songs');
     }
-    
+
     async function getSongById(songId) {
         try {
             return await apiCall(`/songs/${songId}`);
@@ -78,18 +83,18 @@ const SONGS_SERVICE = (function() {
             return null;
         }
     }
-    
+
     async function getSongsByFolder(folderId) {
-        return await apiCall(`/folders/${folderId}/songs`);
+        return await apiCall(`/songs/folders/${folderId}/songs`);
     }
-    
+
     async function createSong(songData) {
         return await apiCall('/songs', {
             method: 'POST',
             body: JSON.stringify(songData)
         });
     }
-    
+
     async function updateSong(songId, songData) {
         await apiCall(`/songs/${songId}`, {
             method: 'PUT',
@@ -97,7 +102,7 @@ const SONGS_SERVICE = (function() {
         });
         return songId;
     }
-    
+
     async function deleteSong(songId) {
         await apiCall(`/songs/${songId}`, {
             method: 'DELETE'
@@ -111,11 +116,11 @@ const SONGS_SERVICE = (function() {
     async function getSongChordDiagrams(songId) {
         return await apiCall(`/songs/${songId}/chords`);
     }
-    
+
     // =============================================
     // SONG FOLDERS MAPPING
     // =============================================
-    
+
     async function getSongFolders(songId) {
         return await apiCall(`/songs/${songId}/folders`);
     }
