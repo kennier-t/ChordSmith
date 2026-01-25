@@ -43,23 +43,23 @@ const SongPDFGenerator = (function() {
         let currentY = yPosition + 5;
         doc.text('Title:', tableX + 2, currentY);
         doc.setFont('courier', 'normal');
-        const titleValue = song.title || '';
+        const titleValue = song.Title || '';
         const titleLines = doc.splitTextToSize(titleValue, col1Width - 4);
         doc.text(titleLines.slice(0, 2), tableX + 2 + doc.getTextWidth('Title: '), currentY);
-        
+
         // Date field
         doc.setFont('courier', 'bold');
         doc.text('Date:', tableX + col1Width + 2, currentY);
         doc.setFont('courier', 'normal');
-        const dateValue = song.songDate || '';
+        const dateValue = song.SongDate || '';
         const dateLines = doc.splitTextToSize(dateValue, col2Width - 4 - doc.getTextWidth('Date: '));
         doc.text(dateLines.slice(0, 2), tableX + col1Width + 2 + doc.getTextWidth('Date: '), currentY);
-        
+
         // Notes field
         doc.setFont('courier', 'bold');
         doc.text('Notes:', tableX + col1Width + col2Width + 2, currentY);
         doc.setFont('courier', 'normal');
-        const notesValue = song.notes || '';
+        const notesValue = song.Notes || '';
         const notesLines = doc.splitTextToSize(notesValue, col3Width - 4 - doc.getTextWidth('Notes: '));
         doc.text(notesLines.slice(0, 4), tableX + col1Width + col2Width + 2 + doc.getTextWidth('Notes: '), currentY);
         
@@ -82,31 +82,31 @@ const SongPDFGenerator = (function() {
         doc.setFont('courier', 'bold');
         doc.text('Key:', tableX + 2, currentY);
         doc.setFont('courier', 'normal');
-        const keyValue = song.songKey || '';
+        const keyValue = song.SongKey || '';
         const keyLines = doc.splitTextToSize(keyValue, col2_1Width - 4 - doc.getTextWidth('Key: '));
         doc.text(keyLines.slice(0, 2), tableX + 2 + doc.getTextWidth('Key: '), currentY);
-        
+
         // Capo field
         doc.setFont('courier', 'bold');
         doc.text('Capo:', tableX + col2_1Width + 2, currentY);
         doc.setFont('courier', 'normal');
-        const capoValue = song.capo || '';
+        const capoValue = song.Capo || '';
         const capoLines = doc.splitTextToSize(capoValue, col2_2Width - 4 - doc.getTextWidth('Capo: '));
         doc.text(capoLines.slice(0, 2), tableX + col2_1Width + 2 + doc.getTextWidth('Capo: '), currentY);
-        
+
         // BPM field
         doc.setFont('courier', 'bold');
         doc.text('BPM:', tableX + col2_1Width + col2_2Width + 2, currentY);
         doc.setFont('courier', 'normal');
-        const bpmValue = song.bpm || '';
+        const bpmValue = song.BPM || '';
         const bpmLines = doc.splitTextToSize(bpmValue, col2_3Width - 4 - doc.getTextWidth('BPM: '));
         doc.text(bpmLines.slice(0, 2), tableX + col2_1Width + col2_2Width + 2 + doc.getTextWidth('BPM: '), currentY);
-        
+
         // Effects field
         doc.setFont('courier', 'bold');
         doc.text('Effects:', tableX + col2_1Width + col2_2Width + col2_3Width + 2, currentY);
         doc.setFont('courier', 'normal');
-        const effectsValue = song.effects || '';
+        const effectsValue = song.Effects || '';
         const effectsLines = doc.splitTextToSize(effectsValue, col2_4Width - 4 - doc.getTextWidth('Effects: '));
         doc.text(effectsLines.slice(0, 2), tableX + col2_1Width + col2_2Width + col2_3Width + 2 + doc.getTextWidth('Effects: '), currentY);
         
@@ -114,14 +114,14 @@ const SongPDFGenerator = (function() {
 
         // Use Courier font for lyrics, with per-song font size or default
         doc.setFont('courier', 'normal');
-        const contentFontSize = song.songContentFontSizePt ? parseFloat(song.songContentFontSizePt) : 11;
+        const contentFontSize = song.SongContentFontSizePt ? parseFloat(song.SongContentFontSizePt) : 11;
         doc.setFontSize(contentFontSize);
-        
+
         const lyricsMargin = 12;
         const maxLineWidth = pageWidth - (lyricsMargin * 2);
-        
+
         // Normalize text to ensure proper character encoding
-        const normalizedContent = normalizeText(song.contentText);
+        const normalizedContent = normalizeText(song.ContentText);
         const contentLines = normalizedContent.split('\n');
         contentLines.forEach(line => {
             if (yPosition > pageHeight - 40) {
