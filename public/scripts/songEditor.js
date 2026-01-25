@@ -559,7 +559,7 @@ const SongEditor = (function() {
         folders.forEach(folder => {
             const label = document.createElement('label');
             label.className = 'folder-checkbox-label';
-            label.innerHTML = `<input type="checkbox" class="folder-checkbox" value="${folder.Id}"> <span>${folder.name}</span>`;
+            label.innerHTML = `<input type="checkbox" class="folder-checkbox" value="${folder.Id}"> <span>${folder.Name}</span>`;
             container.appendChild(label);
         });
     }
