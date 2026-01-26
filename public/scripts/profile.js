@@ -32,7 +32,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             profileForm.first_name.value = user.first_name;
             profileForm.last_name.value = user.last_name;
             currentLanguagePref = user.language_pref;
-            Profile.selectLanguageOption(user.language_pref);
+            // Update display without toggling dropdown
+            const displayElement = document.getElementById('language-pref-display');
+            const translationsMap = {
+                'en': 'English',
+                'es': 'Spanish'
+            };
+            displayElement.textContent = translationsMap[user.language_pref] || user.language_pref;
         } else {
             alert(user.message);
             window.location.href = '/login.html';
