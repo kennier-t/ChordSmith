@@ -4,48 +4,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shares - ChordSmith</title>
+    <link rel="icon" type="image/webp" href="assets/guitar.webp">
     <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/guitar-pattern.css">
+    <link rel="stylesheet" href="styles/translation.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Shares</h1>
-
-        <!-- Send Shares Section -->
-        <div id="send-shares-section">
-            <h2>Send Share</h2>
-            <form id="send-share-form">
-                <div>
-                    <label for="share-type">Type:</label>
-                    <select id="share-type" required>
-                        <option value="song">Song</option>
-                        <option value="chord">Chord</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="share-item">Item:</label>
-                    <select id="share-item" required>
-                        <option value="">Select an item</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="recipient-username">Recipient Username:</label>
-                    <input type="text" id="recipient-username" required>
-                </div>
-                <button type="submit">Send Share</button>
-            </form>
-        </div>
-
-        <!-- Incoming Shares Section -->
-        <div id="incoming-shares-section">
-            <h2>Incoming Shares</h2>
-            <div id="shares-container">
-                <h3>Song Shares</h3>
-                <ul id="song-shares-list"></ul>
-                <h3>Chord Shares</h3>
-                <ul id="chord-shares-list"></ul>
+    <div id="app">
+        <div class="view">
+            <div class="top-buttons-container">
+                <button id="back-btn" class="utility-btn" onclick="window.location.href='/'" data-translate="← Back">← Back</button>
             </div>
+
+            <h1>Shares</h1>
+            <div style="max-width: 500px; margin: 0 auto;">
+                <!-- Send Shares Section -->
+                <div id="send-shares-section">
+                    <h2>Send Share</h2>
+                    <form id="send-share-form">
+                        <div class="form-group">
+                            <label for="share-type">Type:</label>
+                            <select id="share-type" class="chord-select" required style="color: var(--text-primary); font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 0.875rem; letter-spacing: 0.01em;">
+                                <option value="song">Song</option>
+                                <option value="chord">Chord</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="share-item">Item:</label>
+                            <select id="share-item" class="chord-select" required style="color: var(--text-primary); font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 0.875rem; letter-spacing: 0.01em;">
+                                <option value="">Select an item</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="recipient-username">Recipient Username:</label>
+                            <input type="text" id="recipient-username" required>
+                        </div>
+                        <button type="submit" class="utility-btn" style="margin: 24px auto; display: block; padding: 16px 20px;">Send Share</button>
+                    </form>
+                </div>
+
+                <!-- Incoming Shares Section -->
+                <div id="incoming-shares-section" style="margin-top: 40px;">
+                    <h2>Incoming Shares</h2>
+                    <div id="shares-container" style="margin-top: 16px;">
+                        <div style="margin-bottom: 24px;">
+                            <h3 style="margin-bottom: 12px; color: var(--text-primary); font-size: 1.1rem;">Song Shares</h3>
+                            <ul id="song-shares-list" style="list-style: none; padding: 0; margin: 0;"></ul>
+                        </div>
+                        <div>
+                            <h3 style="margin-bottom: 12px; color: var(--text-primary); font-size: 1.1rem;">Chord Shares</h3>
+                            <ul id="chord-shares-list" style="list-style: none; padding: 0; margin: 0;"></ul>
+                        </div>
+                    </div>
+                </div>
         </div>
     </div>
+    <script src="scripts/translation.js"></script>
+    <script src="scripts/guitar-pattern.js"></script>
     <script src="scripts/shares.js"></script>
 </body>
 </html>

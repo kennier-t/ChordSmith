@@ -4,47 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - ChordSmith</title>
+    <link rel="icon" type="image/webp" href="assets/guitar.webp">
     <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/guitar-pattern.css">
+    <link rel="stylesheet" href="styles/translation.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Your Profile</h1>
-        <form id="profile-form">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
+    <div id="app">
+        <div class="view">
+            <div class="top-buttons-container">
+                <button id="back-btn" class="utility-btn" onclick="window.location.href='/'" data-translate="← Back">← Back</button>
             </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label for="first_name">First Name</label>
-                <input type="text" id="first_name" name="first_name" required>
-            </div>
-            <div class="form-group">
-                <label for="last_name">Last Name</label>
-                <input type="text" id="last_name" name="last_name" required>
-            </div>
-            <div class="form-group">
-                <label for="language_pref">Language</label>
-                <select id="language_pref" name="language_pref">
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                </select>
-            </div>
-            <button type="submit">Update Profile</button>
-        </form>
 
-        <h2>Change Password</h2>
-        <form id="password-form">
-            <div class="form-group">
-                <label for="new_password">New Password</label>
-                <input type="password" id="new_password" name="new_password" required>
+            <h1>Your Profile</h1>
+            <div style="max-width: 400px; margin: 0 auto;">
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="language_pref">Language</label>
+                        <select id="language_pref" name="language_pref" class="chord-select" style="color: var(--text-primary); font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 0.875rem; letter-spacing: 0.01em;">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="utility-btn" style="margin: 24px auto; display: block; padding: 16px 20px;">Update Profile</button>
+                </form>
+
+                <h2 style="margin-top: 40px;">Change Password</h2>
+                <form id="password-form">
+                    <div class="form-group">
+                        <label for="new_password">New Password</label>
+                        <input type="password" id="new_password" name="new_password" required>
+                    </div>
+                    <button type="submit" class="utility-btn" style="margin: 24px auto; display: block; padding: 16px 20px;">Change Password</button>
+                </form>
             </div>
-            <button type="submit">Change Password</button>
-        </form>
+        </div>
     </div>
+    <script src="scripts/translation.js"></script>
+    <script src="scripts/guitar-pattern.js"></script>
     <script src="scripts/profile.js"></script>
 </body>
 </html>

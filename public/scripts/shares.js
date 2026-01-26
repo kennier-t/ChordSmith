@@ -107,11 +107,18 @@ function renderShares(shares, listElement, type) {
     listElement.innerHTML = '';
     shares.forEach(share => {
         const li = document.createElement('li');
+        li.style.display = 'flex';
+        li.style.justifyContent = 'space-between';
+        li.style.alignItems = 'center';
+        li.style.padding = '12px 0';
+        li.style.borderBottom = '1px solid var(--border)';
         const payload = JSON.parse(share.payload);
         li.innerHTML = `
-            <span>${payload.Title || payload.Name} from ${payload.senderUsername}</span>
-            <button class="accept-share" data-id="${share.id}" data-type="${type}">Accept</button>
-            <button class="reject-share" data-id="${share.id}" data-type="${type}">Reject</button>
+            <span style="color: var(--text-primary); font-size: 0.9rem;">${payload.Title || payload.Name} from ${payload.senderUsername}</span>
+            <div style="display: flex; gap: 8px;">
+                <button class="accept-share utility-btn" data-id="${share.id}" data-type="${type}" style="padding: 8px 16px; font-size: 0.8rem;">Accept</button>
+                <button class="reject-share utility-btn" data-id="${share.id}" data-type="${type}" style="padding: 8px 16px; font-size: 0.8rem; background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);">Reject</button>
+            </div>
         `;
         listElement.appendChild(li);
     });

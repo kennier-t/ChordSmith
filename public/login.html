@@ -4,25 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - ChordSmith</title>
+    <link rel="icon" type="image/webp" href="assets/guitar.webp">
     <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/guitar-pattern.css">
+    <link rel="stylesheet" href="styles/translation.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Login</h1>
-        <form id="login-form">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
+    <div id="app">
+        <div class="view">
+            <h1>Login</h1>
+            <div style="max-width: 400px; margin: 0 auto;">
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="utility-btn" style="margin: 24px auto; display: block; padding: 16px 20px;">Login</button>
+                </form>
+                <div style="margin-top: 24px; text-align: center;">
+                    <p style="margin: 8px 0; color: var(--text-secondary); font-size: 0.9rem;">
+                        Don't have an account?
+                        <a href="/register.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Register here</a>
+                    </p>
+                    <p style="margin: 8px 0; color: var(--text-secondary); font-size: 0.9rem;">
+                        <a href="/reset-password.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Forgot your password?</a>
+                    </p>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
-        <p>Don't have an account? <a href="/register.html">Register here</a></p>
-        <p><a href="/reset-password.html">Forgot your password?</a></p>
+        </div>
     </div>
+    <script src="scripts/translation.js"></script>
+    <script src="scripts/guitar-pattern.js"></script>
     <script src="scripts/login.js"></script>
 </body>
 </html>

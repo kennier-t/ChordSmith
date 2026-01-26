@@ -4,36 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - ChordSmith</title>
+    <link rel="icon" type="image/webp" href="assets/guitar.webp">
     <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/guitar-pattern.css">
+    <link rel="stylesheet" href="styles/translation.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Register</h1>
-        <form id="register-form">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
+    <div id="app">
+        <div class="view">
+            <h1>Register</h1>
+            <div style="max-width: 400px; margin: 0 auto;">
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" name="first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" name="last_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="utility-btn" style="margin: 24px auto; display: block; padding: 16px 20px;">Register</button>
+                </form>
+                <div style="margin-top: 24px; text-align: center;">
+                    <p style="margin: 8px 0; color: var(--text-secondary); font-size: 0.9rem;">
+                        Already have an account?
+                        <a href="/login.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Login here</a>
+                    </p>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label for="first_name">First Name</label>
-                <input type="text" id="first_name" name="first_name" required>
-            </div>
-            <div class="form-group">
-                <label for="last_name">Last Name</label>
-                <input type="text" id="last_name" name="last_name" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Register</button>
-        </form>
-        <p>Already have an account? <a href="/login.html">Login here</a></p>
+        </div>
     </div>
+    <script src="scripts/translation.js"></script>
+    <script src="scripts/guitar-pattern.js"></script>
     <script src="scripts/register.js"></script>
 </body>
 </html>
