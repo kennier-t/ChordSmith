@@ -24,16 +24,28 @@
                     <form id="send-share-form">
                         <div class="form-group">
                             <label for="share-type">Type:</label>
-                            <select id="share-type" class="chord-select" required style="color: var(--text-primary); font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 0.875rem; letter-spacing: 0.01em;">
-                                <option value="song">Song</option>
-                                <option value="chord">Chord</option>
-                            </select>
+                            <div class="custom-select-container">
+                                <button id="share-type-btn" class="custom-select" onclick="Shares.toggleTypeDropdown()">
+                                    <span id="share-type-display">Song</span>
+                                    <span class="custom-select-arrow"></span>
+                                </button>
+                                <div id="share-type-dropdown" class="custom-dropdown hidden">
+                                    <div class="custom-dropdown-item" data-value="song" onclick="Shares.selectTypeOption('song')" data-translate="Song">Song</div>
+                                    <div class="custom-dropdown-item" data-value="chord" onclick="Shares.selectTypeOption('chord')" data-translate="Chord">Chord</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="share-item">Item:</label>
-                            <select id="share-item" class="chord-select" required style="color: var(--text-primary); font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 0.875rem; letter-spacing: 0.01em;">
-                                <option value="">Select an item</option>
-                            </select>
+                            <div class="custom-select-container">
+                                <button id="share-item-btn" class="custom-select" onclick="Shares.toggleItemDropdown()">
+                                    <span id="share-item-display">Select an item</span>
+                                    <span class="custom-select-arrow"></span>
+                                </button>
+                                <div id="share-item-dropdown" class="custom-dropdown hidden">
+                                    <!-- Options will be populated dynamically -->
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="recipient-username">Recipient Username:</label>

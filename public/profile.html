@@ -37,10 +37,16 @@
                     </div>
                     <div class="form-group">
                         <label for="language_pref">Language</label>
-                        <select id="language_pref" name="language_pref" class="chord-select" style="color: var(--text-primary); font-family: 'Helvetica Neue', 'Arial', sans-serif; font-size: 0.875rem; letter-spacing: 0.01em;">
-                            <option value="en">English</option>
-                            <option value="es">Spanish</option>
-                        </select>
+                        <div class="custom-select-container">
+                            <button id="language-pref-btn" class="custom-select" onclick="Profile.toggleLanguageDropdown()">
+                                <span id="language-pref-display">English</span>
+                                <span class="custom-select-arrow"></span>
+                            </button>
+                            <div id="language-pref-dropdown" class="custom-dropdown hidden">
+                                <div class="custom-dropdown-item" data-value="en" onclick="Profile.selectLanguageOption('en')" data-translate="English">English</div>
+                                <div class="custom-dropdown-item" data-value="es" onclick="Profile.selectLanguageOption('es')" data-translate="Spanish">Spanish</div>
+                            </div>
+                        </div>
                     </div>
                     <button type="submit" class="utility-btn" style="margin: 24px auto; display: block; padding: 16px 20px;">Update Profile</button>
                 </form>

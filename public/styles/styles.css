@@ -1062,7 +1062,6 @@ h2::after {
 
 .custom-select {
     padding: 7px 10px;
-    border: 1px solid var(--border);
     background: white;
     color: var(--text-primary);
     font-size: 0.8125rem;
@@ -1070,6 +1069,7 @@ h2::after {
     transition: all 0.3s ease;
     min-width: 160px;
     font-family: inherit;
+    letter-spacing: 0.01em;
     border-radius: 0;
     display: flex;
     align-items: center;
@@ -1109,8 +1109,6 @@ h2::after {
     left: 0;
     right: 0;
     background: white;
-    border: 1px solid var(--border);
-    border-top: none;
     z-index: 1000;
     max-height: 200px;
     overflow-y: auto;

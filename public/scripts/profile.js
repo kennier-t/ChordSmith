@@ -1,6 +1,7 @@
 const profileForm = document.getElementById('profile-form');
 const passwordForm = document.getElementById('password-form');
 const token = localStorage.getItem('token');
+let currentLanguagePref = 'en';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!token) {
@@ -19,7 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             profileForm.email.value = user.email;
             profileForm.first_name.value = user.first_name;
             profileForm.last_name.value = user.last_name;
-            profileForm.language_pref.value = user.language_pref;
+            currentLanguagePref = user.language_pref;
+            Profile.selectLanguageOption(user.language_pref);
         } else {
             alert(user.message);
             window.location.href = '/login.html';
@@ -37,7 +39,7 @@ profileForm.addEventListener('submit', async (e) => {
     const email = profileForm.email.value;
     const first_name = profileForm.first_name.value;
     const last_name = profileForm.last_name.value;
-    const language_pref = profileForm.language_pref.value;
+    const language_pref = currentLanguagePref;
 
     try {
         const res = await fetch('/api/users/me', {
@@ -76,3 +78,30 @@ passwordForm.addEventListener('submit', async (e) => {
         alert('An error occurred. Please try again.');
     }
 });
+
+const Profile = {
+    toggleLanguageDropdown() {
+        const dropdown = document.getElementById('language-pref-dropdown');
+        const button = document.getElementById('language-pref-btn');
+        if (!dropdown || !button) return;
+        const isVisible = !dropdown.classList.contains('hidden');
+        if (isVisible) {
+            dropdown.classList.add('hidden');
+            button.classList.remove('active');
+        } else {
+            dropdown.classList.remove('hidden');
+            button.classList.add('active');
+        }
+    },
+
+    selectLanguageOption(value) {
+        currentLanguagePref = value;
+        const displayElement = document.getElementById('language-pref-display');
+        const translationsMap = {
+            'en': 'English',
+            'es': 'Spanish'
+        };
+        displayElement.textContent = translationsMap[value] || value;
+        this.toggleLanguageDropdown();
+    }
+};

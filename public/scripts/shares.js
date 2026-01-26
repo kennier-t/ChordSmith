@@ -1,12 +1,12 @@
 const songSharesList = document.getElementById('song-shares-list');
 const chordSharesList = document.getElementById('chord-shares-list');
-const shareTypeSelect = document.getElementById('share-type');
-const shareItemSelect = document.getElementById('share-item');
 const sendShareForm = document.getElementById('send-share-form');
 const token = localStorage.getItem('token');
 
 let userSongs = [];
 let userChords = [];
+let currentShareType = 'song';
+let currentShareItem = '';
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!token) {
@@ -50,16 +50,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Handle share type change
-shareTypeSelect.addEventListener('change', () => {
-    populateItemDropdown(shareTypeSelect.value);
-});
-
 // Handle form submission
 sendShareForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const type = shareTypeSelect.value;
-    const itemId = shareItemSelect.value;
+    const type = currentShareType;
+    const itemId = currentShareItem;
     const recipientUsername = document.getElementById('recipient-username').value.trim();
 
     if (!itemId || !recipientUsername) {
@@ -84,7 +79,7 @@ sendShareForm.addEventListener('submit', async (e) => {
         if (res.ok) {
             // Clear form
             sendShareForm.reset();
-            populateItemDropdown('song'); // Reset to songs
+            Shares.selectTypeOption('song'); // Reset to songs
         }
     } catch (error) {
         console.error(error);
@@ -93,13 +88,16 @@ sendShareForm.addEventListener('submit', async (e) => {
 });
 
 function populateItemDropdown(type) {
-    shareItemSelect.innerHTML = '<option value="">Select an item</option>';
+    const dropdown = document.getElementById('share-item-dropdown');
+    dropdown.innerHTML = '';
     const items = type === 'song' ? userSongs : userChords;
     items.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item.Id;
-        option.textContent = type === 'song' ? item.Title : item.Name;
-        shareItemSelect.appendChild(option);
+        const div = document.createElement('div');
+        div.className = 'custom-dropdown-item';
+        div.dataset.value = item.Id;
+        div.textContent = type === 'song' ? item.Title : item.Name;
+        div.onclick = () => Shares.selectItemOption(item.Id, div.textContent);
+        dropdown.appendChild(div);
     });
 }
 
@@ -221,3 +219,57 @@ async function rejectShare(shareId, type) {
         alert('An error occurred. Please try again.');
     }
 }
+
+const Shares = {
+    toggleTypeDropdown() {
+        const dropdown = document.getElementById('share-type-dropdown');
+        const button = document.getElementById('share-type-btn');
+        if (!dropdown || !button) return;
+        const isVisible = !dropdown.classList.contains('hidden');
+        if (isVisible) {
+            dropdown.classList.add('hidden');
+            button.classList.remove('active');
+            button.setAttribute('aria-expanded', 'false');
+        } else {
+            dropdown.classList.remove('hidden');
+            button.classList.add('active');
+            button.setAttribute('aria-expanded', 'true');
+        }
+    },
+
+    selectTypeOption(value) {
+        currentShareType = value;
+        const displayElement = document.getElementById('share-type-display');
+        const translationsMap = {
+            'song': 'Song',
+            'chord': 'Chord'
+        };
+        displayElement.textContent = translationsMap[value] || value;
+        this.toggleTypeDropdown();
+        populateItemDropdown(value);
+        currentShareItem = ''; // Reset item
+        document.getElementById('share-item-display').textContent = 'Select an item';
+    },
+
+    toggleItemDropdown() {
+        const dropdown = document.getElementById('share-item-dropdown');
+        const button = document.getElementById('share-item-btn');
+        if (!dropdown || !button) return;
+        const isVisible = !dropdown.classList.contains('hidden');
+        if (isVisible) {
+            dropdown.classList.add('hidden');
+            button.classList.remove('active');
+            button.setAttribute('aria-expanded', 'false');
+        } else {
+            dropdown.classList.remove('hidden');
+            button.classList.add('active');
+            button.setAttribute('aria-expanded', 'true');
+        }
+    },
+
+    selectItemOption(value, text) {
+        currentShareItem = value;
+        document.getElementById('share-item-display').textContent = text;
+        this.toggleItemDropdown();
+    }
+};
