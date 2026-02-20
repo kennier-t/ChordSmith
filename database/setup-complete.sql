@@ -111,6 +111,10 @@ CREATE TABLE Songs (
     BPM NVARCHAR(20) NULL,
     Effects NVARCHAR(200) NULL,
     ContentText NVARCHAR(MAX) NOT NULL,
+    LayoutColumnCount TINYINT NOT NULL DEFAULT 1 CHECK (LayoutColumnCount IN (1, 2)),
+    LayoutDividerRatio DECIMAL(6,5) NOT NULL DEFAULT 0.50000 CHECK (LayoutDividerRatio >= 0.20000 AND LayoutDividerRatio <= 0.80000),
+    ContentTextColumn1 NVARCHAR(MAX) NULL,
+    ContentTextColumn2 NVARCHAR(MAX) NULL,
     SongContentFontSizePt DECIMAL(5,2) NULL,
     CreatedDate DATETIME2 DEFAULT GETDATE(),
     ModifiedDate DATETIME2 DEFAULT GETDATE()
@@ -390,6 +394,10 @@ SELECT
     s.BPM,
     s.Effects,
     s.ContentText,
+    s.LayoutColumnCount,
+    s.LayoutDividerRatio,
+    s.ContentTextColumn1,
+    s.ContentTextColumn2,
     s.CreatedDate,
     s.ModifiedDate,
     STUFF((

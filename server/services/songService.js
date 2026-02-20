@@ -1,7 +1,78 @@
 const db = require('../db');
+const userService = require('./userService');
+const sql = require('mssql/msnodesqlv8');
+
+function clampDividerRatio(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 0.5;
+    return Math.min(0.8, Math.max(0.2, numeric));
+}
+
+function normalizeSongLayoutInput(song) {
+    const requestedColumnCount = Number(song.layoutColumnCount || song.LayoutColumnCount);
+    const layoutColumnCount = requestedColumnCount === 2 ? 2 : 1;
+
+    const providedSingleText = typeof song.contentText === 'string'
+        ? song.contentText
+        : (typeof song.ContentText === 'string' ? song.ContentText : '');
+
+    const providedColumn1Text = typeof song.contentTextColumn1 === 'string'
+        ? song.contentTextColumn1
+        : (typeof song.ContentTextColumn1 === 'string' ? song.ContentTextColumn1 : null);
+
+    const providedColumn2Text = typeof song.contentTextColumn2 === 'string'
+        ? song.contentTextColumn2
+        : (typeof song.ContentTextColumn2 === 'string' ? song.ContentTextColumn2 : null);
+
+    let contentTextColumn1 = providedColumn1Text;
+    let contentTextColumn2 = providedColumn2Text;
+
+    if (layoutColumnCount === 1) {
+        if (contentTextColumn1 === null) {
+            contentTextColumn1 = providedSingleText;
+        }
+        if (contentTextColumn2 === null) {
+            contentTextColumn2 = '';
+        }
+    } else {
+        if (contentTextColumn1 === null) {
+            contentTextColumn1 = '';
+        }
+        if (contentTextColumn2 === null) {
+            contentTextColumn2 = '';
+        }
+    }
+
+    const dividerRatio = clampDividerRatio(song.layoutDividerRatio || song.LayoutDividerRatio);
+
+    let contentText = providedSingleText;
+    if (layoutColumnCount === 2) {
+        contentText = [contentTextColumn1, contentTextColumn2]
+            .filter(part => typeof part === 'string' && part.length > 0)
+            .join('\n\n');
+    } else if (!contentText) {
+        contentText = contentTextColumn1 || '';
+    }
+
+    return {
+        layoutColumnCount,
+        dividerRatio,
+        contentTextColumn1: contentTextColumn1 || '',
+        contentTextColumn2: contentTextColumn2 || '',
+        contentText: contentText || ''
+    };
+}
 
 async function createSong(song, userId) {
-    const { title, songDate, notes, songKey, capo, bpm, effects, songContentFontSizePt, contentText, chordIds, folderIds } = song;
+    const { title, songDate, notes, songKey, capo, bpm, effects, songContentFontSizePt, chordIds, folderIds } = song;
+    const {
+        layoutColumnCount,
+        dividerRatio,
+        contentTextColumn1,
+        contentTextColumn2,
+        contentText
+    } = normalizeSongLayoutInput(song);
+
     const pool = await db.connect();
     const transaction = new sql.Transaction(pool);
     await transaction.begin();
@@ -16,11 +87,25 @@ async function createSong(song, userId) {
             .input('effects', sql.NVarChar, effects || '')
             .input('songContentFontSizePt', sql.Float, songContentFontSizePt ? parseFloat(songContentFontSizePt) : null)
             .input('contentText', sql.NVarChar, contentText)
+            .input('layoutColumnCount', sql.Int, layoutColumnCount)
+            .input('layoutDividerRatio', sql.Decimal(6, 5), dividerRatio)
+            .input('contentTextColumn1', sql.NVarChar, contentTextColumn1)
+            .input('contentTextColumn2', sql.NVarChar, contentTextColumn2)
             .input('creator_id', sql.Int, userId)
             .query(`
-                INSERT INTO Songs (Title, SongDate, Notes, SongKey, Capo, BPM, Effects, SongContentFontSizePt, ContentText, creator_id, created_at, updated_at)
+                INSERT INTO Songs (
+                    Title, SongDate, Notes, SongKey, Capo, BPM, Effects,
+                    SongContentFontSizePt, ContentText, LayoutColumnCount,
+                    LayoutDividerRatio, ContentTextColumn1, ContentTextColumn2,
+                    creator_id, created_at, updated_at
+                )
                 OUTPUT INSERTED.Id
-                VALUES (@title, @songDate, @notes, @songKey, @capo, @bpm, @effects, @songContentFontSizePt, @contentText, @creator_id, GETDATE(), GETDATE())
+                VALUES (
+                    @title, @songDate, @notes, @songKey, @capo, @bpm, @effects,
+                    @songContentFontSizePt, @contentText, @layoutColumnCount,
+                    @layoutDividerRatio, @contentTextColumn1, @contentTextColumn2,
+                    @creator_id, GETDATE(), GETDATE()
+                )
             `);
         
         const songId = songResult.recordset[0].Id;
@@ -116,7 +201,15 @@ async function updateSong(songId, song, userId) {
         return await forkSong(songId, song, userId);
     }
 
-    const { title, songDate, notes, songKey, capo, bpm, effects, songContentFontSizePt, contentText, chordIds, folderIds } = song;
+    const { title, songDate, notes, songKey, capo, bpm, effects, songContentFontSizePt, chordIds, folderIds } = song;
+    const {
+        layoutColumnCount,
+        dividerRatio,
+        contentTextColumn1,
+        contentTextColumn2,
+        contentText
+    } = normalizeSongLayoutInput(song);
+
     const pool = await db.connect();
     const transaction = new sql.Transaction(pool);
     await transaction.begin();
@@ -132,11 +225,18 @@ async function updateSong(songId, song, userId) {
             .input('effects', sql.NVarChar, effects || '')
             .input('songContentFontSizePt', sql.Float, songContentFontSizePt ? parseFloat(songContentFontSizePt) : null)
             .input('contentText', sql.NVarChar, contentText)
+            .input('layoutColumnCount', sql.Int, layoutColumnCount)
+            .input('layoutDividerRatio', sql.Decimal(6, 5), dividerRatio)
+            .input('contentTextColumn1', sql.NVarChar, contentTextColumn1)
+            .input('contentTextColumn2', sql.NVarChar, contentTextColumn2)
             .query(`
                 UPDATE Songs
                 SET Title = @title, SongDate = @songDate, Notes = @notes,
                     SongKey = @songKey, Capo = @capo, BPM = @bpm,
-                    Effects = @effects, SongContentFontSizePt = @songContentFontSizePt, ContentText = @contentText, updated_at = GETDATE()
+                    Effects = @effects, SongContentFontSizePt = @songContentFontSizePt,
+                    ContentText = @contentText, LayoutColumnCount = @layoutColumnCount,
+                    LayoutDividerRatio = @layoutDividerRatio, ContentTextColumn1 = @contentTextColumn1,
+                    ContentTextColumn2 = @contentTextColumn2, updated_at = GETDATE()
                 WHERE Id = @id
             `);
 
@@ -385,5 +485,3 @@ module.exports = {
     getSongChordDiagrams,
     getSongFolders
 };
-const userService = require('./userService');
-const sql = require('mssql/msnodesqlv8');

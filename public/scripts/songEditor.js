@@ -4,8 +4,9 @@ const SongEditor = (function() {
     // Editor State
     let currentSongId = null;
     let selectedChordIds = [];
-    let personalizedLinePositions = [33, 66];
-    let isDraggingLine = false;
+    let layoutColumnCount = 1;
+    let layoutDividerRatio = 0.5;
+    let isDraggingDivider = false;
 
     // Variation Modal State
     let selectedVariationId = null;
@@ -26,7 +27,8 @@ const SongEditor = (function() {
         
         // --- PREVIOUSLY UNCHANGED INITIALIZE LOGIC ---
         const keyInput = document.getElementById('song-key-input');
-        const columnGuidesSelect = document.getElementById('column-guides-select');
+        const layoutSelect = document.getElementById('song-layout-select');
+        const divider = document.getElementById('song-column-divider');
         if (keyInput) {
             keyInput.addEventListener('input', function() {
                 if (this.dataset.autoFilled === 'true') {
@@ -34,8 +36,11 @@ const SongEditor = (function() {
                 }
             });
         }
-        if (columnGuidesSelect) {
-            columnGuidesSelect.addEventListener('change', updateColumnGuides);
+        if (layoutSelect) {
+            layoutSelect.addEventListener('change', handleLayoutChange);
+        }
+        if (divider) {
+            divider.addEventListener('mousedown', startDividerDrag);
         }
         const fontSizeInput = document.getElementById('song-content-font-size-input');
         if (fontSizeInput) {
@@ -43,7 +48,7 @@ const SongEditor = (function() {
         }
         window.addEventListener('resize', () => {
             if (!document.getElementById('song-editor-modal').classList.contains('hidden')) {
-                updateColumnGuides();
+                applyDividerPosition();
             }
         });
         // --- END OF UNCHANGED LOGIC ---
@@ -243,99 +248,128 @@ const SongEditor = (function() {
         detectAndUpdateKey();
     }
     
-    // --- Other functions (unchanged) ---
-    function updateColumnGuides() {
-        const select = document.getElementById('column-guides-select');
-        const guidesContainer = document.getElementById('column-guides');
-        const textarea = document.getElementById('song-content-textarea');
-        const mode = select.value;
-        
-        guidesContainer.innerHTML = '';
-        
-        if (mode === 'none') {
-            guidesContainer.classList.add('hidden');
-            return;
-        }
-        
-        guidesContainer.classList.remove('hidden');
-        
-        const textareaWidth = textarea.offsetWidth;
-        const paddingLeft = parseInt(window.getComputedStyle(textarea).paddingLeft);
-        const paddingRight = parseInt(window.getComputedStyle(textarea).paddingRight);
-        const contentWidth = textareaWidth - paddingLeft - paddingRight;
-        
-        if (mode === 'personalized') {
-            const line = document.createElement('div');
-            line.className = 'column-guide-line draggable';
-            const linePosition = paddingLeft + (contentWidth * personalizedLinePositions[0] / 100);
-            line.style.left = `${linePosition}px`;
-            line.dataset.lineIndex = 0;
-            line.addEventListener('mousedown', startDraggingLine);
-            guidesContainer.appendChild(line);
-        } else if (mode === 'two-personalized') {
-            for (let i = 0; i < 2; i++) {
-                const line = document.createElement('div');
-                line.className = 'column-guide-line draggable';
-                const linePosition = paddingLeft + (contentWidth * personalizedLinePositions[i] / 100);
-                line.style.left = `${linePosition}px`;
-                line.dataset.lineIndex = i;
-                line.addEventListener('mousedown', startDraggingLine);
-                guidesContainer.appendChild(line);
-            }
-        } else {
-            const columns = mode === 'two' ? 2 : 3;
-            const columnWidth = contentWidth / columns;
-            for (let i = 1; i < columns; i++) {
-                const line = document.createElement('div');
-                line.className = 'column-guide-line';
-                line.style.left = `${paddingLeft + (columnWidth * i)}px`;
-                guidesContainer.appendChild(line);
-            }
-        }
+    // --- Layout + editor helpers ---
+    function buildCombinedTextFromColumns(column1Text, column2Text) {
+        const left = column1Text || '';
+        const right = column2Text || '';
+        if (!left) return right;
+        if (!right) return left;
+        return `${left}\n\n${right}`;
     }
-    
-    function updateContentFontSize() {
-        const fontSizeInput = document.getElementById('song-content-font-size-input');
-        const textarea = document.getElementById('song-content-textarea');
-        if (fontSizeInput && textarea) {
-            const fontSize = fontSizeInput.value.trim();
-            if (fontSize && !isNaN(parseFloat(fontSize)) && parseFloat(fontSize) >= 6 && parseFloat(fontSize) <= 72) {
-                textarea.style.fontSize = fontSize + 'pt';
-            } else {
-                textarea.style.fontSize = '11pt';
-            }
+
+    function clampDividerRatio(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return 0.5;
+        return Math.min(0.8, Math.max(0.2, numeric));
+    }
+
+    function setLayoutColumnCount(count, syncSelect = true) {
+        layoutColumnCount = count === 2 ? 2 : 1;
+        const layoutSelect = document.getElementById('song-layout-select');
+        const singleEditor = document.getElementById('single-column-editor');
+        const twoColumnEditor = document.getElementById('two-column-editor');
+
+        if (syncSelect && layoutSelect) {
+            layoutSelect.value = String(layoutColumnCount);
+        }
+
+        if (layoutColumnCount === 2) {
+            if (singleEditor) singleEditor.classList.add('hidden');
+            if (twoColumnEditor) twoColumnEditor.classList.remove('hidden');
+        } else {
+            if (singleEditor) singleEditor.classList.remove('hidden');
+            if (twoColumnEditor) twoColumnEditor.classList.add('hidden');
         }
     }
 
-    function startDraggingLine(e) {
-        isDraggingLine = true;
+    function applyDividerPosition() {
+        const twoColumnEditor = document.getElementById('two-column-editor');
+        if (!twoColumnEditor) return;
+        const ratio = clampDividerRatio(layoutDividerRatio);
+        layoutDividerRatio = ratio;
+        twoColumnEditor.style.setProperty('--divider-position', `${(ratio * 100).toFixed(2)}%`);
+    }
+
+    function handleLayoutChange(event) {
+        const nextColumnCount = parseInt(event.target.value, 10) === 2 ? 2 : 1;
+
+        if (nextColumnCount === layoutColumnCount) {
+            setLayoutColumnCount(nextColumnCount, false);
+            return;
+        }
+
+        const singleTextarea = document.getElementById('song-content-textarea');
+        const column1Textarea = document.getElementById('song-content-column1-textarea');
+        const column2Textarea = document.getElementById('song-content-column2-textarea');
+
+        if (nextColumnCount === 2) {
+            if (column1Textarea && column2Textarea) {
+                const hasExistingTwoColumnContent = (column1Textarea.value || '').trim() || (column2Textarea.value || '').trim();
+                if (!hasExistingTwoColumnContent && singleTextarea) {
+                    column1Textarea.value = singleTextarea.value || '';
+                    column2Textarea.value = '';
+                }
+            }
+        } else if (singleTextarea && column1Textarea && column2Textarea) {
+            singleTextarea.value = buildCombinedTextFromColumns(column1Textarea.value, column2Textarea.value);
+        }
+
+        setLayoutColumnCount(nextColumnCount, false);
+    }
+
+    function startDividerDrag(e) {
+        e.preventDefault();
+        isDraggingDivider = true;
+
+        const divider = document.getElementById('song-column-divider');
+        if (divider) divider.classList.add('dragging');
         document.body.style.userSelect = 'none';
-        e.target.classList.add('dragging');
-        const lineIndex = parseInt(e.target.dataset.lineIndex) || 0;
+
         const handleMouseMove = (moveEvent) => {
-            if (!isDraggingLine) return;
-            const textarea = document.getElementById('song-content-textarea');
-            const guidesContainer = document.getElementById('column-guides');
-            const containerRect = guidesContainer.getBoundingClientRect();
-            const paddingLeft = parseInt(window.getComputedStyle(textarea).paddingLeft);
-            const paddingRight = parseInt(window.getComputedStyle(textarea).paddingRight);
-            const contentWidth = textarea.offsetWidth - paddingLeft - paddingRight;
-            let newLeft = moveEvent.clientX - containerRect.left;
-            newLeft = Math.max(paddingLeft, Math.min(newLeft, paddingLeft + contentWidth));
-            e.target.style.left = `${newLeft}px`;
-            personalizedLinePositions[lineIndex] = ((newLeft - paddingLeft) / contentWidth) * 100;
+            if (!isDraggingDivider) return;
+
+            const twoColumnEditor = document.getElementById('two-column-editor');
+            if (!twoColumnEditor) return;
+
+            const rect = twoColumnEditor.getBoundingClientRect();
+            const relativeX = moveEvent.clientX - rect.left;
+            const rawRatio = relativeX / rect.width;
+            layoutDividerRatio = clampDividerRatio(rawRatio);
+            applyDividerPosition();
         };
+
         const handleMouseUp = () => {
-            isDraggingLine = false;
+            isDraggingDivider = false;
             document.body.style.userSelect = '';
-            e.target.classList.remove('dragging');
+            if (divider) divider.classList.remove('dragging');
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('mouseup', handleMouseUp);
         };
+
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
     }
     
+    function updateContentFontSize() {
+        const fontSizeInput = document.getElementById('song-content-font-size-input');
+        const textareas = [
+            document.getElementById('song-content-textarea'),
+            document.getElementById('song-content-column1-textarea'),
+            document.getElementById('song-content-column2-textarea')
+        ].filter(Boolean);
+
+        if (fontSizeInput && textareas.length > 0) {
+            const fontSize = fontSizeInput.value.trim();
+            const resolvedFontSize = (fontSize && !isNaN(parseFloat(fontSize)) && parseFloat(fontSize) >= 6 && parseFloat(fontSize) <= 72)
+                ? `${fontSize}pt`
+                : '11pt';
+
+            textareas.forEach((textarea) => {
+                textarea.style.fontSize = resolvedFontSize;
+            });
+        }
+    }
+
     async function openEditor(songId = null) {
         currentSongId = songId;
         selectedChordIds = [];
@@ -346,6 +380,9 @@ const SongEditor = (function() {
                 alert(translations[currentLanguage]['Song not found'] || 'Song not found');
                 return;
             }
+            const savedColumnCount = parseInt(song.LayoutColumnCount, 10) === 2 ? 2 : 1;
+            const savedDividerRatio = clampDividerRatio(song.LayoutDividerRatio);
+
             document.getElementById('song-title-input').value = song.Title;
             document.getElementById('song-date-input').value = song.SongDate;
             document.getElementById('song-notes-input').value = song.Notes;
@@ -354,7 +391,12 @@ const SongEditor = (function() {
             document.getElementById('song-bpm-input').value = song.BPM;
             document.getElementById('song-effects-input').value = song.Effects;
             document.getElementById('song-content-font-size-input').value = song.SongContentFontSizePt || '';
-            document.getElementById('song-content-textarea').value = song.ContentText;
+            document.getElementById('song-content-textarea').value = song.ContentText || '';
+            document.getElementById('song-content-column1-textarea').value = song.ContentTextColumn1 || song.ContentText || '';
+            document.getElementById('song-content-column2-textarea').value = song.ContentTextColumn2 || '';
+            layoutDividerRatio = savedDividerRatio;
+            setLayoutColumnCount(savedColumnCount);
+            applyDividerPosition();
             updateContentFontSize();
             selectedChordIds = song.chordIds || [];
             await updateSelectedChordsList();
@@ -372,6 +414,11 @@ const SongEditor = (function() {
             document.getElementById('song-effects-input').value = '';
             document.getElementById('song-content-font-size-input').value = '';
             document.getElementById('song-content-textarea').value = '';
+            document.getElementById('song-content-column1-textarea').value = '';
+            document.getElementById('song-content-column2-textarea').value = '';
+            layoutDividerRatio = 0.5;
+            setLayoutColumnCount(1);
+            applyDividerPosition();
             updateContentFontSize();
             document.querySelectorAll('.folder-checkbox').forEach(cb => {
                 cb.checked = false;
@@ -379,15 +426,15 @@ const SongEditor = (function() {
             updateSelectedChordsList();
         }
         document.getElementById('song-editor-modal').classList.remove('hidden');
-        setTimeout(() => {
-            updateColumnGuides();
-        }, 100);
+        applyDividerPosition();
     }
     
     function closeEditor() {
         document.getElementById('song-editor-modal').classList.add('hidden');
         currentSongId = null;
         selectedChordIds = [];
+        layoutColumnCount = 1;
+        layoutDividerRatio = 0.5;
     }
     
     function removeChordFromSelection(index) {
@@ -570,8 +617,14 @@ const SongEditor = (function() {
             alert(translations[currentLanguage]['Title is required'] || 'Title is required');
             return;
         }
-        const contentText = document.getElementById('song-content-textarea').value;
-        if (!contentText.trim()) {
+        const singleContentText = document.getElementById('song-content-textarea').value;
+        const column1Text = document.getElementById('song-content-column1-textarea').value;
+        const column2Text = document.getElementById('song-content-column2-textarea').value;
+        const effectiveContentText = layoutColumnCount === 2
+            ? buildCombinedTextFromColumns(column1Text, column2Text)
+            : singleContentText;
+
+        if (!effectiveContentText.trim()) {
             alert(translations[currentLanguage]['Song content cannot be empty'] || 'Song content cannot be empty');
             return;
         }
@@ -581,7 +634,23 @@ const SongEditor = (function() {
             return;
         }
         const selectedFolders = Array.from(document.querySelectorAll('.folder-checkbox:checked')).map(cb => parseInt(cb.value));
-        const songData = { title: title, songDate: document.getElementById('song-date-input').value.trim(), notes: document.getElementById('song-notes-input').value.trim(), songKey: document.getElementById('song-key-input').value.trim(), capo: document.getElementById('song-capo-input').value.trim(), bpm: document.getElementById('song-bpm-input').value.trim(), effects: document.getElementById('song-effects-input').value.trim(), songContentFontSizePt: document.getElementById('song-content-font-size-input').value.trim(), contentText: contentText, chordIds: selectedChordIds, folderIds: selectedFolders };
+        const songData = {
+            title: title,
+            songDate: document.getElementById('song-date-input').value.trim(),
+            notes: document.getElementById('song-notes-input').value.trim(),
+            songKey: document.getElementById('song-key-input').value.trim(),
+            capo: document.getElementById('song-capo-input').value.trim(),
+            bpm: document.getElementById('song-bpm-input').value.trim(),
+            effects: document.getElementById('song-effects-input').value.trim(),
+            songContentFontSizePt: document.getElementById('song-content-font-size-input').value.trim(),
+            contentText: effectiveContentText,
+            layoutColumnCount: layoutColumnCount,
+            layoutDividerRatio: layoutDividerRatio,
+            contentTextColumn1: layoutColumnCount === 2 ? column1Text : singleContentText,
+            contentTextColumn2: layoutColumnCount === 2 ? column2Text : '',
+            chordIds: selectedChordIds,
+            folderIds: selectedFolders
+        };
         try {
             if (currentSongId) {
                 await SONGS_SERVICE.updateSong(currentSongId, songData);

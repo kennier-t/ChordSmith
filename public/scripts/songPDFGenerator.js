@@ -7,6 +7,130 @@ const SongPDFGenerator = (function() {
         // Ensure text is properly decoded and normalized
         return text.normalize('NFC');
     }
+
+    function clampDividerRatio(value) {
+        const numeric = Number(value);
+        if (!Number.isFinite(numeric)) return 0.5;
+        return Math.min(0.8, Math.max(0.2, numeric));
+    }
+
+    function getSongLayout(song) {
+        const layoutColumnCount = parseInt(song.LayoutColumnCount, 10) === 2 ? 2 : 1;
+        const layoutDividerRatio = clampDividerRatio(song.LayoutDividerRatio);
+
+        const contentText = normalizeText(song.ContentText || '');
+        const contentTextColumn1 = normalizeText(song.ContentTextColumn1 || '');
+        const contentTextColumn2 = normalizeText(song.ContentTextColumn2 || '');
+
+        if (layoutColumnCount === 2) {
+            return {
+                layoutColumnCount: 2,
+                layoutDividerRatio,
+                contentTextColumn1,
+                contentTextColumn2
+            };
+        }
+
+        return {
+            layoutColumnCount: 1,
+            layoutDividerRatio,
+            contentText: contentText || contentTextColumn1
+        };
+    }
+
+    function buildWrappedLines(doc, rawText, maxLineWidth) {
+        const normalized = normalizeText(rawText || '');
+        const lines = normalized.split('\n');
+        const wrapped = [];
+        lines.forEach(line => {
+            const wrappedLines = doc.splitTextToSize(line || ' ', maxLineWidth);
+            wrapped.push(...wrappedLines);
+        });
+        return wrapped;
+    }
+
+    function paginateLines(lines, firstPageLineCapacity, nextPageLineCapacity) {
+        const pages = [];
+        let cursor = 0;
+
+        while (cursor < lines.length) {
+            const capacity = pages.length === 0 ? firstPageLineCapacity : nextPageLineCapacity;
+            const safeCapacity = Math.max(1, capacity);
+            pages.push(lines.slice(cursor, cursor + safeCapacity));
+            cursor += safeCapacity;
+        }
+
+        if (pages.length === 0) {
+            pages.push([]);
+        }
+
+        return pages;
+    }
+
+    function renderTwoColumnLyrics(doc, layout, config) {
+        const {
+            pageWidth,
+            pageHeight,
+            startY,
+            lyricsTopMargin,
+            lyricsBottomMargin,
+            lineHeight
+        } = config;
+
+        const pageContentWidth = pageWidth - (lyricsTopMargin * 2);
+        const dividerX = lyricsTopMargin + (pageContentWidth * layout.layoutDividerRatio);
+        const columnGap = 8;
+
+        const leftX = lyricsTopMargin;
+        const rightX = dividerX + (columnGap / 2);
+        const leftWidth = Math.max(20, dividerX - leftX - (columnGap / 2));
+        const rightWidth = Math.max(20, (pageWidth - lyricsTopMargin) - rightX);
+
+        const leftLines = buildWrappedLines(doc, layout.contentTextColumn1, leftWidth);
+        const rightLines = buildWrappedLines(doc, layout.contentTextColumn2, rightWidth);
+
+        const firstPageLineCapacity = Math.floor((pageHeight - lyricsBottomMargin - startY) / lineHeight);
+        const nextPageLineCapacity = Math.floor((pageHeight - lyricsBottomMargin - lyricsTopMargin) / lineHeight);
+
+        const leftPages = paginateLines(leftLines, firstPageLineCapacity, nextPageLineCapacity);
+        const rightPages = paginateLines(rightLines, firstPageLineCapacity, nextPageLineCapacity);
+        const requiredPages = Math.max(leftPages.length, rightPages.length);
+
+        const startPage = doc.getNumberOfPages();
+        while (doc.getNumberOfPages() < startPage + requiredPages - 1) {
+            doc.addPage();
+        }
+
+        let finalY = startY;
+        const finalPage = startPage + requiredPages - 1;
+
+        for (let pageOffset = 0; pageOffset < requiredPages; pageOffset++) {
+            const pageNumber = startPage + pageOffset;
+            const baseY = pageOffset === 0 ? startY : lyricsTopMargin;
+            const leftPageLines = leftPages[pageOffset] || [];
+            const rightPageLines = rightPages[pageOffset] || [];
+
+            doc.setPage(pageNumber);
+
+            let leftY = baseY;
+            leftPageLines.forEach(line => {
+                doc.text(line, leftX, leftY, { align: 'left', maxWidth: leftWidth });
+                leftY += lineHeight;
+            });
+
+            let rightY = baseY;
+            rightPageLines.forEach(line => {
+                doc.text(line, rightX, rightY, { align: 'left', maxWidth: rightWidth });
+                rightY += lineHeight;
+            });
+
+            if (pageNumber === finalPage) {
+                finalY = Math.max(leftY, rightY);
+            }
+        }
+
+        return { finalPage, finalY };
+    }
     
     async function generatePDF(song, chords) {
         const { jsPDF } = window.jspdf;
@@ -118,32 +242,47 @@ const SongPDFGenerator = (function() {
         doc.setFontSize(contentFontSize);
 
         const lyricsMargin = 12;
-        const maxLineWidth = pageWidth - (lyricsMargin * 2);
+        const lyricsBottomMargin = 40;
+        const lineHeight = 5;
+        const songLayout = getSongLayout(song);
 
-        // Normalize text to ensure proper character encoding
-        const normalizedContent = normalizeText(song.ContentText);
-        const contentLines = normalizedContent.split('\n');
-        contentLines.forEach(line => {
-            if (yPosition > pageHeight - 40) {
-                doc.addPage();
-                yPosition = lyricsMargin;
-            }
-            
-            // Wrap text to respect right margin
-            const wrappedLines = doc.splitTextToSize(line || ' ', maxLineWidth);
-            wrappedLines.forEach(wrappedLine => {
-                if (yPosition > pageHeight - 40) {
+        if (songLayout.layoutColumnCount === 2) {
+            const { finalPage, finalY } = renderTwoColumnLyrics(doc, songLayout, {
+                pageWidth,
+                pageHeight,
+                startY: yPosition,
+                lyricsTopMargin: lyricsMargin,
+                lyricsBottomMargin,
+                lineHeight
+            });
+            doc.setPage(finalPage);
+            yPosition = finalY;
+        } else {
+            const maxLineWidth = pageWidth - (lyricsMargin * 2);
+            const contentLines = songLayout.contentText.split('\n');
+
+            contentLines.forEach(line => {
+                if (yPosition > pageHeight - lyricsBottomMargin) {
                     doc.addPage();
                     yPosition = lyricsMargin;
                 }
-                // Use array format to ensure proper character encoding
-                doc.text(wrappedLine, lyricsMargin, yPosition, { 
-                    align: 'left',
-                    maxWidth: maxLineWidth 
+
+                // Wrap text to respect right margin
+                const wrappedLines = doc.splitTextToSize(line || ' ', maxLineWidth);
+                wrappedLines.forEach(wrappedLine => {
+                    if (yPosition > pageHeight - lyricsBottomMargin) {
+                        doc.addPage();
+                        yPosition = lyricsMargin;
+                    }
+
+                    doc.text(wrappedLine, lyricsMargin, yPosition, {
+                        align: 'left',
+                        maxWidth: maxLineWidth
+                    });
+                    yPosition += lineHeight;
                 });
-                yPosition += 5;
             });
-        });
+        }
         
         const numDiagrams = Math.min(8, Math.max(6, (chords || []).length));
         const chordDiagramsImage = await generateChordDiagramsImage(chords || [], numDiagrams);

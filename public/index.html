@@ -358,24 +358,37 @@
                     <div class="song-content-editor">
                         <div class="content-header">
                             <h3 data-translate="Song Content">Song Content</h3>
-                            <div class="column-guides-control">
-                                <label for="column-guides-select" data-translate="Column Guides:">Column Guides:</label>
-                                <select id="column-guides-select">
-                                    <option value="none" selected data-translate="None">None</option>
-                                    <option value="personalized" data-translate="Personalized">Personalized</option>
-                                    <option value="two-personalized" data-translate="Two Personalized">Two Personalized</option>
-                                    <option value="two" data-translate="2 Columns">2 Columns</option>
-                                    <option value="three" data-translate="3 Columns">3 Columns</option>
+                            <div class="layout-control">
+                                <label for="song-layout-select" data-translate="Page Layout:">Page Layout:</label>
+                                <select id="song-layout-select">
+                                    <option value="1" selected data-translate="Single Column">Single Column</option>
+                                    <option value="2" data-translate="Two Columns">Two Columns</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="textarea-wrapper">
+                        <div id="single-column-editor" class="textarea-wrapper">
                             <textarea id="song-content-textarea" 
                                       placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."
                                       data-translate-placeholder-1="Paste or type your song here..."
                                       data-translate-placeholder-2="Chords go on the line above lyrics."
                                       data-translate-placeholder-3="Double line break separates sections."></textarea>
-                            <div id="column-guides" class="column-guides"></div>
+                        </div>
+                        <div id="two-column-editor" class="two-column-editor hidden">
+                            <textarea id="song-content-column1-textarea"
+                                      class="song-column-textarea"
+                                      placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."
+                                      data-translate-placeholder-1="Paste or type your song here..."
+                                      data-translate-placeholder-2="Chords go on the line above lyrics."
+                                      data-translate-placeholder-3="Double line break separates sections."
+                                      aria-label="Column 1"></textarea>
+                            <div id="song-column-divider" class="song-column-divider" role="separator" aria-label="Column divider"></div>
+                            <textarea id="song-content-column2-textarea"
+                                      class="song-column-textarea"
+                                      placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."
+                                      data-translate-placeholder-1="Paste or type your song here..."
+                                      data-translate-placeholder-2="Chords go on the line above lyrics."
+                                      data-translate-placeholder-3="Double line break separates sections."
+                                      aria-label="Column 2"></textarea>
                         </div>
                     </div>
                     

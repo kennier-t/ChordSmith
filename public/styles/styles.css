@@ -1362,19 +1362,19 @@ h2::after {
     margin-bottom: 12px;
 }
 
-.column-guides-control {
+.layout-control {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.column-guides-control label {
+.layout-control label {
     font-size: 0.875rem;
     color: var(--text-secondary);
     white-space: nowrap;
 }
 
-.column-guides-control select {
+.layout-control select {
     padding: 4px 8px;
     border: 1px solid var(--border);
     background: white;
@@ -1384,11 +1384,11 @@ h2::after {
     transition: all 0.3s ease;
 }
 
-.column-guides-control select:hover {
+.layout-control select:hover {
     border-color: var(--primary);
 }
 
-.column-guides-control select:focus {
+.layout-control select:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(139, 111, 71, 0.1);
@@ -1398,45 +1398,14 @@ h2::after {
     position: relative;
 }
 
-.column-guides {
-    position: absolute;
-    top: 12px;
-    left: 0;
+.two-column-editor {
+    --divider-position: 50%;
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 0;
     width: 100%;
-    height: calc(100% - 24px);
-    pointer-events: none;
-    z-index: 1;
-}
-
-.column-guides.hidden {
-    display: none;
-}
-
-.column-guide-line {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: rgba(139, 111, 71, 0.15);
-    pointer-events: none;
-}
-
-.column-guide-line.draggable {
-    pointer-events: auto;
-    cursor: col-resize;
-    width: 3px;
-    margin-left: -1.5px;
-    background: rgba(139, 111, 71, 0.3);
-    transition: background 0.2s ease;
-}
-
-.column-guide-line.draggable:hover {
-    background: rgba(139, 111, 71, 0.5);
-}
-
-.column-guide-line.draggable.dragging {
-    background: rgba(139, 111, 71, 0.7);
-    z-index: 10;
+    min-height: 300px;
 }
 
 .metadata-table {
@@ -1470,7 +1439,8 @@ h2::after {
     outline: 1px solid var(--primary);
 }
 
-#song-content-textarea {
+#song-content-textarea,
+.song-column-textarea {
     width: 100%;
     min-height: 300px;
     padding: 12px;
@@ -1484,10 +1454,55 @@ h2::after {
     background: transparent;
 }
 
-#song-content-textarea:focus {
+#song-content-textarea:focus,
+.song-column-textarea:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(139, 111, 71, 0.1);
+}
+
+#song-content-column1-textarea {
+    width: calc(var(--divider-position) - 6px);
+    min-width: 120px;
+    border-right: none;
+}
+
+#song-content-column2-textarea {
+    width: calc(100% - var(--divider-position) - 6px);
+    min-width: 120px;
+    border-left: none;
+}
+
+.song-column-divider {
+    width: 12px;
+    min-width: 12px;
+    cursor: col-resize;
+    background: linear-gradient(
+        to right,
+        rgba(139, 111, 71, 0.12) 0,
+        rgba(139, 111, 71, 0.35) 50%,
+        rgba(139, 111, 71, 0.12) 100%
+    );
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+}
+
+.song-column-divider:hover,
+.song-column-divider.dragging {
+    background: linear-gradient(
+        to right,
+        rgba(139, 111, 71, 0.2) 0,
+        rgba(139, 111, 71, 0.6) 50%,
+        rgba(139, 111, 71, 0.2) 100%
+    );
+}
+
+@media (max-width: 768px) {
+    #song-content-column1-textarea,
+    #song-content-column2-textarea {
+        min-width: 90px;
+    }
 }
 
 .selected-chords-list {
