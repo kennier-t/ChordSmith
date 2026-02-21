@@ -110,10 +110,9 @@ CREATE TABLE Songs (
     Capo NVARCHAR(20) NULL,
     BPM NVARCHAR(20) NULL,
     Effects NVARCHAR(200) NULL,
-    ContentText NVARCHAR(MAX) NOT NULL,
     LayoutColumnCount TINYINT NOT NULL DEFAULT 1 CHECK (LayoutColumnCount IN (1, 2)),
     LayoutDividerRatio DECIMAL(6,5) NOT NULL DEFAULT 0.50000 CHECK (LayoutDividerRatio >= 0.20000 AND LayoutDividerRatio <= 0.80000),
-    ContentTextColumn1 NVARCHAR(MAX) NULL,
+    ContentTextColumn1 NVARCHAR(MAX) NOT NULL DEFAULT N'',
     ContentTextColumn2 NVARCHAR(MAX) NULL,
     SongContentFontSizePt DECIMAL(5,2) NULL,
     CreatedDate DATETIME2 DEFAULT GETDATE(),
@@ -393,7 +392,19 @@ SELECT
     s.Capo,
     s.BPM,
     s.Effects,
-    s.ContentText,
+    CASE
+        WHEN ISNULL(s.LayoutColumnCount, 1) = 2
+            THEN CONCAT(
+                ISNULL(s.ContentTextColumn1, N''),
+                CASE
+                    WHEN ISNULL(s.ContentTextColumn1, N'') <> N'' AND ISNULL(s.ContentTextColumn2, N'') <> N''
+                        THEN NCHAR(10) + NCHAR(10)
+                    ELSE N''
+                END,
+                ISNULL(s.ContentTextColumn2, N'')
+            )
+        ELSE ISNULL(s.ContentTextColumn1, N'')
+    END AS ContentText,
     s.LayoutColumnCount,
     s.LayoutDividerRatio,
     s.ContentTextColumn1,
@@ -905,3 +916,224 @@ ALTER TABLE dbo.ChordShares ADD CONSTRAINT FK_ChordShares_Chord FOREIGN KEY (cho
 GO
 
 PRINT 'Migration completed: Folders are now user-specific, and delete cascades added';
+
+-- 2026-02-20_add-song-layout-columns!!
+
+-- =============================================
+-- Migration: 2026-02-20_add-song-layout-columns.sql
+-- Purpose:
+-- - Persist editor layout mode (single/two columns)
+-- - Persist divider position and per-column text
+-- - Keep backward compatibility with existing ContentText
+-- Safe to re-run: yes (checks column/constraint existence)
+-- =============================================
+
+USE ChordSmith;
+GO
+
+SET XACT_ABORT ON;
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    IF OBJECT_ID('dbo.Songs', 'U') IS NULL
+    BEGIN
+        RAISERROR('dbo.Songs table was not found.', 16, 1);
+    END;
+
+    IF COL_LENGTH('dbo.Songs', 'LayoutColumnCount') IS NULL
+    BEGIN
+        ALTER TABLE dbo.Songs
+        ADD LayoutColumnCount TINYINT NOT NULL
+            CONSTRAINT DF_Songs_LayoutColumnCount DEFAULT (1);
+    END;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM sys.check_constraints
+        WHERE name = 'CK_Songs_LayoutColumnCount'
+    )
+    BEGIN
+        EXEC sp_executesql N'
+            ALTER TABLE dbo.Songs
+            ADD CONSTRAINT CK_Songs_LayoutColumnCount
+                CHECK (LayoutColumnCount IN (1, 2));
+        ';
+    END;
+
+    IF COL_LENGTH('dbo.Songs', 'LayoutDividerRatio') IS NULL
+    BEGIN
+        ALTER TABLE dbo.Songs
+        ADD LayoutDividerRatio DECIMAL(6,5) NOT NULL
+            CONSTRAINT DF_Songs_LayoutDividerRatio DEFAULT (0.50000);
+    END;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM sys.check_constraints
+        WHERE name = 'CK_Songs_LayoutDividerRatio'
+    )
+    BEGIN
+        EXEC sp_executesql N'
+            ALTER TABLE dbo.Songs
+            ADD CONSTRAINT CK_Songs_LayoutDividerRatio
+                CHECK (LayoutDividerRatio >= 0.20000 AND LayoutDividerRatio <= 0.80000);
+        ';
+    END;
+
+    IF COL_LENGTH('dbo.Songs', 'ContentTextColumn1') IS NULL
+    BEGIN
+        ALTER TABLE dbo.Songs
+        ADD ContentTextColumn1 NVARCHAR(MAX) NULL;
+    END;
+
+    IF COL_LENGTH('dbo.Songs', 'ContentTextColumn2') IS NULL
+    BEGIN
+        ALTER TABLE dbo.Songs
+        ADD ContentTextColumn2 NVARCHAR(MAX) NULL;
+    END;
+
+    EXEC sp_executesql N'
+        UPDATE dbo.Songs
+        SET LayoutColumnCount = 1
+        WHERE LayoutColumnCount IS NULL OR LayoutColumnCount NOT IN (1, 2);
+    ';
+
+    EXEC sp_executesql N'
+        UPDATE dbo.Songs
+        SET LayoutDividerRatio = 0.50000
+        WHERE LayoutDividerRatio IS NULL
+           OR LayoutDividerRatio < 0.20000
+           OR LayoutDividerRatio > 0.80000;
+    ';
+
+    IF COL_LENGTH('dbo.Songs', 'ContentText') IS NOT NULL
+    BEGIN
+        EXEC sp_executesql N'
+            UPDATE dbo.Songs
+            SET ContentTextColumn1 = ContentText
+            WHERE ContentTextColumn1 IS NULL;
+        ';
+    END;
+
+    EXEC sp_executesql N'
+        UPDATE dbo.Songs
+        SET ContentTextColumn2 = N''''
+        WHERE ContentTextColumn2 IS NULL;
+    ';
+
+    COMMIT TRANSACTION;
+    PRINT 'Migration completed: song layout columns added.';
+END TRY
+BEGIN CATCH
+    IF XACT_STATE() <> 0
+        ROLLBACK TRANSACTION;
+
+    DECLARE @err_msg NVARCHAR(4000) = ERROR_MESSAGE();
+    RAISERROR('Migration failed: %s', 16, 1, @err_msg);
+END CATCH;
+GO
+
+
+-- 2026-02-21_drop-songs-contenttext!!!
+-- =============================================
+-- Migration: 2026-02-21_drop-songs-contenttext.sql
+-- Purpose:
+-- - Remove deprecated Songs.ContentText column
+-- - Keep compatibility in vw_SongsWithFolders by exposing computed ContentText
+-- Safe to re-run: yes
+-- =============================================
+
+USE ChordSmith;
+GO
+
+SET XACT_ABORT ON;
+BEGIN TRY
+    BEGIN TRANSACTION;
+
+    IF OBJECT_ID('dbo.Songs', 'U') IS NULL
+    BEGIN
+        RAISERROR('dbo.Songs table was not found.', 16, 1);
+    END;
+
+    IF COL_LENGTH('dbo.Songs', 'ContentTextColumn1') IS NULL
+    BEGIN
+        RAISERROR('ContentTextColumn1 was not found. Run 2026-02-20_add-song-layout-columns.sql first.', 16, 1);
+    END;
+
+    IF COL_LENGTH('dbo.Songs', 'ContentTextColumn2') IS NULL
+    BEGIN
+        RAISERROR('ContentTextColumn2 was not found. Run 2026-02-20_add-song-layout-columns.sql first.', 16, 1);
+    END;
+
+    IF COL_LENGTH('dbo.Songs', 'LayoutColumnCount') IS NULL
+    BEGIN
+        RAISERROR('LayoutColumnCount was not found. Run 2026-02-20_add-song-layout-columns.sql first.', 16, 1);
+    END;
+
+    -- Backfill before drop, only if old column still exists
+    IF COL_LENGTH('dbo.Songs', 'ContentText') IS NOT NULL
+    BEGIN
+        EXEC sp_executesql N'
+            UPDATE dbo.Songs
+            SET ContentTextColumn1 = ISNULL(ContentTextColumn1, ContentText)
+            WHERE ContentTextColumn1 IS NULL;
+        ';
+    END;
+
+    -- Keep view output compatible by exposing a computed ContentText column.
+    EXEC sp_executesql N'
+        CREATE OR ALTER VIEW dbo.vw_SongsWithFolders AS
+        SELECT
+            s.Id,
+            s.Title,
+            s.SongDate,
+            s.Notes,
+            s.SongKey,
+            s.Capo,
+            s.BPM,
+            s.Effects,
+            CASE
+                WHEN ISNULL(s.LayoutColumnCount, 1) = 2
+                    THEN CONCAT(
+                        ISNULL(s.ContentTextColumn1, N''''),
+                        CASE
+                            WHEN ISNULL(s.ContentTextColumn1, N'''') <> N'''' AND ISNULL(s.ContentTextColumn2, N'''') <> N''''
+                                THEN NCHAR(10) + NCHAR(10)
+                            ELSE N''''
+                        END,
+                        ISNULL(s.ContentTextColumn2, N'''')
+                    )
+                ELSE ISNULL(s.ContentTextColumn1, N'''')
+            END AS ContentText,
+            s.LayoutColumnCount,
+            s.LayoutDividerRatio,
+            s.ContentTextColumn1,
+            s.ContentTextColumn2,
+            s.CreatedDate,
+            s.ModifiedDate,
+            STUFF((
+                SELECT '', '' + f.Name
+                FROM SongFolderMapping sfm
+                INNER JOIN Folders f ON sfm.FolderId = f.Id
+                WHERE sfm.SongId = s.Id
+                FOR XML PATH(''''), TYPE
+            ).value(''.'', ''NVARCHAR(MAX)''), 1, 2, '''') AS Folders
+        FROM Songs s;
+    ';
+
+    IF COL_LENGTH('dbo.Songs', 'ContentText') IS NOT NULL
+    BEGIN
+        EXEC sp_executesql N'ALTER TABLE dbo.Songs DROP COLUMN ContentText;';
+    END;
+
+    COMMIT TRANSACTION;
+    PRINT 'Migration completed: Songs.ContentText removed safely.';
+END TRY
+BEGIN CATCH
+    IF XACT_STATE() <> 0
+        ROLLBACK TRANSACTION;
+
+    DECLARE @err_msg NVARCHAR(4000) = ERROR_MESSAGE();
+    RAISERROR('Migration failed: %s', 16, 1, @err_msg);
+END CATCH;
+GO

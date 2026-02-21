@@ -45,22 +45,36 @@ function normalizeSongLayoutInput(song) {
 
     const dividerRatio = clampDividerRatio(song.layoutDividerRatio || song.LayoutDividerRatio);
 
-    let contentText = providedSingleText;
-    if (layoutColumnCount === 2) {
-        contentText = [contentTextColumn1, contentTextColumn2]
-            .filter(part => typeof part === 'string' && part.length > 0)
-            .join('\n\n');
-    } else if (!contentText) {
-        contentText = contentTextColumn1 || '';
-    }
-
     return {
         layoutColumnCount,
         dividerRatio,
         contentTextColumn1: contentTextColumn1 || '',
-        contentTextColumn2: contentTextColumn2 || '',
-        contentText: contentText || ''
+        contentTextColumn2: contentTextColumn2 || ''
     };
+}
+
+function buildLegacyContentText(song) {
+    if (!song) return '';
+    const existing = typeof song.ContentText === 'string' ? song.ContentText : '';
+    if (existing) return existing;
+
+    const columnCount = Number(song.LayoutColumnCount) === 2 ? 2 : 1;
+    const col1 = typeof song.ContentTextColumn1 === 'string' ? song.ContentTextColumn1 : '';
+    const col2 = typeof song.ContentTextColumn2 === 'string' ? song.ContentTextColumn2 : '';
+
+    if (columnCount === 2) {
+        if (!col1) return col2;
+        if (!col2) return col1;
+        return `${col1}\n\n${col2}`;
+    }
+
+    return col1;
+}
+
+function applyLegacyContentCompatibility(song) {
+    if (!song) return song;
+    song.ContentText = buildLegacyContentText(song);
+    return song;
 }
 
 async function createSong(song, userId) {
@@ -69,8 +83,7 @@ async function createSong(song, userId) {
         layoutColumnCount,
         dividerRatio,
         contentTextColumn1,
-        contentTextColumn2,
-        contentText
+        contentTextColumn2
     } = normalizeSongLayoutInput(song);
 
     const pool = await db.connect();
@@ -86,7 +99,6 @@ async function createSong(song, userId) {
             .input('bpm', sql.NVarChar, bpm || '')
             .input('effects', sql.NVarChar, effects || '')
             .input('songContentFontSizePt', sql.Float, songContentFontSizePt ? parseFloat(songContentFontSizePt) : null)
-            .input('contentText', sql.NVarChar, contentText)
             .input('layoutColumnCount', sql.Int, layoutColumnCount)
             .input('layoutDividerRatio', sql.Decimal(6, 5), dividerRatio)
             .input('contentTextColumn1', sql.NVarChar, contentTextColumn1)
@@ -95,14 +107,14 @@ async function createSong(song, userId) {
             .query(`
                 INSERT INTO Songs (
                     Title, SongDate, Notes, SongKey, Capo, BPM, Effects,
-                    SongContentFontSizePt, ContentText, LayoutColumnCount,
+                    SongContentFontSizePt, LayoutColumnCount,
                     LayoutDividerRatio, ContentTextColumn1, ContentTextColumn2,
                     creator_id, created_at, updated_at
                 )
                 OUTPUT INSERTED.Id
                 VALUES (
                     @title, @songDate, @notes, @songKey, @capo, @bpm, @effects,
-                    @songContentFontSizePt, @contentText, @layoutColumnCount,
+                    @songContentFontSizePt, @layoutColumnCount,
                     @layoutDividerRatio, @contentTextColumn1, @contentTextColumn2,
                     @creator_id, GETDATE(), GETDATE()
                 )
@@ -177,6 +189,7 @@ async function getSongById(songId, userId) {
     if (song) {
         song.folderIds = song.folderIds ? song.folderIds.split(',').map(Number) : [];
         song.chordIds = song.chordIds ? song.chordIds.split(',').map(Number) : [];
+        applyLegacyContentCompatibility(song);
     }
     return song;
 }
@@ -187,7 +200,7 @@ async function getSongsByUserId(userId) {
         JOIN UserSongs us ON s.id = us.song_id
         WHERE us.user_id = @userId
     `, { userId });
-    return result.recordset;
+    return result.recordset.map(applyLegacyContentCompatibility);
 }
 
 async function updateSong(songId, song, userId) {
@@ -206,8 +219,7 @@ async function updateSong(songId, song, userId) {
         layoutColumnCount,
         dividerRatio,
         contentTextColumn1,
-        contentTextColumn2,
-        contentText
+        contentTextColumn2
     } = normalizeSongLayoutInput(song);
 
     const pool = await db.connect();
@@ -224,7 +236,6 @@ async function updateSong(songId, song, userId) {
             .input('bpm', sql.NVarChar, bpm || '')
             .input('effects', sql.NVarChar, effects || '')
             .input('songContentFontSizePt', sql.Float, songContentFontSizePt ? parseFloat(songContentFontSizePt) : null)
-            .input('contentText', sql.NVarChar, contentText)
             .input('layoutColumnCount', sql.Int, layoutColumnCount)
             .input('layoutDividerRatio', sql.Decimal(6, 5), dividerRatio)
             .input('contentTextColumn1', sql.NVarChar, contentTextColumn1)
@@ -234,7 +245,7 @@ async function updateSong(songId, song, userId) {
                 SET Title = @title, SongDate = @songDate, Notes = @notes,
                     SongKey = @songKey, Capo = @capo, BPM = @bpm,
                     Effects = @effects, SongContentFontSizePt = @songContentFontSizePt,
-                    ContentText = @contentText, LayoutColumnCount = @layoutColumnCount,
+                    LayoutColumnCount = @layoutColumnCount,
                     LayoutDividerRatio = @layoutDividerRatio, ContentTextColumn1 = @contentTextColumn1,
                     ContentTextColumn2 = @contentTextColumn2, updated_at = GETDATE()
                 WHERE Id = @id
@@ -413,7 +424,7 @@ async function getSongsByFolder(folderId, userId) {
         JOIN SongFolderMapping sfm ON s.id = sfm.SongId
         WHERE sfm.FolderId = @folderId AND us.user_id = @userId
     `, { folderId: parsedFolderId, userId });
-    return result.recordset;
+    return result.recordset.map(applyLegacyContentCompatibility);
 }
 
 async function getSongChordDiagrams(songId, userId) {

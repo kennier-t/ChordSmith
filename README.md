@@ -61,6 +61,7 @@ A web application for visualizing, creating, sharing, and downloading guitar cho
     - Run `database/setup-complete.sql` to create the initial database.
     - Run `database/2026-01-23_add-multiuser-and-sharing.sql` to add the multi-user features.
     - Run `database/2026-02-20_add-song-layout-columns.sql` to add song column-layout persistence.
+    - Run `database/2026-02-21_drop-songs-contenttext.sql` to remove legacy `Songs.ContentText`.
 4.  Update the connection string in `server/db.js` with your server name.
 5.  Start the server:
     ```bash
@@ -113,7 +114,8 @@ ChordSmith/
 │   ├── setup-complete.sql
 │   ├── 2026-01-23_add-multiuser-and-sharing.sql
 │   ├── 2026-02-20_add-song-layout-columns.sql
-│   └── 2026-02-20_add-song-layout-columns.rollback.sql
+│   ├── 2026-02-21_drop-songs-contenttext.sql
+│   └── 2026-02-21_drop-songs-contenttext.rollback.sql
 ├── package.json
 └── README.md
 ```

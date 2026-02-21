@@ -391,8 +391,9 @@ const SongEditor = (function() {
             document.getElementById('song-bpm-input').value = song.BPM;
             document.getElementById('song-effects-input').value = song.Effects;
             document.getElementById('song-content-font-size-input').value = song.SongContentFontSizePt || '';
-            document.getElementById('song-content-textarea').value = song.ContentText || '';
-            document.getElementById('song-content-column1-textarea').value = song.ContentTextColumn1 || song.ContentText || '';
+            const contentColumn1 = song.ContentTextColumn1 || song.ContentText || '';
+            document.getElementById('song-content-textarea').value = contentColumn1;
+            document.getElementById('song-content-column1-textarea').value = contentColumn1;
             document.getElementById('song-content-column2-textarea').value = song.ContentTextColumn2 || '';
             layoutDividerRatio = savedDividerRatio;
             setLayoutColumnCount(savedColumnCount);
