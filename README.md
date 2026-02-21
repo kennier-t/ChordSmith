@@ -23,6 +23,10 @@ ChordSmith is a web app to create, manage, share, and export guitar chords and s
   - Single column (default).
   - Two columns with draggable divider.
 - Two-column layout persists per song (column count, divider position, column content).
+- Song editor includes a UI-only line-number gutter for the first text column.
+- Line numbers are not saved and are not included in generated PDFs.
+- Default line-number window is 30 visible lines; developer override is available:
+  set `window.CHORDSMITH_EDITOR_VISIBLE_LINES` (for example `40` or `50`) before `songEditor.js` loads.
 - PDF export preserves the existing document structure:
   - metadata at top,
   - lyrics/content area in the configured layout,

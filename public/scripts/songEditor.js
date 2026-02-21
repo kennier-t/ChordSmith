@@ -7,6 +7,14 @@ const SongEditor = (function() {
     let layoutColumnCount = 1;
     let layoutDividerRatio = 0.5;
     let isDraggingDivider = false;
+    let gutterResizeObserver = null;
+    const DEFAULT_VISIBLE_EDITOR_LINES = Number(window.CHORDSMITH_EDITOR_VISIBLE_LINES) > 0
+        ? Math.floor(Number(window.CHORDSMITH_EDITOR_VISIBLE_LINES))
+        : 30;
+    const lineNumberBindings = [
+        { textareaId: 'song-content-textarea', gutterId: 'single-column-line-numbers' },
+        { textareaId: 'song-content-column1-textarea', gutterId: 'column1-line-numbers' }
+    ];
 
     // Variation Modal State
     let selectedVariationId = null;
@@ -46,9 +54,11 @@ const SongEditor = (function() {
         if (fontSizeInput) {
             fontSizeInput.addEventListener('input', updateContentFontSize);
         }
+        initializeLineNumberGutters();
         window.addEventListener('resize', () => {
             if (!document.getElementById('song-editor-modal').classList.contains('hidden')) {
                 applyDividerPosition();
+                refreshLineNumberGutters();
             }
         });
         // --- END OF UNCHANGED LOGIC ---
@@ -280,6 +290,7 @@ const SongEditor = (function() {
             if (singleEditor) singleEditor.classList.remove('hidden');
             if (twoColumnEditor) twoColumnEditor.classList.add('hidden');
         }
+        refreshLineNumberGutters();
     }
 
     function applyDividerPosition() {
@@ -315,6 +326,7 @@ const SongEditor = (function() {
         }
 
         setLayoutColumnCount(nextColumnCount, false);
+        refreshLineNumberGutters();
     }
 
     function startDividerDrag(e) {
@@ -366,8 +378,154 @@ const SongEditor = (function() {
 
             textareas.forEach((textarea) => {
                 textarea.style.fontSize = resolvedFontSize;
+                delete textarea.dataset.defaultHeightApplied;
             });
         }
+        refreshLineNumberGutters();
+    }
+
+    function initializeLineNumberGutters() {
+        lineNumberBindings.forEach(({ textareaId, gutterId }) => {
+            const textarea = document.getElementById(textareaId);
+            const gutter = document.getElementById(gutterId);
+            if (!textarea || !gutter) return;
+
+            textarea.addEventListener('input', () => updateGutterForTextarea(textarea, gutter));
+            textarea.addEventListener('scroll', () => {
+                updateGutterForTextarea(textarea, gutter);
+            });
+        });
+
+        if (typeof ResizeObserver !== 'undefined') {
+            gutterResizeObserver = new ResizeObserver(() => {
+                refreshLineNumberGutters();
+            });
+
+            lineNumberBindings.forEach(({ textareaId }) => {
+                const textarea = document.getElementById(textareaId);
+                if (textarea) {
+                    gutterResizeObserver.observe(textarea);
+                }
+            });
+
+            const twoColumnEditor = document.getElementById('two-column-editor');
+            if (twoColumnEditor) {
+                gutterResizeObserver.observe(twoColumnEditor);
+            }
+        }
+    }
+
+    function getVisualLineCount(textarea) {
+        const styles = window.getComputedStyle(textarea);
+        const lineHeight = parseFloat(styles.lineHeight) || 16;
+        const paddingTop = parseFloat(styles.paddingTop) || 0;
+        const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+        const contentHeight = Math.max(0, textarea.scrollHeight - paddingTop - paddingBottom);
+        return Math.max(1, Math.ceil(contentHeight / lineHeight));
+    }
+
+    function getVisibleLineCapacity(textarea) {
+        const styles = window.getComputedStyle(textarea);
+        const lineHeight = parseFloat(styles.lineHeight) || 16;
+        const paddingTop = parseFloat(styles.paddingTop) || 0;
+        const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+        const visibleContentHeight = Math.max(0, textarea.clientHeight - paddingTop - paddingBottom);
+        return Math.max(1, Math.floor(visibleContentHeight / lineHeight));
+    }
+
+    function setDefaultEditorHeight(textarea) {
+        const styles = window.getComputedStyle(textarea);
+        const lineHeight = parseFloat(styles.lineHeight) || 16;
+        const paddingTop = parseFloat(styles.paddingTop) || 0;
+        const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+        let targetHeight = Math.ceil((lineHeight * DEFAULT_VISIBLE_EDITOR_LINES) + paddingTop + paddingBottom);
+
+        if (textarea.id === 'song-content-column1-textarea') {
+            const twoColumnEditor = document.getElementById('two-column-editor');
+            const column2 = document.getElementById('song-content-column2-textarea');
+            if (twoColumnEditor) {
+                for (let i = 0; i < 12; i++) {
+                    twoColumnEditor.style.height = `${targetHeight}px`;
+                    if (getVisibleLineCapacity(textarea) >= DEFAULT_VISIBLE_EDITOR_LINES) {
+                        break;
+                    }
+                    targetHeight += 1;
+                }
+            }
+            textarea.style.height = '';
+            if (column2) {
+                column2.style.height = '';
+            }
+            return;
+        }
+
+        for (let i = 0; i < 12; i++) {
+            textarea.style.height = `${targetHeight}px`;
+            if (getVisibleLineCapacity(textarea) >= DEFAULT_VISIBLE_EDITOR_LINES) {
+                break;
+            }
+            targetHeight += 1;
+        }
+    }
+
+    function buildLineNumbersText(startLine, endLine) {
+        const lineCount = Math.max(0, endLine - startLine + 1);
+        const lines = new Array(lineCount);
+        for (let i = 0; i < lineCount; i++) {
+            lines[i] = String(startLine + i);
+        }
+        return lines.join('\n');
+    }
+
+    function updateGutterForTextarea(textarea, gutter) {
+        const styles = window.getComputedStyle(textarea);
+        gutter.style.fontSize = styles.fontSize;
+        gutter.style.lineHeight = styles.lineHeight;
+        let content = gutter.querySelector('.line-number-content');
+        if (!content) {
+            content = document.createElement('span');
+            content.className = 'line-number-content';
+            gutter.textContent = '';
+            gutter.appendChild(content);
+        }
+
+        const lineHeight = parseFloat(styles.lineHeight) || 16;
+        const lineCount = getVisualLineCount(textarea);
+        const visibleLineCapacity = getVisibleLineCapacity(textarea);
+        const rawStart = Math.floor(textarea.scrollTop / lineHeight) + 1;
+        const startLine = Math.max(1, rawStart);
+        const endLine = Math.min(lineCount, startLine + visibleLineCapacity - 1);
+        const offset = -(textarea.scrollTop - ((startLine - 1) * lineHeight));
+
+        const previousStart = parseInt(gutter.dataset.startLine || '0', 10);
+        const previousEnd = parseInt(gutter.dataset.endLine || '0', 10);
+        if (previousStart !== startLine || previousEnd !== endLine) {
+            content.textContent = buildLineNumbersText(startLine, endLine);
+            gutter.dataset.startLine = String(startLine);
+            gutter.dataset.endLine = String(endLine);
+        }
+        content.style.transform = `translateY(${offset}px)`;
+    }
+
+    function refreshLineNumberGutters() {
+        lineNumberBindings.forEach(({ textareaId, gutterId }) => {
+            const textarea = document.getElementById(textareaId);
+            const gutter = document.getElementById(gutterId);
+            if (!textarea || !gutter) return;
+            if (!textarea.dataset.defaultHeightApplied) {
+                setDefaultEditorHeight(textarea);
+                textarea.dataset.defaultHeightApplied = 'true';
+            }
+            updateGutterForTextarea(textarea, gutter);
+        });
+    }
+
+    function resetDefaultEditorHeights() {
+        lineNumberBindings.forEach(({ textareaId }) => {
+            const textarea = document.getElementById(textareaId);
+            if (!textarea) return;
+            delete textarea.dataset.defaultHeightApplied;
+        });
     }
 
     async function openEditor(songId = null) {
@@ -396,9 +554,11 @@ const SongEditor = (function() {
             document.getElementById('song-content-column1-textarea').value = contentColumn1;
             document.getElementById('song-content-column2-textarea').value = song.ContentTextColumn2 || '';
             layoutDividerRatio = savedDividerRatio;
+            resetDefaultEditorHeights();
             setLayoutColumnCount(savedColumnCount);
             applyDividerPosition();
             updateContentFontSize();
+            refreshLineNumberGutters();
             selectedChordIds = song.chordIds || [];
             await updateSelectedChordsList();
             const folderIds = song.folderIds || [];
@@ -418,9 +578,11 @@ const SongEditor = (function() {
             document.getElementById('song-content-column1-textarea').value = '';
             document.getElementById('song-content-column2-textarea').value = '';
             layoutDividerRatio = 0.5;
+            resetDefaultEditorHeights();
             setLayoutColumnCount(1);
             applyDividerPosition();
             updateContentFontSize();
+            refreshLineNumberGutters();
             document.querySelectorAll('.folder-checkbox').forEach(cb => {
                 cb.checked = false;
             });
@@ -428,6 +590,7 @@ const SongEditor = (function() {
         }
         document.getElementById('song-editor-modal').classList.remove('hidden');
         applyDividerPosition();
+        refreshLineNumberGutters();
     }
     
     function closeEditor() {

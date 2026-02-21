@@ -366,21 +366,33 @@
                                 </select>
                             </div>
                         </div>
-                        <div id="single-column-editor" class="textarea-wrapper">
-                            <textarea id="song-content-textarea" 
-                                      placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."
-                                      data-translate-placeholder-1="Paste or type your song here..."
-                                      data-translate-placeholder-2="Chords go on the line above lyrics."
-                                      data-translate-placeholder-3="Double line break separates sections."></textarea>
+                        <div id="single-column-editor" class="editor-with-gutter">
+                            <div id="single-column-line-numbers"
+                                 class="line-number-gutter"
+                                 aria-hidden="true"
+                                 tabindex="-1"></div>
+                            <div class="textarea-wrapper line-number-textarea-wrapper">
+                                <textarea id="song-content-textarea" 
+                                          placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."
+                                          data-translate-placeholder-1="Paste or type your song here..."
+                                          data-translate-placeholder-2="Chords go on the line above lyrics."
+                                          data-translate-placeholder-3="Double line break separates sections."></textarea>
+                            </div>
                         </div>
                         <div id="two-column-editor" class="two-column-editor hidden">
-                            <textarea id="song-content-column1-textarea"
-                                      class="song-column-textarea"
-                                      placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."
-                                      data-translate-placeholder-1="Paste or type your song here..."
-                                      data-translate-placeholder-2="Chords go on the line above lyrics."
-                                      data-translate-placeholder-3="Double line break separates sections."
-                                      aria-label="Column 1"></textarea>
+                            <div id="column1-editor-shell" class="editor-with-gutter editor-with-gutter-column1">
+                                <div id="column1-line-numbers"
+                                     class="line-number-gutter"
+                                     aria-hidden="true"
+                                     tabindex="-1"></div>
+                                <textarea id="song-content-column1-textarea"
+                                          class="song-column-textarea"
+                                          placeholder="Paste or type your song here...\n\nChords go on the line above lyrics.\nDouble line break separates sections."
+                                          data-translate-placeholder-1="Paste or type your song here..."
+                                          data-translate-placeholder-2="Chords go on the line above lyrics."
+                                          data-translate-placeholder-3="Double line break separates sections."
+                                          aria-label="Column 1"></textarea>
+                            </div>
                             <div id="song-column-divider" class="song-column-divider" role="separator" aria-label="Column divider"></div>
                             <textarea id="song-content-column2-textarea"
                                       class="song-column-textarea"
