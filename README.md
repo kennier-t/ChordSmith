@@ -1,118 +1,96 @@
 # ChordSmith
 
-A web application for visualizing, creating, sharing, and downloading guitar chord diagrams and songs.
+ChordSmith is a web app to create, manage, share, and export guitar chords and songs.
 
 ## Features
 
-### 🎸 Browse and Create Chords
-- **7 Musical Families**: C, D, E, F, G, A, B
-- Each family displays its related chords in an organized gallery.
-- Click any chord to view it in detail.
-- **Practice Mode**: Practice chords within each family with randomized selection.
-- **Interactive Canvas Editor**: Draw chords visually without traditional forms.
-- **Chord Variants**: Create multiple variations of the same chord name with different fingerings.
-- **Edit & Delete**: Full CRUD functionality for your custom chords.
+### Chords
+- Browse 7 chord families: `C, D, E, F, G, A, B`.
+- Open chord detail previews.
+- Practice mode with randomized chord sets per family.
+- Create custom chords with interactive canvas editing.
+- Manage chord variations (including default variation).
+- Full chord CRUD (create, edit, delete).
+- Export chords as `PNG` or `SVG`.
+- Export full chord families as ZIP packages.
 
-### 🎼 Create and Manage Songs
-- **Song Editor**: Create songs with metadata (Title, Date, Notes, Key, Capo, BPM, Effects).
-- **Text Editor**: Paste or type song lyrics and chords.
-- **Chord Diagrams**: Select up to 8 chord diagrams to include with each song.
-- **Folders**: Organize songs into folders.
-- **PDF Export**: Download songs as formatted PDF documents.
-- **Full CRUD**: Create, edit, delete your songs and folders.
+### Songs
+- Song editor with metadata: title, date, notes, key, capo, bpm, effects.
+- Select up to 8 chord diagrams per song.
+- Organize songs in folders.
+- Full song/folder CRUD.
+- Song layout modes:
+  - Single column (default).
+  - Two columns with draggable divider.
+- Two-column layout persists per song (column count, divider position, column content).
+- PDF export preserves the existing document structure:
+  - metadata at top,
+  - lyrics/content area in the configured layout,
+  - chord diagrams at the end.
 
-### 👥 Multi-user and Sharing
-- **User Registration and Login**: Create an account and log in to save your work.
-- **Persistent Sessions**: Stay logged in between visits.
-- **Ownership**: Songs and chords you create belong to you.
-- **Sharing**: Share your songs and chords with other users by their username.
-- **Forking**: When you edit a shared song or chord, a new copy is created that belongs to you, leaving the original untouched.
-- **Incoming Shares**: View and manage songs and chords shared with you.
+### Sharing and Multi-user
+- User registration/login with session support.
+- Ownership model for songs and chords.
+- Share songs and chords by recipient username.
+- Accept/reject incoming shares.
+- Editing shared items creates user-owned copies (fork behavior).
 
-### 🎵 Generate Song Chord Sequences
-- Select up to 8 chords for your song.
-- Generates a visual diagram of the entire chord progression.
+### Language and UX
+- UI supports English and Spanish.
+- Main language toggle switches app language live.
+- User language preference is stored in `Users.language_pref`.
+- Language preference is loaded from DB for authenticated users and applied automatically.
 
-### 💾 Download Options
-- **Individual chords**: PNG or SVG format.
-- **Complete families**: Downloads as a ZIP file.
-- **Song sequences**: Export your chord progressions.
+### PDF to Text
+- Convert PDF files to text using `pdftotext -layout` while preserving spacing.
 
-### 📄 PDF to Text Converter
-- **Extract text from PDFs**: Convert PDF files to plain text, preserving layout.
+## Tech Stack
+- Frontend: HTML, CSS, vanilla JavaScript.
+- Backend: Node.js + Express.
+- Database: SQL Server.
+
+## Database Setup
+
+Run:
+- `database/setup-complete.sql`
+
+This script initializes the full current schema from scratch, including:
+- users/auth tables,
+- chord domain tables,
+- songs/folders/sharing tables,
+- song layout columns for single/two-column editing.
 
 ## Getting Started
 
-### Prerequisites
-- Node.js (v14 or higher)
-- SQL Server with ODBC Driver 17 installed
-- Windows Authentication configured for SQL Server
-- `pdftotext` (from poppler-utils) installed and in system PATH (for PDF to Text feature)
-
-### Installation
-
-1.  Clone the repository.
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Set up the database:
-    - Open SQL Server Management Studio (SSMS).
-    - Run `database/setup-complete.sql` once. This script creates the full current schema (users, sharing, folders, song layout columns) and seed data from scratch.
-4.  Update the connection string in `server/db.js` with your server name.
-5.  Start the server:
-    ```bash
-    npm start
-    ```
-6.  Open your browser and navigate to `http://localhost:3000`.
-
-## How It Works
-
-### Data Storage
-- All user, song, and chord data is stored in a SQL Server database.
-- Library chords are global, while user-created content is private until shared.
-
-### Architecture
-
-**Backend (Node.js/Express):**
-- `server/server.js`: Express API server.
-- `server/db.js`: Database connection management.
-- `server/routes/`: API routes for auth, users, songs, chords, and shares.
-- `server/services/`: Business logic for all backend operations.
-- `server/utils/`: Utility functions for email and JWT.
-
-**Frontend:**
-- `public/`: All frontend files.
-- `public/scripts/app.js`: Main application logic.
-- `public/scripts/dbService-api.js`: API client for chord operations.
-- `public/scripts/songsService-api.js`: API client for songs/folders.
-- And many more...
-
-## Project Structure
-
+1. Install dependencies:
+```bash
+npm install
 ```
-ChordSmith/
-├── public/                 # Frontend files
-│   ├── index.html
-│   ├── login.html
-│   ├── register.html
-│   ├── reset-password.html
-│   ├── profile.html
-│   ├── shares.html
-│   ├── scripts/
-│   └── styles/
-├── server/                 # Backend files
-│   ├── server.js
-│   ├── db.js
-│   ├── routes/
-│   ├── services/
-│   └── utils/
-├── database/               # Database scripts
-│   ├── setup-complete.sql
-│   └── setup-backup.sql
-├── package.json
-└── README.md
+
+2. Configure DB connection in:
+- `server/db.js`
+
+3. Run database setup in SSMS:
+- `database/setup-complete.sql`
+
+4. Start the app:
+```bash
+npm start
 ```
+
+5. Open:
+- `http://localhost:3000`
+
+## Key Project Paths
+
+- `server/server.js`: API bootstrap.
+- `server/routes/`: Auth, users, songs, chords, shares routes.
+- `server/services/`: Business/data logic.
+- `public/scripts/app.js`: Main app behavior.
+- `public/scripts/songEditor.js`: Song editing UI and layout behavior.
+- `public/scripts/songPDFGenerator.js`: PDF generation.
+- `public/scripts/translation.js`: i18n strings and language switching.
+- `database/setup-complete.sql`: Full schema + seed setup.
 
 ## License
 
