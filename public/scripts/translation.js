@@ -194,22 +194,24 @@ const translations = {
                         'Practice': 'Practice',
                         'Practice Session': 'Practice Session',
                         'Randomize': 'Randomize',
-                        'No chords available for practice in this family.': 'No chords available for practice in this family.',
-                        ' Family Practice': ' Family Practice',
-                    },
+	                        'No chords available for practice in this family.': 'No chords available for practice in this family.',
+	                        ' Family Practice': ' Family Practice',
+	                        'English': 'English',
+	                        'Spanish': 'Spanish',
+	                    },
                     es: {
                         'Gen Song Chords': 'Generar Acordes',
                         'Songs': 'Canciones',
                         'Create Chord': 'Crear Acorde',
-                        'PDF → Text': 'PDF → Texto',
+                        'PDF → Text': 'PDF \u2192 Texto',
                         'ChordSmith': 'ChordSmith',
-                        '← Back': '← Volver',
+                        '← Back': '\u2190 Volver',
                         'Download Full Family (PNG)': 'Descargar Familia (PNG)',
                         'Download Full Family (SVG)': 'Descargar Familia (SVG)',
                         'Download PNG': 'Descargar PNG',
                         'Download SVG': 'Descargar SVG',
-                        'Generate Song Chords': 'Generar Acordes de Canción',
-                        'Select up to 8 chords for your song (in order)': 'Selecciona hasta 8 acordes para tu canción (en orden)',
+                        'Generate Song Chords': 'Generar Acordes de Canci\u00f3n',
+                        'Select up to 8 chords for your song (in order)': 'Selecciona hasta 8 acordes para tu canci\u00f3n (en orden)',
                         'Chord 1:': 'Acorde 1:',
                         'Chord 2:': 'Acorde 2:',
                         'Chord 3:': 'Acorde 3:',
@@ -231,55 +233,55 @@ const translations = {
                         'Instructions:': 'Instrucciones:',
                         'Click on fret to add finger (1-4)': 'Haz clic en el traste para agregar el dedo (1-4)',
                         'Click above strings for X (not played)': 'Haz clic arriba de las cuerdas para X (no se toca)',
-                        'Drag across strings for barre': 'Arrastra a través de las cuerdas para la cejilla',
-                        'Click finger to change number or remove': 'Haz clic en el dedo para cambiar el número o eliminar',
+                        'Drag across strings for barre': 'Arrastra a trav\u00e9s de las cuerdas para la cejilla',
+                        'Click finger to change number or remove': 'Haz clic en el dedo para cambiar el n\u00famero o eliminar',
                         'Save Chord': 'Guardar Acorde',
                         'Cancel': 'Cancelar',
                         'Delete': 'Eliminar',
                         'Create Folder': 'Crear Carpeta',
-                        'Create New Song': 'Crear Nueva Canción',
+                        'Create New Song': 'Crear Nueva Canci\u00f3n',
                         'Sort by:': 'Ordenar por:',
                         'Date (Oldest First)': 'Fecha (Antiguos Primero)',
                         'Date (Newest First)': 'Fecha (Nuevos Primero)',
                         'Name (A-Z)': 'Nombre (A-Z)',
                         'Name (Z-A)': 'Nombre (Z-A)',
-                        'Songs (Most First)': 'Canciones (Más Primero)',
+                        'Songs (Most First)': 'Canciones (M\u00e1s Primero)',
                         'Songs (Least First)': 'Canciones (Menos Primero)',
                         'Back to Folders': 'Volver a las Carpetas',
-                        'Create/Edit Song': 'Crear/Editar Canción',
+                        'Create/Edit Song': 'Crear/Editar Canci\u00f3n',
                         'Metadata': 'Metadatos',
-                        'Title:': 'Título:',
+                        'Title:': 'T\u00edtulo:',
                         'Date:': 'Fecha:',
                         'Notes:': 'Notas:',
                         'Key:': 'Tonalidad:',
                         'Capo:': 'Capo:',
                         'BPM:': 'BPM:',
                         'Effects:': 'Efectos:',
-                        'Song Content': 'Contenido de la Canción',
-                        'Column Guides:': 'Guías de Columna:',
+                        'Song Content': 'Contenido de la Canci\u00f3n',
+                        'Column Guides:': 'Gu\u00edas de Columna:',
                         'None': 'Ninguna',
                         'Personalized': 'Personalizadas',
                         '2 Columns': '2 Columnas',
-                        'Page Layout:': 'DiseÃ±o de PÃ¡gina:',
+                        'Page Layout:': 'Dise\u00f1o de P\u00e1gina:',
                         'Single Column': 'Una Columna',
                         'Two Columns': 'Dos Columnas',
                         '3 Columns': '3 Columnas',
-                        'Paste or type your song here...': 'Pega o escribe tu canción aquí...',
-                        'Chords go on the line above lyrics.': 'Los acordes van en la línea sobre la letra.',
-                        'Double line break separates sections.': 'El doble salto de línea separa las secciones.',
+                        'Paste or type your song here...': 'Pega o escribe tu canci\u00f3n aqu\u00ed...',
+                        'Chords go on the line above lyrics.': 'Los acordes van en la l\u00ednea sobre la letra.',
+                        'Double line break separates sections.': 'El doble salto de l\u00ednea separa las secciones.',
                         'Selected Chords (up to 8)': 'Acordes Seleccionados (hasta 8)',
                         'Available Chords': 'Acordes Disponibles',
-                        'Save Song': 'Guardar Canción',
+                        'Save Song': 'Guardar Canci\u00f3n',
                         'Edit': 'Editar',
                         'Rename': 'Renombrar',
                         'Save to folders': 'Guardar en carpetas',
-                        'No custom chords yet. Create one!': 'Aún no hay acordes personalizados. ¡Crea uno!',
-                        'No folders yet. Create one to organize your songs!': 'No hay carpetas todavía. ¡Crea una para organizar tus canciones!',
-                        'No songs in this folder. Create your first song!': 'No hay canciones en esta carpeta. ¡Crea tu primera canción!',
+                        'No custom chords yet. Create one!': 'A\u00fan no hay acordes personalizados. \u00a1Crea uno!',
+                        'No folders yet. Create one to organize your songs!': 'No hay carpetas todav\u00eda. \u00a1Crea una para organizar tus canciones!',
+                        'No songs in this folder. Create your first song!': 'No hay canciones en esta carpeta. \u00a1Crea tu primera canci\u00f3n!',
                         'Enter folder name:': 'Introduce el nombre de la carpeta:',
                         'Enter new folder name:': 'Introduce el nuevo nombre de la carpeta:',
-                        'Delete this folder? Songs will not be deleted, only removed from this folder.': '¿Eliminar esta carpeta? Las canciones no se eliminarán, solo se quitarán de esta carpeta.',
-                        'Delete song': 'Eliminar canción',
+                        'Delete this folder? Songs will not be deleted, only removed from this folder.': '\u00bfEliminar esta carpeta? Las canciones no se eliminar\u00e1n, solo se quitar\u00e1n de esta carpeta.',
+                        'Delete song': 'Eliminar canci\u00f3n',
                         'C Family': 'Familia de C',
                         'D Family': 'Familia de D',
                         'E Family': 'Familia de E',
@@ -289,13 +291,13 @@ const translations = {
                         'B Family': 'Familia de B',
                         'Select PDF': 'Seleccionar PDF',
                         'Drag & drop': 'Arrastra y suelta',
-                        'your PDF here': 'tu PDF aquí',
+                        'your PDF here': 'tu PDF aqu\u00ed',
                         'or click to select': 'o haz clic para seleccionar',
-                        'No file selected': 'Ningún archivo seleccionado',
+                        'No file selected': 'Ning\u00fan archivo seleccionado',
                         'Convert': 'Convertir',
                         'Preserves formatting and spacing using pdftotext -layout': 'Conserva el formato y el espaciado usando pdftotext -layout',
                         'Converted Text': 'Texto Convertido',
-                        'Converted text will appear here...': 'El texto convertido aparecerá aquí...',
+                        'Converted text will appear here...': 'El texto convertido aparecer\u00e1 aqu\u00ed...',
                         'Copy': 'Copiar',
                         'Clear': 'Limpiar',
                         'Ready': 'Listo',
@@ -311,9 +313,9 @@ const translations = {
                         'from': 'de',
                         'Accept': 'Aceptar',
                         'Reject': 'Rechazar',
-                        'Select Folders for the Song': 'Selecciona carpetas para la cancion',
+                        'Select Folders for the Song': 'Selecciona carpetas para la canci\u00f3n',
                         'Please select an item and enter a recipient username.': 'Selecciona un elemento e ingresa un usuario destinatario.',
-                        'An error occurred loading folders. Please try again.': 'Ocurrio un error cargando carpetas. Intenta de nuevo.',
+                        'An error occurred loading folders. Please try again.': 'Ocurri\u00f3 un error cargando carpetas. Intenta de nuevo.',
                         'Your Profile': 'Tu Perfil',
                         'Username': 'Usuario',
                         'Email': 'Correo',
@@ -321,27 +323,27 @@ const translations = {
                         'Last Name': 'Apellido',
                         'Language': 'Idioma',
                         'Update Profile': 'Actualizar Perfil',
-                        'Change Password': 'Cambiar Contrasena',
-                        'New Password': 'Nueva Contrasena',
-                        'Login': 'Iniciar Sesion',
-                        'Password': 'Contrasena',
-                        'Don\'t have an account?': 'No tienes cuenta?',
-                        'Register here': 'Registrate aqui',
-                        'Forgot your password?': 'Olvidaste tu contrasena?',
+                        'Change Password': 'Cambiar Contrase\u00f1a',
+                        'New Password': 'Nueva Contrase\u00f1a',
+                        'Login': 'Iniciar Sesi\u00f3n',
+                        'Password': 'Contrase\u00f1a',
+                        'Don\'t have an account?': '\u00bfNo tienes cuenta?',
+                        'Register here': 'Reg\u00edstrate aqu\u00ed',
+                        'Forgot your password?': '\u00bfOlvidaste tu contrase\u00f1a?',
                         'Register': 'Registrarse',
-                        'Already have an account?': 'Ya tienes cuenta?',
-                        'Login here': 'Inicia sesion aqui',
-                        'Reset Password': 'Restablecer Contrasena',
-                        'Confirm New Password': 'Confirmar Nueva Contrasena',
+                        'Already have an account?': '\u00bfYa tienes cuenta?',
+                        'Login here': 'Inicia sesi\u00f3n aqu\u00ed',
+                        'Reset Password': 'Restablecer Contrase\u00f1a',
+                        'Confirm New Password': 'Confirmar Nueva Contrase\u00f1a',
                         'Send Reset Link': 'Enviar Enlace de Reinicio',
-                        'Enter New Password': 'Ingresa Nueva Contrasena',
-                        'Passwords do not match.': 'Las contrasenas no coinciden.',
-                        'An error occurred. Please try again.': 'Ocurrio un error. Intenta de nuevo.',
+                        'Enter New Password': 'Ingresa Nueva Contrase\u00f1a',
+                        'Passwords do not match.': 'Las contrase\u00f1as no coinciden.',
+                        'An error occurred. Please try again.': 'Ocurri\u00f3 un error. Intenta de nuevo.',
                         'Profile updated successfully': 'Perfil actualizado correctamente',
-                        'Password changed successfully': 'Contrasena actualizada correctamente',
-                        'Settings': 'Configuracion',
-                        'Log out': 'Cerrar sesion',
-                        'Family is not yet implemented.': 'La familia {family} aun no esta implementada.',
+                        'Password changed successfully': 'Contrase\u00f1a actualizada correctamente',
+                        'Settings': 'Configuraci\u00f3n',
+                        'Log out': 'Cerrar sesi\u00f3n',
+                        'Family is not yet implemented.': 'La familia {family} a\u00fan no est\u00e1 implementada.',
                         'No chords available to download in this family.': 'No hay acordes disponibles para descargar en esta familia.',
                         'Please enter a recipient username.': 'Ingresa un usuario destinatario.',
                         'All Songs': 'Todas las Canciones',
@@ -353,7 +355,7 @@ const translations = {
                         'Chord updated successfully!': 'Acorde actualizado correctamente!',
                         'Chord created successfully!': 'Acorde creado correctamente!',
                         'Error saving chord: ': 'Error guardando acorde: ',
-                        'Are you sure you want to delete this chord?': 'Seguro que deseas eliminar este acorde?',
+                        'Are you sure you want to delete this chord?': '\u00bfSeguro que deseas eliminar este acorde?',
                         'Chord deleted successfully!': 'Acorde eliminado correctamente!',
                         'Error deleting chord: ': 'Error eliminando acorde: ',
                         'Error: Please select a PDF file': 'Error: Selecciona un archivo PDF',
@@ -364,25 +366,25 @@ const translations = {
                         'Unknown error': 'Error desconocido',
                         'Details': 'Detalles',
                         'Completed': 'Completado',
-                        'Connection error': 'Error de conexion',
+                        'Connection error': 'Error de conexi\u00f3n',
                         'Nothing to copy': 'Nada para copiar',
                         'Copied to clipboard': 'Copiado al portapapeles',
                         'Copied (fallback)': 'Copiado (alternativo)',
                         'No folders available. Create one in Songs view first.': 'No hay carpetas disponibles. Crea una primero en la vista de Canciones.',
                         'already selected': 'ya seleccionado',
                         'No chords selected. Click on chords below to add them.': 'No hay acordes seleccionados. Haz clic en los acordes abajo para agregarlos.',
-                        'Song content cannot be empty': 'El contenido de la canción no puede estar vacío',
-                        'Title is required': 'El título es obligatorio',
-                        'Maximum 8 chords allowed': 'Máximo 8 acordes permitidos',
-                        'Song not found': 'Canción no encontrada',
-                        'Song updated successfully!': '¡Canción actualizada exitosamente!',
-                        'Song created successfully!': '¡Canción creada exitosamente!',
-                        'Error saving song: ': 'Error guardando canción: ',
-                        'song': 'canción',
+                        'Song content cannot be empty': 'El contenido de la canci\u00f3n no puede estar vac\u00edo',
+                        'Title is required': 'El t\u00edtulo es obligatorio',
+                        'Maximum 8 chords allowed': 'M\u00e1ximo 8 acordes permitidos',
+                        'Song not found': 'Canci\u00f3n no encontrada',
+                        'Song updated successfully!': '\u00a1Canci\u00f3n actualizada exitosamente!',
+                        'Song created successfully!': '\u00a1Canci\u00f3n creada exitosamente!',
+                        'Error saving song: ': 'Error guardando canci\u00f3n: ',
+                        'song': 'canci\u00f3n',
                         'songs': 'canciones',
                         'All': 'TODAS',
                         'Unknown': 'Desconocida',
-                        'Uncategorized': 'Sin categoría',
+                        'Uncategorized': 'Sin categor\u00eda',
                         'Key': 'Tonalidad',
                         'Folder': 'Carpeta',
                         'Artist': 'Artista',
@@ -390,30 +392,95 @@ const translations = {
                         'Visible Folders:': 'Carpetas Visibles:',
                         'Visible Artists:': 'Artistas Visibles:',
                         'Visible': 'Visibles',
-                        'Choose Variation': 'Elegir Variación',
-                        'Add Variation': 'Agregar Variación',
+                        'Choose Variation': 'Elegir Variaci\u00f3n',
+                        'Add Variation': 'Agregar Variaci\u00f3n',
                         'Make Default': 'Hacer Predeterminado',
                         'Already Default': 'Ya Predeterminado',
                         'Set as Default': 'Establecer como Predeterminado',
-                        'Default variation updated successfully': 'Variación predeterminada actualizada exitosamente',
+                        'Default variation updated successfully': 'Variaci\u00f3n predeterminada actualizada exitosamente',
                         'Variations for': 'Variaciones para',
-                        'Please create at least one folder before creating a song.': 'Por favor, crea al menos una carpeta antes de crear una canción.',
+                        'Please create at least one folder before creating a song.': 'Por favor, crea al menos una carpeta antes de crear una canci\u00f3n.',
                         'Practice': 'Practicar',
-                        'Practice Session': 'Sesión de Práctica',
+                        'Practice Session': 'Sesi\u00f3n de Pr\u00e1ctica',
                         'Randomize': 'Aleatorizar',
                         'No chords available for practice in this family.': 'No hay acordes disponibles para practicar en esta familia.',
-                        ' Family Practice': ' Práctica de Familia',
+                        ' Family Practice': ' Pr\u00e1ctica de Familia',
                         'Shares': 'Compartidos',
                         'Share': 'Compartir',
                         'Recipient Username': 'Nombre de usuario del destinatario',
+                        'English': 'Ingl\u00e9s',
+                        'Spanish': 'Espa\u00f1ol',
                     }};
 
-let currentLanguage = localStorage.getItem('language') || 'es';
+const supportedLanguages = ['en', 'es'];
+let currentLanguage = normalizeLanguage(localStorage.getItem('language') || 'en');
 
-function setLanguage(lang) {
-    currentLanguage = lang;
-    localStorage.setItem('language', lang);
+function normalizeLanguage(lang) {
+    return supportedLanguages.includes(lang) ? lang : 'en';
+}
+
+function getStoredToken() {
+    return localStorage.getItem('token');
+}
+
+async function persistLanguagePreference(lang) {
+    const token = getStoredToken();
+    if (!token) {
+        return false;
+    }
+
+    try {
+        const res = await fetch('/api/users/me/language', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ language_pref: lang })
+        });
+        return res.ok;
+    } catch (error) {
+        console.error('Failed to persist language preference:', error);
+        return false;
+    }
+}
+
+async function getLanguagePreferenceFromServer() {
+    const token = getStoredToken();
+    if (!token) {
+        return null;
+    }
+
+    try {
+        const res = await fetch('/api/users/me', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!res.ok) {
+            return null;
+        }
+
+        const user = await res.json();
+        return normalizeLanguage(user.language_pref);
+    } catch (error) {
+        console.error('Failed to load language preference:', error);
+        return null;
+    }
+}
+
+function setLanguage(lang, options = {}) {
+    const normalizedLanguage = normalizeLanguage(lang);
+    currentLanguage = normalizedLanguage;
+    localStorage.setItem('language', normalizedLanguage);
     translatePage();
+
+    if (options.persistRemote) {
+        return persistLanguagePreference(normalizedLanguage);
+    }
+
+    return Promise.resolve(true);
 }
 
 function translatePage() {
@@ -449,14 +516,21 @@ function translatePage() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const langToggle = document.getElementById('language-toggle');
     if (langToggle) {
         langToggle.addEventListener('click', () => {
             const newLang = currentLanguage === 'en' ? 'es' : 'en';
-            setLanguage(newLang);
+            setLanguage(newLang, { persistRemote: true });
         });
     }
+
     translatePage();
+
+    const serverLanguage = await getLanguagePreferenceFromServer();
+    if (serverLanguage && serverLanguage !== currentLanguage) {
+        setLanguage(serverLanguage, { persistRemote: false });
+    }
 });
+
 

@@ -88,7 +88,8 @@ header {
     position: absolute;
     top: 100%;
     right: 0;
-    width: 160px;
+    min-width: 180px;
+    width: max-content;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
@@ -121,6 +122,7 @@ header {
     display: flex;
     align-items: center;
     justify-content: flex-start;
+    white-space: nowrap;
 }
 
 .dropdown-item:hover {

@@ -24,6 +24,9 @@ router.get('/me', authMiddleware, async (req, res) => {
 router.put('/me', authMiddleware, async (req, res) => {
     try {
         const { username, email, first_name, last_name, language_pref } = req.body;
+        if (language_pref && !['en', 'es'].includes(language_pref)) {
+            return res.status(400).json({ message: 'Invalid language preference' });
+        }
         const existingUserByUsername = await userService.findUserByUsername(username);
         if (existingUserByUsername && existingUserByUsername.id !== req.user.id) {
             return res.status(400).json({ message: 'Username already exists' });
@@ -34,6 +37,20 @@ router.put('/me', authMiddleware, async (req, res) => {
         }
         const updatedUser = await userService.updateUser(req.user.id, { username, email, first_name, last_name, language_pref });
         res.json(updatedUser);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.put('/me/language', authMiddleware, async (req, res) => {
+    try {
+        const { language_pref } = req.body;
+        if (!['en', 'es'].includes(language_pref)) {
+            return res.status(400).json({ message: 'Invalid language preference' });
+        }
+        await userService.updateUserLanguage(req.user.id, language_pref);
+        res.json({ message: 'Language updated successfully', language_pref });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });

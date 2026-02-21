@@ -73,6 +73,7 @@ async function checkAuth() {
                             logout();
                         } else {
                             user = retryData;
+                            setLanguage(user.language_pref, { persistRemote: false });
                             displayUserProfile();
                         }
                     } else {
@@ -83,6 +84,7 @@ async function checkAuth() {
                 }
             } else {
                 user = data;
+                setLanguage(user.language_pref, { persistRemote: false });
                 displayUserProfile();
             }
         } catch (error) {
@@ -128,6 +130,7 @@ function displayUserProfile() {
     settingsIcon.alt = 'Settings';
     settingsItem.appendChild(settingsIcon);
     const settingsText = document.createElement('span');
+    settingsText.setAttribute('data-translate', 'Settings');
     settingsText.textContent = t('Settings', 'Settings');
     settingsItem.appendChild(settingsText);
     settingsItem.addEventListener('click', () => {
@@ -142,6 +145,7 @@ function displayUserProfile() {
     logoutIcon.alt = 'Logout';
     logoutItem.appendChild(logoutIcon);
     const logoutText = document.createElement('span');
+    logoutText.setAttribute('data-translate', 'Log out');
     logoutText.textContent = t('Log out', 'Log out');
     logoutItem.appendChild(logoutText);
     logoutItem.addEventListener('click', logout);

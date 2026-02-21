@@ -39,6 +39,14 @@ async function updateUser(id, user) {
     return result;
 }
 
+async function updateUserLanguage(id, language_pref) {
+    const result = await db.query(
+        'UPDATE Users SET language_pref = @language_pref WHERE id = @id',
+        { language_pref, id }
+    );
+    return result;
+}
+
 async function updateUserPassword(id, password) {
     const password_hash = await bcrypt.hash(password, 10);
     const result = await db.query('UPDATE Users SET password_hash = @password_hash WHERE id = @id', { password_hash, id });
@@ -101,6 +109,7 @@ module.exports = {
   findUserByUsername,
   verifyPassword,
   updateUser,
+  updateUserLanguage,
   updateUserPassword,
   createVerificationToken,
   findVerificationToken,

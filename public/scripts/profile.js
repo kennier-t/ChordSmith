@@ -46,8 +46,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             profileForm.email.value = user.email;
             profileForm.first_name.value = user.first_name;
             profileForm.last_name.value = user.last_name;
-            currentLanguagePref = user.language_pref;
-            updateLanguagePreferenceDisplay(user.language_pref);
+            currentLanguagePref = ['en', 'es'].includes(user.language_pref) ? user.language_pref : 'en';
+            setLanguage(currentLanguagePref, { persistRemote: false });
+            updateLanguagePreferenceDisplay(currentLanguagePref);
         } else {
             alert(user.message);
             window.location.href = '/login.html';
@@ -122,6 +123,7 @@ const Profile = {
 
     selectLanguageOption(value) {
         currentLanguagePref = value;
+        setLanguage(value, { persistRemote: true });
         updateLanguagePreferenceDisplay(value);
         this.toggleLanguageDropdown();
     }
