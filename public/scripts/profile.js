@@ -4,6 +4,21 @@ const backBtn = document.getElementById('back-btn');
 const token = localStorage.getItem('token');
 let currentLanguagePref = 'en';
 
+function t(key, fallback) {
+    return (translations[currentLanguage] && translations[currentLanguage][key]) || fallback || key;
+}
+
+function updateLanguagePreferenceDisplay(value) {
+    const displayElement = document.getElementById('language-pref-display');
+    if (!displayElement) return;
+
+    const translationsMap = {
+        en: t('English', 'English'),
+        es: t('Spanish', 'Spanish')
+    };
+    displayElement.textContent = translationsMap[value] || value;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Back button
     backBtn.addEventListener('click', () => {
@@ -32,20 +47,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             profileForm.first_name.value = user.first_name;
             profileForm.last_name.value = user.last_name;
             currentLanguagePref = user.language_pref;
-            // Update display without toggling dropdown
-            const displayElement = document.getElementById('language-pref-display');
-            const translationsMap = {
-                'en': 'English',
-                'es': 'Spanish'
-            };
-            displayElement.textContent = translationsMap[user.language_pref] || user.language_pref;
+            updateLanguagePreferenceDisplay(user.language_pref);
         } else {
             alert(user.message);
             window.location.href = '/login.html';
         }
     } catch (error) {
         console.error(error);
-        alert('An error occurred. Please try again.');
+        alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
         window.location.href = '/login.html';
     }
 });
@@ -68,10 +77,10 @@ profileForm.addEventListener('submit', async (e) => {
             body: JSON.stringify({ username, email, first_name, last_name, language_pref })
         });
         const data = await res.json();
-        alert(data.message || 'Profile updated successfully');
+        alert(data.message || t('Profile updated successfully', 'Profile updated successfully'));
     } catch (error) {
         console.error(error);
-        alert('An error occurred. Please try again.');
+        alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
     }
 });
 
@@ -89,10 +98,10 @@ passwordForm.addEventListener('submit', async (e) => {
             body: JSON.stringify({ password })
         });
         const data = await res.json();
-        alert(data.message || 'Password changed successfully');
+        alert(data.message || t('Password changed successfully', 'Password changed successfully'));
     } catch (error) {
         console.error(error);
-        alert('An error occurred. Please try again.');
+        alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
     }
 });
 
@@ -113,12 +122,7 @@ const Profile = {
 
     selectLanguageOption(value) {
         currentLanguagePref = value;
-        const displayElement = document.getElementById('language-pref-display');
-        const translationsMap = {
-            'en': 'English',
-            'es': 'Spanish'
-        };
-        displayElement.textContent = translationsMap[value] || value;
+        updateLanguagePreferenceDisplay(value);
         this.toggleLanguageDropdown();
     }
 };

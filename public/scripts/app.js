@@ -9,6 +9,10 @@ const familyView = document.getElementById('family-view');
 const chordModal = document.getElementById('chord-modal');
 const practiceModal = document.getElementById('practice-modal');
 
+function t(key, fallback) {
+    return (translations[currentLanguage] && translations[currentLanguage][key]) || fallback || key;
+}
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
@@ -124,7 +128,7 @@ function displayUserProfile() {
     settingsIcon.alt = 'Settings';
     settingsItem.appendChild(settingsIcon);
     const settingsText = document.createElement('span');
-    settingsText.textContent = 'Settings';
+    settingsText.textContent = t('Settings', 'Settings');
     settingsItem.appendChild(settingsText);
     settingsItem.addEventListener('click', () => {
         window.location.href = '/profile.html';
@@ -138,7 +142,7 @@ function displayUserProfile() {
     logoutIcon.alt = 'Logout';
     logoutItem.appendChild(logoutIcon);
     const logoutText = document.createElement('span');
-    logoutText.textContent = 'Log out';
+    logoutText.textContent = t('Log out', 'Log out');
     logoutItem.appendChild(logoutText);
     logoutItem.addEventListener('click', logout);
     dropdown.appendChild(logoutItem);
@@ -256,7 +260,7 @@ async function showFamilyView(family) {
     const chords = await DB_SERVICE.getChordsForFamily(family);
 
     if (chords.length === 0) {
-        alert(`Family ${family} is not yet implemented.`);
+        alert(t('Family is not yet implemented.', `Family ${family} is not yet implemented.`).replace('{family}', family));
         return;
     }
 
@@ -394,7 +398,7 @@ async function downloadFamily(family, format) {
     const chords = await DB_SERVICE.getChordsForFamily(family);
     
     if (chords.length === 0) {
-        alert('No chords available to download in this family.');
+        alert(t('No chords available to download in this family.', 'No chords available to download in this family.'));
         return;
     }
     
@@ -482,7 +486,7 @@ function initializeShareButton() {
     shareBtn.addEventListener('click', async () => {
         const recipient_username = document.getElementById('recipient-username').value;
         if (!recipient_username) {
-            alert('Please enter a recipient username.');
+            alert(t('Please enter a recipient username.', 'Please enter a recipient username.'));
             return;
         }
 
@@ -502,7 +506,7 @@ function initializeShareButton() {
             }
         } catch (error) {
             console.error(error);
-            alert('An error occurred. Please try again.');
+            alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
         }
     });
 }

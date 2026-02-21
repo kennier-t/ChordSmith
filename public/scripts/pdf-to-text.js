@@ -12,6 +12,10 @@ const backBtn = document.getElementById('back-btn');
 
 let selectedFile = null;
 
+function t(key, fallback) {
+    return (translations[currentLanguage] && translations[currentLanguage][key]) || fallback || key;
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     initializeEventListeners();
@@ -87,10 +91,10 @@ function handleFile(file) {
 
     // Validate file is PDF
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-        status.textContent = 'Error: Please select a PDF file';
+        status.textContent = t('Error: Please select a PDF file', 'Error: Please select a PDF file');
         status.style.color = '#d32f2f';
         setTimeout(() => {
-            status.textContent = 'Ready';
+            status.textContent = t('Ready', 'Ready');
             status.style.color = '';
         }, 3000);
         return;
@@ -99,19 +103,19 @@ function handleFile(file) {
     selectedFile = file;
     filename.textContent = file.name;
     convertBtn.disabled = false;
-    status.textContent = 'Ready to convert';
+    status.textContent = t('Ready to convert', 'Ready to convert');
     status.style.color = '';
 }
 
 async function convertPDF() {
     if (!selectedFile) {
-        status.textContent = 'Error: No file selected';
+        status.textContent = t('Error: No file selected', 'Error: No file selected');
         status.style.color = '#d32f2f';
         return;
     }
 
     convertBtn.disabled = true;
-    status.textContent = 'Converting...';
+    status.textContent = t('Converting...', 'Converting...');
     status.style.color = '';
     result.value = '';
 
@@ -127,20 +131,20 @@ async function convertPDF() {
         const data = await response.json();
 
         if (!response.ok) {
-            result.value = 'Error:\n' + (data.error || 'Unknown error');
+            result.value = (t('Error', 'Error')) + ':\n' + (data.error || t('Unknown error', 'Unknown error'));
             if (data.detail) {
-                result.value += '\n\nDetails: ' + data.detail;
+                result.value += '\n\n' + (t('Details', 'Details')) + ': ' + data.detail;
             }
-            status.textContent = 'Error';
+            status.textContent = t('Error', 'Error');
             status.style.color = '#d32f2f';
         } else {
             result.value = data.text || '';
-            status.textContent = 'Completed';
+            status.textContent = t('Completed', 'Completed');
             status.style.color = '';
         }
     } catch (err) {
-        result.value = 'Connection error: ' + err.message;
-        status.textContent = 'Connection error';
+        result.value = (t('Connection error', 'Connection error')) + ': ' + err.message;
+        status.textContent = t('Connection error', 'Connection error');
         status.style.color = '#d32f2f';
     } finally {
         convertBtn.disabled = false;
@@ -149,10 +153,10 @@ async function convertPDF() {
 
 async function copyToClipboard() {
     if (!result.value) {
-        status.textContent = 'Nothing to copy';
+        status.textContent = t('Nothing to copy', 'Nothing to copy');
         status.style.color = '#d32f2f';
         setTimeout(() => {
-            status.textContent = 'Ready';
+            status.textContent = t('Ready', 'Ready');
             status.style.color = '';
         }, 2000);
         return;
@@ -160,22 +164,22 @@ async function copyToClipboard() {
 
     try {
         await navigator.clipboard.writeText(result.value);
-        status.textContent = 'Copied to clipboard';
+        status.textContent = t('Copied to clipboard', 'Copied to clipboard');
         status.style.color = '';
         
         // Reset status after 2 seconds
         setTimeout(() => {
-            status.textContent = 'Ready';
+            status.textContent = t('Ready', 'Ready');
         }, 2000);
     } catch (err) {
         // Fallback for older browsers
         result.select();
         document.execCommand('copy');
-        status.textContent = 'Copied (fallback)';
+        status.textContent = t('Copied (fallback)', 'Copied (fallback)');
         status.style.color = '';
         
         setTimeout(() => {
-            status.textContent = 'Ready';
+            status.textContent = t('Ready', 'Ready');
         }, 2000);
     }
 }
@@ -183,9 +187,9 @@ async function copyToClipboard() {
 function clearAll() {
     result.value = '';
     selectedFile = null;
-    filename.textContent = 'No file selected';
+    filename.textContent = t('No file selected', 'No file selected');
     convertBtn.disabled = true;
-    status.textContent = 'Ready';
+    status.textContent = t('Ready', 'Ready');
     status.style.color = '';
     fileInput.value = '';
 }

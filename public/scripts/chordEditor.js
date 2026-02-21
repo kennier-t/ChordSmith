@@ -22,6 +22,10 @@
         strings: 6,
         frets: 4
     };
+
+    function t(key, fallback) {
+        return (translations[currentLanguage] && translations[currentLanguage][key]) || fallback || key;
+    }
     
     // Initialize editor when DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
@@ -106,13 +110,13 @@
     async function loadChordForEditing(chordId) {
         const chord = await DB_SERVICE.getChordById(chordId);
         if (!chord) {
-            alert('Chord not found');
+            alert(t('Chord not found', 'Chord not found')); 
             showListView();
             return;
         }
         
         if (chord.IsOriginal) {
-            alert('Cannot edit original chords');
+            alert(t('Cannot edit original chords', 'Cannot edit original chords')); 
             showListView();
             return;
         }
@@ -434,14 +438,14 @@
 
         // Validation
         if (!name) {
-            alert('Please enter a chord name');
+            alert(t('Please enter a chord name', 'Please enter a chord name')); 
             return;
         }
 
         // Check if at least one finger is placed
         const hasFingers = editorState.fingers.some(f => f > 0);
         if (!hasFingers) {
-            alert('Please place at least one finger on the diagram');
+            alert(t('Please place at least one finger on the diagram', 'Please place at least one finger on the diagram')); 
             return;
         }
 
@@ -470,11 +474,11 @@
             if (editorState.chordId) {
                 // Update existing
                 await DB_SERVICE.updateChord(editorState.chordId, chordData);
-                alert('Chord updated successfully!');
+                alert(t('Chord updated successfully!', 'Chord updated successfully!')); 
             } else {
                 // Create new
                 await DB_SERVICE.createChord(chordData);
-                alert('Chord created successfully!');
+                alert(t('Chord created successfully!', 'Chord created successfully!')); 
             }
 
             // Refresh song chords selector
@@ -487,14 +491,14 @@
 
             showListView();
         } catch (error) {
-            alert('Error saving chord: ' + error.message);
+            alert((t('Error saving chord: ', 'Error saving chord: ')) + error.message);
         }
     }
     
     function deleteChord() {
         if (!editorState.chordId) return;
         
-        if (!confirm('Are you sure you want to delete this chord?')) {
+        if (!confirm(t('Are you sure you want to delete this chord?', 'Are you sure you want to delete this chord?'))) {
             return;
         }
         
@@ -509,10 +513,10 @@
                 updateAllSelectors();
             }
             
-            alert('Chord deleted successfully!');
+            alert(t('Chord deleted successfully!', 'Chord deleted successfully!')); 
             showListView();
         } catch (error) {
-            alert('Error deleting chord: ' + error.message);
+            alert((t('Error deleting chord: ', 'Error deleting chord: ')) + error.message);
         }
     }
     
@@ -523,3 +527,4 @@
         refreshCustomChordsList
     };
 })();
+

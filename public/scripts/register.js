@@ -1,5 +1,9 @@
 const form = document.getElementById('register-form');
 
+function t(key, fallback) {
+    return (translations[currentLanguage] && translations[currentLanguage][key]) || fallback || key;
+}
+
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = form.username.value;
@@ -23,6 +27,6 @@ form.addEventListener('submit', async (e) => {
         }
     } catch (error) {
         console.error(error);
-        alert('An error occurred. Please try again.');
+        alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
     }
 });

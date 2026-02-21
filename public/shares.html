@@ -16,17 +16,17 @@
                 <button id="back-btn" class="utility-btn" data-translate="← Back">← Back</button>
             </div>
 
-            <h1>Shares</h1>
+            <h1 data-translate="Shares">Shares</h1>
             <div style="max-width: 500px; margin: 0 auto;">
                 <!-- Send Shares Section -->
                 <div id="send-shares-section">
-                    <h2>Send Share</h2>
+                    <h2 data-translate="Send Share">Send Share</h2>
                     <form id="send-share-form">
                         <div class="form-group">
-                            <label for="share-type">Type:</label>
+                            <label for="share-type" data-translate="Type:">Type:</label>
                             <div class="custom-select-container">
                                 <button id="share-type-btn" class="custom-select" onclick="Shares.toggleTypeDropdown()">
-                                    <span id="share-type-display">Song</span>
+                                    <span id="share-type-display" data-translate="Song">Song</span>
                                     <span class="custom-select-arrow"></span>
                                 </button>
                                 <div id="share-type-dropdown" class="custom-dropdown hidden">
@@ -36,10 +36,10 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="share-item">Item:</label>
+                            <label for="share-item" data-translate="Item:">Item:</label>
                             <div class="custom-select-container">
                                 <button id="share-item-btn" class="custom-select" onclick="Shares.toggleItemDropdown()">
-                                    <span id="share-item-display">Select an item</span>
+                                    <span id="share-item-display" data-translate="Select an item">Select an item</span>
                                     <span class="custom-select-arrow"></span>
                                 </button>
                                 <div id="share-item-dropdown" class="custom-dropdown hidden">
@@ -48,23 +48,23 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="recipient-username">Recipient Username:</label>
+                            <label for="recipient-username" data-translate="Recipient Username:">Recipient Username:</label>
                             <input type="text" id="recipient-username" required>
                         </div>
-                        <button type="submit" class="utility-btn" style="margin: 24px auto; display: block; padding: 16px 20px;">Send Share</button>
+                        <button type="submit" class="utility-btn" style="margin: 24px auto; display: block; padding: 16px 20px;" data-translate="Send Share">Send Share</button>
                     </form>
                 </div>
 
                 <!-- Incoming Shares Section -->
                 <div id="incoming-shares-section" style="margin-top: 40px;">
-                    <h2>Incoming Shares</h2>
+                    <h2 data-translate="Incoming Shares">Incoming Shares</h2>
                     <div id="shares-container" style="margin-top: 16px;">
                         <div style="margin-bottom: 24px;">
-                            <h3 style="margin-bottom: 12px; color: var(--text-primary); font-size: 1.1rem;">Song Shares</h3>
+                            <h3 style="margin-bottom: 12px; color: var(--text-primary); font-size: 1.1rem;" data-translate="Song Shares">Song Shares</h3>
                             <ul id="song-shares-list" style="list-style: none; padding: 0; margin: 0;"></ul>
                         </div>
                         <div>
-                            <h3 style="margin-bottom: 12px; color: var(--text-primary); font-size: 1.1rem;">Chord Shares</h3>
+                            <h3 style="margin-bottom: 12px; color: var(--text-primary); font-size: 1.1rem;" data-translate="Chord Shares">Chord Shares</h3>
                             <ul id="chord-shares-list" style="list-style: none; padding: 0; margin: 0;"></ul>
                         </div>
                     </div>

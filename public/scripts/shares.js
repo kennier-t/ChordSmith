@@ -9,6 +9,21 @@ let userChords = [];
 let currentShareType = 'song';
 let currentShareItem = '';
 
+function t(key, fallback) {
+    return (translations[currentLanguage] && translations[currentLanguage][key]) || fallback || key;
+}
+
+function applyShareTypeDisplay() {
+    const displayElement = document.getElementById('share-type-display');
+    if (!displayElement) return;
+
+    const labels = {
+        song: t('Song', 'Song'),
+        chord: t('Chord', 'Chord')
+    };
+    displayElement.textContent = labels[currentShareType] || currentShareType;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Back button
     backBtn.addEventListener('click', () => {
@@ -52,12 +67,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (sharesRes.ok) {
             renderShares(data.songShares, songSharesList, 'song');
             renderShares(data.chordShares, chordSharesList, 'chord');
+            applyShareTypeDisplay();
         } else {
             alert(data.message);
         }
     } catch (error) {
         console.error(error);
-        alert('An error occurred. Please try again.');
+        alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
     }
 });
 
@@ -69,7 +85,7 @@ sendShareForm.addEventListener('submit', async (e) => {
     const recipientUsername = document.getElementById('recipient-username').value.trim();
 
     if (!itemId || !recipientUsername) {
-        alert('Please select an item and enter a recipient username.');
+        alert(t('Please select an item and enter a recipient username.', 'Please select an item and enter a recipient username.'));
         return;
     }
 
@@ -94,7 +110,7 @@ sendShareForm.addEventListener('submit', async (e) => {
         }
     } catch (error) {
         console.error(error);
-        alert('An error occurred. Please try again.');
+        alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
     }
 });
 
@@ -122,11 +138,15 @@ function renderShares(shares, listElement, type) {
         li.style.padding = '12px 0';
         li.style.borderBottom = '1px solid var(--border)';
         const payload = JSON.parse(share.payload);
+        const itemName = payload.Title || payload.Name;
+        const fromLabel = t('from', 'from');
+        const acceptLabel = t('Accept', 'Accept');
+        const rejectLabel = t('Reject', 'Reject');
         li.innerHTML = `
-            <span style="color: var(--text-primary); font-size: 0.9rem;">${payload.Title || payload.Name} from ${payload.senderUsername}</span>
+            <span style="color: var(--text-primary); font-size: 0.9rem;">${itemName} ${fromLabel} ${payload.senderUsername}</span>
             <div style="display: flex; gap: 8px;">
-                <button class="accept-share utility-btn" data-id="${share.id}" data-type="${type}" style="padding: 8px 16px; font-size: 0.8rem;">Accept</button>
-                <button class="reject-share utility-btn" data-id="${share.id}" data-type="${type}" style="padding: 8px 16px; font-size: 0.8rem; background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);">Reject</button>
+                <button class="accept-share utility-btn" data-id="${share.id}" data-type="${type}" style="padding: 8px 16px; font-size: 0.8rem;">${acceptLabel}</button>
+                <button class="reject-share utility-btn" data-id="${share.id}" data-type="${type}" style="padding: 8px 16px; font-size: 0.8rem; background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);">${rejectLabel}</button>
             </div>
         `;
         listElement.appendChild(li);
@@ -158,9 +178,12 @@ async function showFolderSelectionModal(shareId, type) {
         
         const modal = document.createElement('div');
         modal.className = 'modal';
+        const modalTitle = t('Select Folders for the Song', 'Select Folders for the Song');
+        const acceptLabel = t('Accept', 'Accept');
+        const cancelLabel = t('Cancel', 'Cancel');
         modal.innerHTML = `
             <div class="modal-content">
-                <h3>Select Folders for the Song</h3>
+                <h3>${modalTitle}</h3>
                 <div id="folders-list">
                     ${folders.map(folder => `
                         <label>
@@ -168,8 +191,8 @@ async function showFolderSelectionModal(shareId, type) {
                         </label><br>
                     `).join('')}
                 </div>
-                <button id="accept-with-folders">Accept</button>
-                <button id="cancel-accept">Cancel</button>
+                <button id="accept-with-folders">${acceptLabel}</button>
+                <button id="cancel-accept">${cancelLabel}</button>
             </div>
         `;
         document.body.appendChild(modal);
@@ -185,7 +208,7 @@ async function showFolderSelectionModal(shareId, type) {
         });
     } catch (error) {
         console.error(error);
-        alert('An error occurred loading folders. Please try again.');
+        alert(t('An error occurred loading folders. Please try again.', 'An error occurred loading folders. Please try again.'));
     }
 }
 
@@ -206,7 +229,7 @@ async function acceptShare(shareId, type, folderIds) {
         }
     } catch (error) {
         console.error(error);
-        alert('An error occurred. Please try again.');
+        alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
     }
 }
 
@@ -227,7 +250,7 @@ async function rejectShare(shareId, type) {
         }
     } catch (error) {
         console.error(error);
-        alert('An error occurred. Please try again.');
+        alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
     }
 }
 
@@ -250,16 +273,11 @@ const Shares = {
 
     selectTypeOption(value) {
         currentShareType = value;
-        const displayElement = document.getElementById('share-type-display');
-        const translationsMap = {
-            'song': 'Song',
-            'chord': 'Chord'
-        };
-        displayElement.textContent = translationsMap[value] || value;
+        applyShareTypeDisplay();
         this.toggleTypeDropdown();
         populateItemDropdown(value);
         currentShareItem = ''; // Reset item
-        document.getElementById('share-item-display').textContent = 'Select an item';
+        document.getElementById('share-item-display').textContent = t('Select an item', 'Select an item');
     },
 
     toggleItemDropdown() {

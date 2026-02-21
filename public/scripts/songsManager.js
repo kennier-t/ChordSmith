@@ -1,4 +1,4 @@
-const SongsManager = (function() {
+﻿const SongsManager = (function() {
     'use strict';
     
     let currentFolderId = null;
@@ -89,7 +89,7 @@ const SongsManager = (function() {
                 `;
                 translatePage();
             } else {
-                folderTitleElement.textContent = 'All Songs';
+                folderTitleElement.textContent = translations[currentLanguage]['All Songs'] || 'All Songs';
             }
             
             // Hide the sort control for regular folder view
@@ -309,7 +309,7 @@ const SongsManager = (function() {
         if (selectedCount === totalCount) {
             displayElement.textContent = translations[currentLanguage]['All'] || 'All';
         } else {
-            displayElement.textContent = `${selectedCount} of ${totalCount}`;
+            displayElement.textContent = `${selectedCount} ${translations[currentLanguage]['of'] || 'of'} ${totalCount}`;
         }
 
         // Clear existing options
@@ -365,7 +365,7 @@ const SongsManager = (function() {
         if (selectedCount === totalCount) {
             displayElement.textContent = translations[currentLanguage]['All'] || 'All';
         } else {
-            displayElement.textContent = `${selectedCount} of ${totalCount}`;
+            displayElement.textContent = `${selectedCount} ${translations[currentLanguage]['of'] || 'of'} ${totalCount}`;
         }
     }
 
@@ -621,13 +621,17 @@ const SongsManager = (function() {
     function createSongItem(song) {
         const item = document.createElement('div');
         item.className = 'song-item';
+        const keyLabel = translations[currentLanguage]['Key'] || 'Key';
+        const capoLabel = translations[currentLanguage]['Capo'] || 'Capo';
+        const bpmLabel = translations[currentLanguage]['BPM'] || 'BPM';
+        const separator = '\u2022';
         item.innerHTML = `
             <div class="song-info">
                 <h3>${song.Title}</h3>
                 <div class="song-meta">
-                    ${song.SongKey ? `Key: ${song.SongKey}` : ''} 
-                    ${song.Capo ? `• Capo: ${song.Capo}` : ''}
-                    ${song.BPM ? `• BPM: ${song.BPM}` : ''}
+                    ${song.SongKey ? `${keyLabel}: ${song.SongKey}` : ''} 
+                    ${song.Capo ? `${separator} ${capoLabel}: ${song.Capo}` : ''}
+                    ${song.BPM ? `${separator} ${bpmLabel}: ${song.BPM}` : ''}
                 </div>
             </div>
             <div class="song-actions">
@@ -688,7 +692,7 @@ const SongsManager = (function() {
     async function downloadSongPDF(songId) {
         const song = await SONGS_SERVICE.getSongById(songId);
         if (!song) {
-            alert('Song not found');
+            alert(translations[currentLanguage]['Song not found'] || 'Song not found');
             return;
         }
         
@@ -748,3 +752,5 @@ const SongsManager = (function() {
         selectSortOption
     };
 })();
+
+

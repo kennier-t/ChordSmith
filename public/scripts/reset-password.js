@@ -2,13 +2,17 @@ const form = document.getElementById('reset-password-form');
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token');
 
+function t(key, fallback) {
+    return (translations[currentLanguage] && translations[currentLanguage][key]) || fallback || key;
+}
+
 if (token) {
     // Show reset password form
-    document.getElementById('form-title').textContent = 'Enter New Password';
+    document.getElementById('form-title').textContent = t('Enter New Password', 'Enter New Password');
     document.getElementById('email-group').style.display = 'none';
     document.getElementById('password-group').style.display = 'block';
     document.getElementById('confirm-password-group').style.display = 'block';
-    document.getElementById('submit-btn').textContent = 'Reset Password';
+    document.getElementById('submit-btn').textContent = t('Reset Password', 'Reset Password');
     document.getElementById('email').required = false;
     document.getElementById('password').required = true;
     document.getElementById('confirm-password').required = true;
@@ -29,7 +33,7 @@ form.addEventListener('submit', async (e) => {
         const confirmPassword = form['confirm-password'].value;
 
         if (password !== confirmPassword) {
-            alert('Passwords do not match.');
+            alert(t('Passwords do not match.', 'Passwords do not match.'));
             return;
         }
 
@@ -48,7 +52,7 @@ form.addEventListener('submit', async (e) => {
             }
         } catch (error) {
             console.error(error);
-            alert('An error occurred. Please try again.');
+            alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
         }
     } else {
         // Forgot password
@@ -66,7 +70,7 @@ form.addEventListener('submit', async (e) => {
             alert(data.message);
         } catch (error) {
             console.error(error);
-            alert('An error occurred. Please try again.');
+            alert(t('An error occurred. Please try again.', 'An error occurred. Please try again.'));
         }
     }
 });
