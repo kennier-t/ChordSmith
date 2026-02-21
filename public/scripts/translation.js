@@ -7,8 +7,13 @@ const translations = {
         'PDF → Text': 'PDF → Text',
         'ChordSmith': 'ChordSmith',
         '← Back': '← Back',
+        '? Back': '? Back',
+        'PDF Preview': 'PDF Preview',
+        'Loading PDF preview...': 'Loading PDF preview...',
+        'Unable to load PDF preview.': 'Unable to load PDF preview.',
         'Download Full Family (PNG)': 'Download Full Family (PNG)',
         'Download Full Family (SVG)': 'Download Full Family (SVG)',
+        'Download': 'Download',
         'Download PNG': 'Download PNG',
         'Download SVG': 'Download SVG',
         'Generate Song Chords': 'Generate Song Chords',
@@ -206,8 +211,13 @@ const translations = {
                         'PDF → Text': 'PDF \u2192 Texto',
                         'ChordSmith': 'ChordSmith',
                         '← Back': '\u2190 Volver',
+                        '? Back': '\u2190 Volver',
+                        'PDF Preview': 'Vista Previa PDF',
+                        'Loading PDF preview...': 'Cargando vista previa del PDF...',
+                        'Unable to load PDF preview.': 'No se pudo cargar la vista previa del PDF.',
                         'Download Full Family (PNG)': 'Descargar Familia (PNG)',
                         'Download Full Family (SVG)': 'Descargar Familia (SVG)',
+                        'Download': 'Descargar',
                         'Download PNG': 'Descargar PNG',
                         'Download SVG': 'Descargar SVG',
                         'Generate Song Chords': 'Generar Acordes de Canci\u00f3n',
@@ -532,5 +542,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         setLanguage(serverLanguage, { persistRemote: false });
     }
 });
+
 
 

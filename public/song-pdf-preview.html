@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Preview - ChordSmith</title>
+    <link rel="icon" type="image/webp" href="assets/guitar.webp">
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/guitar-pattern.css">
+    <link rel="stylesheet" href="styles/translation.css">
+</head>
+<body>
+    <header>
+        <div class="top-buttons-container">
+            <button id="back-preview-btn" class="utility-btn utility-btn-modern" data-translate="← Back">← Back</button>
+            <button id="download-preview-btn" class="utility-btn utility-btn-modern" data-translate="Download">Download</button>
+        </div>
+    </header>
+
+    <div id="app">
+        <div class="view pdf-preview-view">
+            <img id="language-toggle" src="assets/translate.png" alt="Language Toggle">
+            <h1 data-translate="PDF Preview">PDF Preview</h1>
+            <p id="pdf-preview-status" class="pdf-preview-status" data-translate="Loading PDF preview...">Loading PDF preview...</p>
+            <iframe id="pdf-preview-frame" class="pdf-preview-frame hidden" title="PDF Preview"></iframe>
+        </div>
+    </div>
+
+    <script src="scripts/translation.js"></script>
+    <script src="scripts/guitar-pattern.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="scripts/chordRenderer.js"></script>
+    <script src="scripts/songsService-api.js"></script>
+    <script src="scripts/songPDFGenerator.js"></script>
+    <script src="scripts/songPdfPreview.js"></script>
+</body>
+</html>

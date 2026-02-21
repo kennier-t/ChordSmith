@@ -1869,3 +1869,20 @@ h2::after {
     margin-bottom: 8px;
     color: var(--text-primary);
 }
+
+.pdf-preview-view {
+    min-height: calc(100vh - 120px);
+}
+
+.pdf-preview-status {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.pdf-preview-frame {
+    width: 100%;
+    height: 75vh;
+    border: 1px solid var(--border);
+    background: white;
+}

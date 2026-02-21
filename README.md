@@ -27,6 +27,9 @@ ChordSmith is a web app to create, manage, share, and export guitar chords and s
   - metadata at top,
   - lyrics/content area in the configured layout,
   - chord diagrams at the end.
+- Song-list `PDF` action now opens a PDF preview page/tab first.
+- Preview page includes `Download` and `Back/Close` controls.
+- Download happens only when the user clicks `Download`.
 
 ### Sharing and Multi-user
 - User registration/login with session support.
@@ -89,6 +92,8 @@ npm start
 - `public/scripts/app.js`: Main app behavior.
 - `public/scripts/songEditor.js`: Song editing UI and layout behavior.
 - `public/scripts/songPDFGenerator.js`: PDF generation.
+- `public/song-pdf-preview.html`: Song PDF preview page.
+- `public/scripts/songPdfPreview.js`: Preview page logic (view/download/back).
 - `public/scripts/translation.js`: i18n strings and language switching.
 - `database/setup-complete.sql`: Full schema + seed setup.
 

@@ -636,7 +636,7 @@
             </div>
             <div class="song-actions">
                 <button class="action-btn" onclick="SongsManager.editSong(${song.Id})" data-translate="Edit"></button>
-                <button class="action-btn" onclick="SongsManager.downloadSongPDF(${song.Id})">PDF</button>
+                <button class="action-btn" onclick="SongsManager.openSongPDFPreview(${song.Id})">PDF</button>
                 <button class="action-btn delete-btn" onclick="SongsManager.deleteSong(${song.Id})" data-translate="Delete"></button>
             </div>
         `;
@@ -699,6 +699,11 @@
         const chords = await SONGS_SERVICE.getSongChordDiagrams(songId);
         await SongPDFGenerator.downloadPDF(song, chords, `${song.Title}.pdf`);
     }
+
+    function openSongPDFPreview(songId) {
+        const url = `/song-pdf-preview.html?songId=${encodeURIComponent(songId)}`;
+        window.open(url, '_blank');
+    }
     
     async function deleteSong(songId) {
         const song = await SONGS_SERVICE.getSongById(songId);
@@ -741,6 +746,7 @@
         renameFolder,
         deleteFolder,
         editSong,
+        openSongPDFPreview,
         downloadSongPDF,
         deleteSong,
         refreshFoldersList,
