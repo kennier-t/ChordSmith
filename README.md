@@ -1,6 +1,12 @@
-# ChordSmith
+# ChordSmith Studio
 
-ChordSmith is a web app to create, manage, share, and export guitar chords and songs.
+ChordSmith Studio is a web app to create, manage, share, and export guitar chords and songs.
+
+## What changed
+- Backend database is now MySQL (cross-platform for Windows and macOS).
+- DB access is environment-driven (`.env`), no hardcoded machine/SQL Server instance.
+- Existing API routes and user-facing behavior are preserved.
+- PDF generation logic remains client-side and unchanged.
 
 ## Features
 
@@ -19,34 +25,17 @@ ChordSmith is a web app to create, manage, share, and export guitar chords and s
 - Select up to 8 chord diagrams per song.
 - Organize songs in folders.
 - Full song/folder CRUD.
-- Song layout modes:
-  - Single column (default).
-  - Two columns with draggable divider.
+- Song layout modes: single column and two columns with draggable divider.
 - Two-column layout persists per song (column count, divider position, column content).
 - Song editor includes a UI-only line-number gutter for the first text column.
-- Line numbers are not saved and are not included in generated PDFs.
-- Default line-number window is 30 visible lines; developer override is available:
-  set `window.CHORDSMITH_EDITOR_VISIBLE_LINES` (for example `40` or `50`) before `songEditor.js` loads.
-- PDF export preserves the existing document structure:
-  - metadata at top,
-  - lyrics/content area in the configured layout,
-  - chord diagrams at the end.
-- Song-list `PDF` action now opens a PDF preview page/tab first.
-- Preview page includes `Download` and `Back/Close` controls.
-- Download happens only when the user clicks `Download`.
+- Song-list `PDF` action opens a preview page before download.
 
 ### Sharing and Multi-user
-- User registration/login with session support.
+- User registration/login with JWT auth.
 - Ownership model for songs and chords.
 - Share songs and chords by recipient username.
 - Accept/reject incoming shares.
 - Editing shared items creates user-owned copies (fork behavior).
-
-### Language and UX
-- UI supports English and Spanish.
-- Main language toggle switches app language live.
-- User language preference is stored in `Users.language_pref`.
-- Language preference is loaded from DB for authenticated users and applied automatically.
 
 ### PDF to Text
 - Convert PDF files to text using `pdftotext -layout` while preserving spacing.
@@ -54,53 +43,90 @@ ChordSmith is a web app to create, manage, share, and export guitar chords and s
 ## Tech Stack
 - Frontend: HTML, CSS, vanilla JavaScript.
 - Backend: Node.js + Express.
-- Database: SQL Server.
+- Database: MySQL 8+.
 
-## Database Setup
+## Quick Start (Windows and macOS)
 
-Run:
-- `database/setup-complete.sql`
-
-This script initializes the full current schema from scratch, including:
-- users/auth tables,
-- chord domain tables,
-- songs/folders/sharing tables,
-- song layout columns for single/two-column editing.
-
-## Getting Started
-
-1. Install dependencies:
+1. Install MySQL Server 8+.
+2. Install MySQL Workbench.
+3. Clone this repo.
+4. Create `.env` from `.env.example` and set your credentials.
+5. In MySQL Workbench:
+- Open a SQL tab connected to your local server.
+- File -> Open SQL Script -> select `database/setup-mysql.sql`.
+- Click Execute (lightning icon).
+6. Install dependencies:
 ```bash
 npm install
 ```
-
-2. Configure DB connection in:
-- `server/db.js`
-
-3. Run database setup in SSMS:
-- `database/setup-complete.sql`
-
-4. Start the app:
+7. Start app:
 ```bash
 npm start
 ```
-
-5. Open:
+8. Open:
 - `http://localhost:3000`
 
-## Key Project Paths
+## MySQL bootstrap script
+- `database/setup-mysql.sql`
 
+This script:
+- drops and recreates database `Chordsmith Studio`,
+- creates all schema objects,
+- seeds chord families/chords mappings,
+- creates compatibility views.
+
+## Data migration from SQL Server to MySQL
+
+### Prerequisites
+- Source SQL Server DB (old `ChordSmith`) reachable.
+- Target MySQL DB already created with `database/setup-mysql.sql`.
+- `.env` includes `SRC_MSSQL_*` variables and `DB_*` target variables.
+
+### Run migration
+```bash
+npm run migrate:sqlserver-to-mysql
+```
+
+What it does:
+- opens a SQL Server source connection,
+- opens a MySQL target connection,
+- migrates all relevant tables preserving IDs,
+- verifies row counts table-by-table,
+- commits on success,
+- rolls back on any failure.
+
+### Verification checklist
+- Confirm migration command ends with: `Migration completed successfully. Row counts verified.`
+- Login with migrated users.
+- Open songs list, edit a song, save, reopen.
+- Open chord families and verify diagrams/fingerings.
+- Test share accept/reject flows.
+
+## Rollback procedure
+
+If migration fails or app behavior regresses:
+
+1. Stop the Node app.
+2. Restore SQL Server as source of truth (unchanged by migration script).
+3. Recreate MySQL target from scratch:
+- rerun `database/setup-mysql.sql` in MySQL Workbench.
+4. Re-run migration only after fixing the issue.
+5. To temporarily use old environment, switch back to the original SQL Server project copy.
+
+## Troubleshooting
+- `ER_ACCESS_DENIED_ERROR`: Check `DB_USER` / `DB_PASSWORD` in `.env`.
+- `Unknown database 'Chordsmith Studio'`: Run `database/setup-mysql.sql` first.
+- `Migration failed: Missing SQL Server source config vars`: fill `SRC_MSSQL_*` in `.env`.
+- `pdftotext command failed`: install Poppler and ensure `pdftotext` is in PATH.
+
+## Key Project Paths
 - `server/server.js`: API bootstrap.
+- `server/db.js`: MySQL DB connection and transactions.
 - `server/routes/`: Auth, users, songs, chords, shares routes.
 - `server/services/`: Business/data logic.
-- `public/scripts/app.js`: Main app behavior.
-- `public/scripts/songEditor.js`: Song editing UI and layout behavior.
-- `public/scripts/songPDFGenerator.js`: PDF generation.
-- `public/song-pdf-preview.html`: Song PDF preview page.
-- `public/scripts/songPdfPreview.js`: Preview page logic (view/download/back).
-- `public/scripts/translation.js`: i18n strings and language switching.
-- `database/setup-complete.sql`: Full schema + seed setup.
+- `public/scripts/songPDFGenerator.js`: PDF generation (unchanged).
+- `database/setup-mysql.sql`: MySQL bootstrap schema and seed script.
+- `scripts/migrate-sqlserver-to-mysql.js`: data migration tool.
 
 ## License
-
 Personal educational project.

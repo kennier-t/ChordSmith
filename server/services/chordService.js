@@ -1,84 +1,91 @@
 const db = require('../db');
 const userService = require('./userService');
-const sql = require('mssql/msnodesqlv8');
 
 async function createChord(chord, userId) {
     const { name, baseFret, frets, fingers, barres, isDefault } = chord;
-    const pool = await db.connect();
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
+    const tx = await db.beginTransaction();
     try {
         if (isDefault) {
-            await new sql.Request(transaction)
-                .input('name', sql.NVarChar, name)
-                .query('UPDATE Chords SET IsDefault = 0 WHERE Name = @name');
+            await tx.query('UPDATE Chords SET IsDefault = 0 WHERE Name = @name', { name });
         }
 
-        const chordResult = await new sql.Request(transaction)
-            .input('name', sql.NVarChar, name)
-            .input('baseFret', sql.Int, baseFret || 1)
-            .input('isDefault', sql.Bit, isDefault || false)
-            .input('creator_id', sql.Int, userId)
-            .query('INSERT INTO Chords (Name, BaseFret, IsOriginal, IsDefault, creator_id, created_at, updated_at) OUTPUT INSERTED.Id VALUES (@name, @baseFret, 0, @isDefault, @creator_id, GETDATE(), GETDATE())');
-        
-        const chordId = chordResult.recordset[0].Id;
+        const chordResult = await tx.query(
+            'INSERT INTO Chords (Name, BaseFret, IsOriginal, IsDefault, creator_id, created_at, updated_at) VALUES (@name, @baseFret, 0, @isDefault, @creator_id, UTC_TIMESTAMP(), UTC_TIMESTAMP())',
+            {
+                name,
+                baseFret: baseFret || 1,
+                isDefault: isDefault ? 1 : 0,
+                creator_id: userId
+            }
+        );
 
-        await new sql.Request(transaction)
-            .input('user_id', sql.Int, userId)
-            .input('chord_id', sql.Int, chordId)
-            .query('INSERT INTO UserChords (user_id, chord_id, is_creator) VALUES (@user_id, @chord_id, 1)');
-        
+        const chordId = chordResult.insertId;
+
+        await tx.query('INSERT INTO UserChords (user_id, chord_id, is_creator) VALUES (@user_id, @chord_id, 1)', {
+            user_id: userId,
+            chord_id: chordId
+        });
+
         for (let i = 0; i < 6; i++) {
-            await new sql.Request(transaction)
-                .input('chordId', sql.Int, chordId)
-                .input('stringNumber', sql.Int, i + 1)
-                .input('fretNumber', sql.Int, frets[i])
-                .input('fingerNumber', sql.Int, fingers[i])
-                .query('INSERT INTO ChordFingerings (ChordId, StringNumber, FretNumber, FingerNumber) VALUES (@chordId, @stringNumber, @fretNumber, @fingerNumber)');
+            await tx.query('INSERT INTO ChordFingerings (ChordId, StringNumber, FretNumber, FingerNumber) VALUES (@chordId, @stringNumber, @fretNumber, @fingerNumber)', {
+                chordId,
+                stringNumber: i + 1,
+                fretNumber: frets[i],
+                fingerNumber: fingers[i]
+            });
         }
-        
+
         if (barres && barres.length > 0) {
             for (const barreFret of barres) {
-                await new sql.Request(transaction)
-                    .input('chordId', sql.Int, chordId)
-                    .input('fretNumber', sql.Int, barreFret)
-                    .query('INSERT INTO ChordBarres (ChordId, FretNumber) VALUES (@chordId, @fretNumber)');
+                await tx.query('INSERT INTO ChordBarres (ChordId, FretNumber) VALUES (@chordId, @fretNumber)', {
+                    chordId,
+                    fretNumber: barreFret
+                });
             }
         }
 
-        await transaction.commit();
+        await tx.commit();
         return { id: chordId };
     } catch (err) {
-        await transaction.rollback();
+        await tx.rollback();
         throw err;
+    } finally {
+        tx.release();
     }
 }
 
 async function getChordById(chordId, userId) {
-    const result = await db.query(`
+    const result = await db.query(
+        `
         SELECT c.*, uc.is_creator FROM Chords c
         LEFT JOIN UserChords uc ON c.id = uc.chord_id AND uc.user_id = @userId
         WHERE c.id = @chordId
-    `, { userId, chordId });
+    `,
+        { userId, chordId }
+    );
 
     const chord = result.recordset[0];
     if (!chord) return null;
 
-    // Get fingerings
-    const fingeringResult = await db.query(`
+    const fingeringResult = await db.query(
+        `
         SELECT StringNumber, FretNumber, FingerNumber
         FROM ChordFingerings
         WHERE ChordId = @chordId
         ORDER BY StringNumber
-    `, { chordId });
+    `,
+        { chordId }
+    );
 
-    // Get barres
-    const barreResult = await db.query(`
+    const barreResult = await db.query(
+        `
         SELECT FretNumber
         FROM ChordBarres
         WHERE ChordId = @chordId
         ORDER BY FretNumber
-    `, { chordId });
+    `,
+        { chordId }
+    );
 
     chord.frets = new Array(6).fill(0);
     chord.fingers = new Array(6).fill(0);
@@ -92,34 +99,38 @@ async function getChordById(chordId, userId) {
 }
 
 async function getChordsByUserId(userId) {
-    const result = await db.query(`
-        SELECT c.*, ISNULL(uc.is_creator, 0) as is_creator FROM Chords c
+    const result = await db.query(
+        `
+        SELECT c.*, IFNULL(uc.is_creator, 0) as is_creator FROM Chords c
         LEFT JOIN UserChords uc ON c.id = uc.chord_id AND uc.user_id = @userId
         WHERE c.IsOriginal = 1 OR uc.user_id IS NOT NULL
-    `, { userId });
+    `,
+        { userId }
+    );
 
     const chords = result.recordset;
     if (chords.length === 0) return chords;
 
     const chordIds = chords.map(c => c.Id);
 
-    // Get fingerings
-    const fingeringResult = await db.query(`
+    const fingeringResult = await db.query(
+        `
         SELECT ChordId, StringNumber, FretNumber, FingerNumber
         FROM ChordFingerings
         WHERE ChordId IN (${chordIds.join(',')})
         ORDER BY ChordId, StringNumber
-    `);
+    `
+    );
 
-    // Get barres
-    const barreResult = await db.query(`
+    const barreResult = await db.query(
+        `
         SELECT ChordId, FretNumber
         FROM ChordBarres
         WHERE ChordId IN (${chordIds.join(',')})
         ORDER BY ChordId, FretNumber
-    `);
+    `
+    );
 
-    // Map fingerings
     const fingeringMap = {};
     fingeringResult.recordset.forEach(f => {
         if (!fingeringMap[f.ChordId]) {
@@ -129,14 +140,12 @@ async function getChordsByUserId(userId) {
         fingeringMap[f.ChordId].fingers[f.StringNumber - 1] = f.FingerNumber;
     });
 
-    // Map barres
     const barreMap = {};
     barreResult.recordset.forEach(b => {
         if (!barreMap[b.ChordId]) barreMap[b.ChordId] = [];
         barreMap[b.ChordId].push(b.FretNumber);
     });
 
-    // Attach to chords
     chords.forEach(c => {
         const data = fingeringMap[c.Id];
         c.frets = data ? data.frets : [];
@@ -148,35 +157,39 @@ async function getChordsByUserId(userId) {
 }
 
 async function getChordVariations(name, userId) {
-    const result = await db.query(`
-        SELECT c.*, ISNULL(uc.is_creator, 0) as is_creator FROM Chords c
+    const result = await db.query(
+        `
+        SELECT c.*, IFNULL(uc.is_creator, 0) as is_creator FROM Chords c
         LEFT JOIN UserChords uc ON c.id = uc.chord_id AND uc.user_id = @userId
         WHERE c.Name = @name AND (c.IsOriginal = 1 OR uc.user_id IS NOT NULL)
         ORDER BY c.IsDefault DESC, c.Id
-    `, { name, userId });
+    `,
+        { name, userId }
+    );
 
     const chords = result.recordset;
     if (chords.length === 0) return chords;
 
     const chordIds = chords.map(c => c.Id);
 
-    // Get fingerings
-    const fingeringResult = await db.query(`
+    const fingeringResult = await db.query(
+        `
         SELECT ChordId, StringNumber, FretNumber, FingerNumber
         FROM ChordFingerings
         WHERE ChordId IN (${chordIds.join(',')})
         ORDER BY ChordId, StringNumber
-    `);
+    `
+    );
 
-    // Get barres
-    const barreResult = await db.query(`
+    const barreResult = await db.query(
+        `
         SELECT ChordId, FretNumber
         FROM ChordBarres
         WHERE ChordId IN (${chordIds.join(',')})
         ORDER BY ChordId, FretNumber
-    `);
+    `
+    );
 
-    // Map fingerings
     const fingeringMap = {};
     fingeringResult.recordset.forEach(f => {
         if (!fingeringMap[f.ChordId]) {
@@ -186,14 +199,12 @@ async function getChordVariations(name, userId) {
         fingeringMap[f.ChordId].fingers[f.StringNumber - 1] = f.FingerNumber;
     });
 
-    // Map barres
     const barreMap = {};
     barreResult.recordset.forEach(b => {
         if (!barreMap[b.ChordId]) barreMap[b.ChordId] = [];
         barreMap[b.ChordId].push(b.FretNumber);
     });
 
-    // Attach to chords
     chords.forEach(c => {
         const data = fingeringMap[c.Id];
         c.frets = data ? data.frets : [];
@@ -205,28 +216,19 @@ async function getChordVariations(name, userId) {
 }
 
 async function setDefaultVariation(chordId, userId) {
-    // Check if user has access to the chord
     const chord = await getChordById(chordId, userId);
     if (!chord) throw new Error('Chord not found or access denied');
 
-    const pool = await db.connect();
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
+    const tx = await db.beginTransaction();
     try {
-        // Set IsDefault = 0 for all chords with the same name
-        await new sql.Request(transaction)
-            .input('name', sql.NVarChar, chord.Name)
-            .query('UPDATE Chords SET IsDefault = 0 WHERE Name = @name');
-
-        // Set IsDefault = 1 for this chord
-        await new sql.Request(transaction)
-            .input('chordId', sql.Int, chordId)
-            .query('UPDATE Chords SET IsDefault = 1 WHERE Id = @chordId');
-
-        await transaction.commit();
+        await tx.query('UPDATE Chords SET IsDefault = 0 WHERE Name = @name', { name: chord.Name });
+        await tx.query('UPDATE Chords SET IsDefault = 1 WHERE Id = @chordId', { chordId });
+        await tx.commit();
     } catch (err) {
-        await transaction.rollback();
+        await tx.rollback();
         throw err;
+    } finally {
+        tx.release();
     }
 }
 
@@ -241,57 +243,48 @@ async function updateChord(chordId, chord, userId) {
     }
 
     const { name, baseFret, frets, fingers, barres, isDefault } = chord;
-    const pool = await db.connect();
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
+    const tx = await db.beginTransaction();
 
     try {
         if (isDefault) {
-            await new sql.Request(transaction)
-                .input('name', sql.NVarChar, name)
-                .input('id', sql.Int, chordId)
-                .query('UPDATE Chords SET IsDefault = 0 WHERE Name = @name AND Id != @id');
+            await tx.query('UPDATE Chords SET IsDefault = 0 WHERE Name = @name AND Id != @id', { name, id: chordId });
         }
 
-        await new sql.Request(transaction)
-            .input('id', sql.Int, chordId)
-            .input('name', sql.NVarChar, name)
-            .input('baseFret', sql.Int, baseFret || 1)
-            .input('isDefault', sql.Bit, isDefault || false)
-            .query('UPDATE Chords SET Name = @name, BaseFret = @baseFret, IsDefault = @isDefault, updated_at = GETDATE() WHERE Id = @id');
-        
-        await new sql.Request(transaction)
-            .input('chordId', sql.Int, chordId)
-            .query('DELETE FROM ChordFingerings WHERE ChordId = @chordId');
-        
-        await new sql.Request(transaction)
-            .input('chordId', sql.Int, chordId)
-            .query('DELETE FROM ChordBarres WHERE ChordId = @chordId');
-        
+        await tx.query('UPDATE Chords SET Name = @name, BaseFret = @baseFret, IsDefault = @isDefault, updated_at = UTC_TIMESTAMP() WHERE Id = @id', {
+            id: chordId,
+            name,
+            baseFret: baseFret || 1,
+            isDefault: isDefault ? 1 : 0
+        });
+
+        await tx.query('DELETE FROM ChordFingerings WHERE ChordId = @chordId', { chordId });
+        await tx.query('DELETE FROM ChordBarres WHERE ChordId = @chordId', { chordId });
+
         for (let i = 0; i < 6; i++) {
-            await new sql.Request(transaction)
-                .input('chordId', sql.Int, chordId)
-                .input('stringNumber', sql.Int, i + 1)
-                .input('fretNumber', sql.Int, frets[i])
-                .input('fingerNumber', sql.Int, fingers[i])
-                .query('INSERT INTO ChordFingerings (ChordId, StringNumber, FretNumber, FingerNumber) VALUES (@chordId, @stringNumber, @fretNumber, @fingerNumber)');
+            await tx.query('INSERT INTO ChordFingerings (ChordId, StringNumber, FretNumber, FingerNumber) VALUES (@chordId, @stringNumber, @fretNumber, @fingerNumber)', {
+                chordId,
+                stringNumber: i + 1,
+                fretNumber: frets[i],
+                fingerNumber: fingers[i]
+            });
         }
-        
+
         if (barres && barres.length > 0) {
             for (const barreFret of barres) {
-                await new sql.Request(transaction)
-                    .input('chordId', sql.Int, chordId)
-                    .input('fretNumber', sql.Int, barreFret)
-                    .query('INSERT INTO ChordBarres (ChordId, FretNumber) VALUES (@chordId, @fretNumber)');
+                await tx.query('INSERT INTO ChordBarres (ChordId, FretNumber) VALUES (@chordId, @fretNumber)', {
+                    chordId,
+                    fretNumber: barreFret
+                });
             }
         }
-        
-        await transaction.commit();
-        return { id: chordId };
 
+        await tx.commit();
+        return { id: chordId };
     } catch (err) {
-        await transaction.rollback();
+        await tx.rollback();
         throw err;
+    } finally {
+        tx.release();
     }
 }
 
@@ -306,10 +299,8 @@ async function deleteChord(chordId, userId) {
         throw new Error('Chord not found');
     }
     if (chord.creator_id === userId) {
-        // Creator deletes the chord entirely
         await db.query('DELETE FROM Chords WHERE Id = @chordId', { chordId });
     } else {
-        // Non-creator removes the mapping
         await db.query('DELETE FROM UserChords WHERE user_id = @userId AND chord_id = @chordId', { userId, chordId });
     }
 }
@@ -332,7 +323,7 @@ async function shareChord(chordId, senderId, recipientUsername) {
 }
 
 async function getIncomingShares(userId) {
-    const result = await db.query('SELECT * FROM ChordShares WHERE recipient_user_id = @userId AND status = \'pending\'', { userId });
+    const result = await db.query("SELECT * FROM ChordShares WHERE recipient_user_id = @userId AND status = 'pending'", { userId });
     return result.recordset;
 }
 
@@ -343,29 +334,26 @@ async function acceptShare(shareId, userId) {
         throw new Error('Share not found');
     }
 
-    const pool = await db.connect();
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
-
+    const tx = await db.beginTransaction();
     try {
-        await new sql.Request(transaction)
-            .input('shareId', sql.Int, shareId)
-            .query('UPDATE ChordShares SET status = \'accepted\' WHERE id = @shareId');
+        await tx.query("UPDATE ChordShares SET status = 'accepted' WHERE id = @shareId", { shareId });
 
-        await new sql.Request(transaction)
-            .input('user_id', sql.Int, userId)
-            .input('chord_id', sql.Int, share.chord_id)
-            .query('INSERT INTO UserChords (user_id, chord_id, is_creator) VALUES (@user_id, @chord_id, 0)');
+        await tx.query('INSERT IGNORE INTO UserChords (user_id, chord_id, is_creator) VALUES (@user_id, @chord_id, 0)', {
+            user_id: userId,
+            chord_id: share.chord_id
+        });
 
-        await transaction.commit();
+        await tx.commit();
     } catch (error) {
-        await transaction.rollback();
+        await tx.rollback();
         throw error;
+    } finally {
+        tx.release();
     }
 }
 
 async function rejectShare(shareId, userId) {
-    await db.query('UPDATE ChordShares SET status = \'rejected\' WHERE id = @shareId AND recipient_user_id = @userId', { shareId, userId });
+    await db.query("UPDATE ChordShares SET status = 'rejected' WHERE id = @shareId AND recipient_user_id = @userId", { shareId, userId });
 }
 
 async function getAllFamilies() {
@@ -374,37 +362,41 @@ async function getAllFamilies() {
 }
 
 async function getChordsForFamily(familyName, userId) {
-    const result = await db.query(`
+    const result = await db.query(
+        `
         SELECT DISTINCT c.* FROM Chords c
         INNER JOIN ChordFamilyMapping cfm ON c.Id = cfm.ChordId
         INNER JOIN Families f ON cfm.FamilyId = f.Id
         WHERE f.Name = @familyName AND (c.IsOriginal = 1 OR EXISTS (
             SELECT 1 FROM UserChords uc WHERE uc.chord_id = c.Id AND uc.user_id = @userId
         ))
-    `, { familyName, userId });
+    `,
+        { familyName, userId }
+    );
 
     const chords = result.recordset;
     if (chords.length === 0) return chords;
 
     const chordIds = chords.map(c => c.Id);
 
-    // Get fingerings
-    const fingeringResult = await db.query(`
+    const fingeringResult = await db.query(
+        `
         SELECT ChordId, StringNumber, FretNumber, FingerNumber
         FROM ChordFingerings
         WHERE ChordId IN (${chordIds.join(',')})
         ORDER BY ChordId, StringNumber
-    `);
+    `
+    );
 
-    // Get barres
-    const barreResult = await db.query(`
+    const barreResult = await db.query(
+        `
         SELECT ChordId, FretNumber
         FROM ChordBarres
         WHERE ChordId IN (${chordIds.join(',')})
         ORDER BY ChordId, FretNumber
-    `);
+    `
+    );
 
-    // Map fingerings
     const fingeringMap = {};
     fingeringResult.recordset.forEach(f => {
         if (!fingeringMap[f.ChordId]) {
@@ -414,14 +406,12 @@ async function getChordsForFamily(familyName, userId) {
         fingeringMap[f.ChordId].fingers[f.StringNumber - 1] = f.FingerNumber;
     });
 
-    // Map barres
     const barreMap = {};
     barreResult.recordset.forEach(b => {
         if (!barreMap[b.ChordId]) barreMap[b.ChordId] = [];
         barreMap[b.ChordId].push(b.FretNumber);
     });
 
-    // Attach to chords
     chords.forEach(c => {
         const data = fingeringMap[c.Id];
         c.frets = data ? data.frets : [];

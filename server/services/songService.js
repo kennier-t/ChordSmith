@@ -1,6 +1,5 @@
 const db = require('../db');
 const userService = require('./userService');
-const sql = require('mssql/msnodesqlv8');
 
 function clampDividerRatio(value) {
     const numeric = Number(value);
@@ -86,105 +85,106 @@ async function createSong(song, userId) {
         contentTextColumn2
     } = normalizeSongLayoutInput(song);
 
-    const pool = await db.connect();
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
+    const tx = await db.beginTransaction();
     try {
-        const songResult = await new sql.Request(transaction)
-            .input('title', sql.NVarChar, title)
-            .input('songDate', sql.NVarChar, songDate || '')
-            .input('notes', sql.NVarChar, notes || '')
-            .input('songKey', sql.NVarChar, songKey || '')
-            .input('capo', sql.NVarChar, capo || '')
-            .input('bpm', sql.NVarChar, bpm || '')
-            .input('effects', sql.NVarChar, effects || '')
-            .input('songContentFontSizePt', sql.Float, songContentFontSizePt ? parseFloat(songContentFontSizePt) : null)
-            .input('layoutColumnCount', sql.Int, layoutColumnCount)
-            .input('layoutDividerRatio', sql.Decimal(6, 5), dividerRatio)
-            .input('contentTextColumn1', sql.NVarChar, contentTextColumn1)
-            .input('contentTextColumn2', sql.NVarChar, contentTextColumn2)
-            .input('creator_id', sql.Int, userId)
-            .query(`
+        const songResult = await tx.query(
+            `
                 INSERT INTO Songs (
                     Title, SongDate, Notes, SongKey, Capo, BPM, Effects,
                     SongContentFontSizePt, LayoutColumnCount,
                     LayoutDividerRatio, ContentTextColumn1, ContentTextColumn2,
                     creator_id, created_at, updated_at
                 )
-                OUTPUT INSERTED.Id
                 VALUES (
                     @title, @songDate, @notes, @songKey, @capo, @bpm, @effects,
                     @songContentFontSizePt, @layoutColumnCount,
                     @layoutDividerRatio, @contentTextColumn1, @contentTextColumn2,
-                    @creator_id, GETDATE(), GETDATE()
+                    @creator_id, UTC_TIMESTAMP(), UTC_TIMESTAMP()
                 )
-            `);
-        
-        const songId = songResult.recordset[0].Id;
+            `,
+            {
+                title,
+                songDate: songDate || '',
+                notes: notes || '',
+                songKey: songKey || '',
+                capo: capo || '',
+                bpm: bpm || '',
+                effects: effects || '',
+                songContentFontSizePt: songContentFontSizePt ? parseFloat(songContentFontSizePt) : null,
+                layoutColumnCount,
+                layoutDividerRatio: dividerRatio,
+                contentTextColumn1,
+                contentTextColumn2,
+                creator_id: userId
+            }
+        );
 
-        await new sql.Request(transaction)
-            .input('user_id', sql.Int, userId)
-            .input('song_id', sql.Int, songId)
-            .query('INSERT INTO UserSongs (user_id, song_id, is_creator) VALUES (@user_id, @song_id, 1)');
+        const songId = songResult.insertId;
+
+        await tx.query('INSERT INTO UserSongs (user_id, song_id, is_creator) VALUES (@user_id, @song_id, 1)', {
+            user_id: userId,
+            song_id: songId
+        });
 
         if (chordIds && chordIds.length > 0) {
             for (let i = 0; i < chordIds.length; i++) {
-                if (chordIds[i] && chordIds[i] !== 'undefined' && !isNaN(parseInt(chordIds[i]))) {
-                    await new sql.Request(transaction)
-                        .input('songId', sql.Int, songId)
-                        .input('chordId', sql.Int, parseInt(chordIds[i]))
-                        .input('displayOrder', sql.Int, i)
-                        .query('INSERT INTO SongChordDiagrams (SongId, ChordId, DisplayOrder) VALUES (@songId, @chordId, @displayOrder)');
+                if (chordIds[i] && chordIds[i] !== 'undefined' && !isNaN(parseInt(chordIds[i], 10))) {
+                    await tx.query('INSERT INTO SongChordDiagrams (SongId, ChordId, DisplayOrder) VALUES (@songId, @chordId, @displayOrder)', {
+                        songId,
+                        chordId: parseInt(chordIds[i], 10),
+                        displayOrder: i
+                    });
                 }
             }
         }
 
         if (folderIds && folderIds.length > 0) {
             for (const folderId of folderIds) {
-                if (folderId && folderId !== 'undefined' && !isNaN(parseInt(folderId))) {
-                    await new sql.Request(transaction)
-                        .input('songId', sql.Int, songId)
-                        .input('folderId', sql.Int, parseInt(folderId))
-                        .query('INSERT INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)');
+                if (folderId && folderId !== 'undefined' && !isNaN(parseInt(folderId, 10))) {
+                    await tx.query('INSERT INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)', {
+                        songId,
+                        folderId: parseInt(folderId, 10)
+                    });
                 }
             }
         }
 
-        await transaction.commit();
+        await tx.commit();
         return { id: songId };
     } catch (error) {
-        await transaction.rollback();
+        await tx.rollback();
         throw error;
+    } finally {
+        tx.release();
     }
 }
 
 async function getSongById(songId, userId) {
-    const result = await db.query(`
+    const result = await db.query(
+        `
         SELECT s.*, us.is_creator,
-               STUFF((
-                   SELECT ',' + CAST(sfm.FolderId AS VARCHAR)
+               (
+                   SELECT GROUP_CONCAT(sfm.FolderId ORDER BY sfm.FolderId SEPARATOR ',')
                    FROM SongFolderMapping sfm
                    WHERE sfm.SongId = s.Id AND us.is_creator = 1
-                   FOR XML PATH('')
-               ), 1, 1, '') AS folderIds,
-               STUFF((
-                   SELECT ', ' + f.Name
+               ) AS folderIds,
+               (
+                   SELECT GROUP_CONCAT(f.Name ORDER BY f.Name SEPARATOR ', ')
                    FROM SongFolderMapping sfm
                    JOIN Folders f ON sfm.FolderId = f.Id
                    WHERE sfm.SongId = s.Id AND us.is_creator = 1
-                   FOR XML PATH('')
-               ), 1, 2, '') AS folderNames,
-               STUFF((
-                    SELECT ',' + CAST(scd.ChordId AS VARCHAR)
+               ) AS folderNames,
+               (
+                    SELECT GROUP_CONCAT(scd.ChordId ORDER BY scd.DisplayOrder SEPARATOR ',')
                     FROM SongChordDiagrams scd
                     WHERE scd.SongId = s.Id
-                    ORDER BY scd.DisplayOrder
-                    FOR XML PATH('')
-                ), 1, 1, '') AS chordIds
+                ) AS chordIds
         FROM Songs s
         LEFT JOIN UserSongs us ON s.id = us.song_id AND us.user_id = @userId
         WHERE s.id = @songId
-    `, { userId, songId });
+    `,
+        { userId, songId }
+    );
     const song = result.recordset[0];
     if (song) {
         song.folderIds = song.folderIds ? song.folderIds.split(',').map(Number) : [];
@@ -195,11 +195,14 @@ async function getSongById(songId, userId) {
 }
 
 async function getSongsByUserId(userId) {
-    const result = await db.query(`
+    const result = await db.query(
+        `
         SELECT s.*, us.is_creator FROM Songs s
         JOIN UserSongs us ON s.id = us.song_id
         WHERE us.user_id = @userId
-    `, { userId });
+    `,
+        { userId }
+    );
     return result.recordset.map(applyLegacyContentCompatibility);
 }
 
@@ -210,7 +213,6 @@ async function updateSong(songId, song, userId) {
     }
 
     if (originalSong.creator_id !== userId) {
-        // Fork the song
         return await forkSong(songId, song, userId);
     }
 
@@ -222,74 +224,71 @@ async function updateSong(songId, song, userId) {
         contentTextColumn2
     } = normalizeSongLayoutInput(song);
 
-    const pool = await db.connect();
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
+    const tx = await db.beginTransaction();
     try {
-        await new sql.Request(transaction)
-            .input('id', sql.Int, songId)
-            .input('title', sql.NVarChar, title)
-            .input('songDate', sql.NVarChar, songDate || '')
-            .input('notes', sql.NVarChar, notes || '')
-            .input('songKey', sql.NVarChar, songKey || '')
-            .input('capo', sql.NVarChar, capo || '')
-            .input('bpm', sql.NVarChar, bpm || '')
-            .input('effects', sql.NVarChar, effects || '')
-            .input('songContentFontSizePt', sql.Float, songContentFontSizePt ? parseFloat(songContentFontSizePt) : null)
-            .input('layoutColumnCount', sql.Int, layoutColumnCount)
-            .input('layoutDividerRatio', sql.Decimal(6, 5), dividerRatio)
-            .input('contentTextColumn1', sql.NVarChar, contentTextColumn1)
-            .input('contentTextColumn2', sql.NVarChar, contentTextColumn2)
-            .query(`
+        await tx.query(
+            `
                 UPDATE Songs
                 SET Title = @title, SongDate = @songDate, Notes = @notes,
                     SongKey = @songKey, Capo = @capo, BPM = @bpm,
                     Effects = @effects, SongContentFontSizePt = @songContentFontSizePt,
                     LayoutColumnCount = @layoutColumnCount,
                     LayoutDividerRatio = @layoutDividerRatio, ContentTextColumn1 = @contentTextColumn1,
-                    ContentTextColumn2 = @contentTextColumn2, updated_at = GETDATE()
+                    ContentTextColumn2 = @contentTextColumn2, updated_at = UTC_TIMESTAMP()
                 WHERE Id = @id
-            `);
+            `,
+            {
+                id: songId,
+                title,
+                songDate: songDate || '',
+                notes: notes || '',
+                songKey: songKey || '',
+                capo: capo || '',
+                bpm: bpm || '',
+                effects: effects || '',
+                songContentFontSizePt: songContentFontSizePt ? parseFloat(songContentFontSizePt) : null,
+                layoutColumnCount,
+                layoutDividerRatio: dividerRatio,
+                contentTextColumn1,
+                contentTextColumn2
+            }
+        );
 
-        await new sql.Request(transaction)
-            .input('songId', sql.Int, songId)
-            .query('DELETE FROM SongChordDiagrams WHERE SongId = @songId');
-        
-        await new sql.Request(transaction)
-            .input('songId', sql.Int, songId)
-            .query('DELETE FROM SongFolderMapping WHERE SongId = @songId');
+        await tx.query('DELETE FROM SongChordDiagrams WHERE SongId = @songId', { songId });
+        await tx.query('DELETE FROM SongFolderMapping WHERE SongId = @songId', { songId });
 
         if (chordIds && chordIds.length > 0) {
             for (let i = 0; i < chordIds.length; i++) {
-                if (chordIds[i] && chordIds[i] !== 'undefined' && !isNaN(parseInt(chordIds[i]))) {
-                    await new sql.Request(transaction)
-                        .input('songId', sql.Int, songId)
-                        .input('chordId', sql.Int, parseInt(chordIds[i]))
-                        .input('displayOrder', sql.Int, i)
-                        .query('INSERT INTO SongChordDiagrams (SongId, ChordId, DisplayOrder) VALUES (@songId, @chordId, @displayOrder)');
+                if (chordIds[i] && chordIds[i] !== 'undefined' && !isNaN(parseInt(chordIds[i], 10))) {
+                    await tx.query('INSERT INTO SongChordDiagrams (SongId, ChordId, DisplayOrder) VALUES (@songId, @chordId, @displayOrder)', {
+                        songId,
+                        chordId: parseInt(chordIds[i], 10),
+                        displayOrder: i
+                    });
                 }
             }
         }
-        
+
         if (folderIds && folderIds.length > 0) {
             for (const folderId of folderIds) {
-                if (folderId && folderId !== 'undefined' && !isNaN(parseInt(folderId))) {
-                    await new sql.Request(transaction)
-                        .input('songId', sql.Int, songId)
-                        .input('folderId', sql.Int, parseInt(folderId))
-                        .query('INSERT INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)');
+                if (folderId && folderId !== 'undefined' && !isNaN(parseInt(folderId, 10))) {
+                    await tx.query('INSERT INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)', {
+                        songId,
+                        folderId: parseInt(folderId, 10)
+                    });
                 }
             }
         }
-        
-        await transaction.commit();
+
+        await tx.commit();
         return { id: songId };
     } catch (error) {
-        await transaction.rollback();
+        await tx.rollback();
         throw error;
+    } finally {
+        tx.release();
     }
 }
-
 
 async function forkSong(originalSongId, song, userId) {
     const newSong = await createSong(song, userId);
@@ -302,17 +301,18 @@ async function deleteSong(songId, userId) {
         throw new Error('Song not found');
     }
     if (song.creator_id === userId) {
-        // Creator deletes the song entirely
         await db.query('DELETE FROM Songs WHERE Id = @songId', { songId });
     } else {
-        // Non-creator removes the mapping
         await db.query('DELETE FROM UserSongs WHERE user_id = @userId AND song_id = @songId', { userId, songId });
-        // Also remove from user's folders
-        await db.query(`
-            DELETE sfm FROM SongFolderMapping sfm
+        await db.query(
+            `
+            DELETE sfm
+            FROM SongFolderMapping sfm
             JOIN Folders f ON sfm.FolderId = f.Id
             WHERE sfm.SongId = @songId AND f.creator_id = @userId
-        `, { songId, userId });
+        `,
+            { songId, userId }
+        );
     }
 }
 
@@ -334,7 +334,7 @@ async function shareSong(songId, senderId, recipientUsername) {
 }
 
 async function getIncomingShares(userId) {
-    const result = await db.query('SELECT * FROM SongShares WHERE recipient_user_id = @userId AND status = \'pending\'', { userId });
+    const result = await db.query("SELECT * FROM SongShares WHERE recipient_user_id = @userId AND status = 'pending'", { userId });
     return result.recordset;
 }
 
@@ -345,50 +345,47 @@ async function acceptShare(shareId, userId, folderIds = []) {
         throw new Error('Share not found');
     }
 
-    const pool = await db.connect();
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
-
+    const tx = await db.beginTransaction();
     try {
-        await new sql.Request(transaction)
-            .input('shareId', sql.Int, shareId)
-            .query('UPDATE SongShares SET status = \'accepted\' WHERE id = @shareId');
+        await tx.query("UPDATE SongShares SET status = 'accepted' WHERE id = @shareId", { shareId });
 
-        await new sql.Request(transaction)
-            .input('user_id', sql.Int, userId)
-            .input('song_id', sql.Int, share.song_id)
-            .query('INSERT INTO UserSongs (user_id, song_id, is_creator) VALUES (@user_id, @song_id, 0)');
-        
-        const chordIdsResult = await new sql.Request(transaction)
-            .input('songId', sql.Int, share.song_id)
-            .query('SELECT ChordId FROM SongChordDiagrams WHERE SongId = @songId');
-        
+        await tx.query('INSERT IGNORE INTO UserSongs (user_id, song_id, is_creator) VALUES (@user_id, @song_id, 0)', {
+            user_id: userId,
+            song_id: share.song_id
+        });
+
+        const chordIdsResult = await tx.query('SELECT ChordId FROM SongChordDiagrams WHERE SongId = @songId', { songId: share.song_id });
+
         for (const record of chordIdsResult.recordset) {
-            await new sql.Request(transaction)
-                .input('user_id', sql.Int, userId)
-                .input('chord_id', sql.Int, record.ChordId)
-                .query('IF NOT EXISTS (SELECT 1 FROM UserChords WHERE user_id = @user_id AND chord_id = @chord_id) INSERT INTO UserChords (user_id, chord_id, is_creator) VALUES (@user_id, @chord_id, 0)');
+            await tx.query('INSERT IGNORE INTO UserChords (user_id, chord_id, is_creator) VALUES (@user_id, @chord_id, 0)', {
+                user_id: userId,
+                chord_id: record.ChordId
+            });
         }
 
-        // Add to selected folders
         if (folderIds && folderIds.length > 0) {
             for (const folderId of folderIds) {
-                await new sql.Request(transaction)
-                    .input('songId', sql.Int, share.song_id)
-                    .input('folderId', sql.Int, folderId)
-                    .query('IF NOT EXISTS (SELECT 1 FROM SongFolderMapping WHERE SongId = @songId AND FolderId = @folderId) INSERT INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)');
+                const parsedFolderId = parseInt(folderId, 10);
+                if (!isNaN(parsedFolderId)) {
+                    await tx.query('INSERT IGNORE INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)', {
+                        songId: share.song_id,
+                        folderId: parsedFolderId
+                    });
+                }
             }
         }
 
-        await transaction.commit();
+        await tx.commit();
     } catch (error) {
-        await transaction.rollback();
+        await tx.rollback();
         throw error;
+    } finally {
+        tx.release();
     }
 }
 
 async function rejectShare(shareId, userId) {
-    await db.query('UPDATE SongShares SET status = \'rejected\' WHERE id = @shareId AND recipient_user_id = @userId', { shareId, userId });
+    await db.query("UPDATE SongShares SET status = 'rejected' WHERE id = @shareId AND recipient_user_id = @userId", { shareId, userId });
 }
 
 async function getAllFolders(userId) {
@@ -398,8 +395,8 @@ async function getAllFolders(userId) {
 
 async function createFolder(folder, userId) {
     const { name } = folder;
-    const result = await db.query('INSERT INTO Folders (Name, creator_id) OUTPUT INSERTED.Id VALUES (@name, @userId)', { name, userId });
-    return { id: result.recordset[0].Id };
+    const result = await db.query('INSERT INTO Folders (Name, creator_id) VALUES (@name, @userId)', { name, userId });
+    return { id: result.insertId };
 }
 
 async function updateFolder(folderId, folder, userId) {
@@ -413,47 +410,55 @@ async function deleteFolder(folderId, userId) {
 }
 
 async function getSongsByFolder(folderId, userId) {
-    const parsedFolderId = parseInt(folderId);
+    const parsedFolderId = parseInt(folderId, 10);
     if (isNaN(parsedFolderId)) return [];
-    // First check if folder belongs to user
     const folderCheck = await db.query('SELECT Id FROM Folders WHERE Id = @folderId AND creator_id = @userId', { folderId: parsedFolderId, userId });
     if (folderCheck.recordset.length === 0) return [];
-    const result = await db.query(`
+    const result = await db.query(
+        `
         SELECT s.*, us.is_creator FROM Songs s
         JOIN UserSongs us ON s.id = us.song_id
         JOIN SongFolderMapping sfm ON s.id = sfm.SongId
         WHERE sfm.FolderId = @folderId AND us.user_id = @userId
-    `, { folderId: parsedFolderId, userId });
+    `,
+        { folderId: parsedFolderId, userId }
+    );
     return result.recordset.map(applyLegacyContentCompatibility);
 }
 
 async function getSongChordDiagrams(songId, userId) {
-    const parsedSongId = parseInt(songId);
+    const parsedSongId = parseInt(songId, 10);
     if (isNaN(parsedSongId)) return [];
-    const result = await db.query(`
+    const result = await db.query(
+        `
         SELECT scd.DisplayOrder, c.* FROM SongChordDiagrams scd
         JOIN Chords c ON scd.ChordId = c.Id
         WHERE scd.SongId = @songId
         ORDER BY scd.DisplayOrder
-    `, { songId: parsedSongId });
+    `,
+        { songId: parsedSongId }
+    );
 
-    // Add fingerings for each chord
     for (const chord of result.recordset) {
-        // Get fingerings
-        const fingeringResult = await db.query(`
+        const fingeringResult = await db.query(
+            `
             SELECT StringNumber, FretNumber, FingerNumber
             FROM ChordFingerings
             WHERE ChordId = @chordId
             ORDER BY StringNumber
-        `, { chordId: chord.Id });
+        `,
+            { chordId: chord.Id }
+        );
 
-        // Get barres
-        const barreResult = await db.query(`
+        const barreResult = await db.query(
+            `
             SELECT FretNumber
             FROM ChordBarres
             WHERE ChordId = @chordId
             ORDER BY FretNumber
-        `, { chordId: chord.Id });
+        `,
+            { chordId: chord.Id }
+        );
 
         chord.frets = new Array(6).fill(0);
         chord.fingers = new Array(6).fill(0);
@@ -468,13 +473,16 @@ async function getSongChordDiagrams(songId, userId) {
 }
 
 async function getSongFolders(songId, userId) {
-    const parsedSongId = parseInt(songId);
+    const parsedSongId = parseInt(songId, 10);
     if (isNaN(parsedSongId)) return [];
-    const result = await db.query(`
+    const result = await db.query(
+        `
         SELECT f.* FROM Folders f
         JOIN SongFolderMapping sfm ON f.Id = sfm.FolderId
         WHERE sfm.SongId = @songId AND f.creator_id = @userId
-    `, { songId: parsedSongId, userId });
+    `,
+        { songId: parsedSongId, userId }
+    );
     return result.recordset;
 }
 
