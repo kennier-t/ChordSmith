@@ -257,6 +257,7 @@
                     <div class="folders-actions">
                         <button id="create-new-folder-btn" class="download-btn" data-translate="Create Folder">Create Folder</button>
                         <button id="create-new-song-btn" class="download-btn" data-translate="Create New Song">Create New Song</button>
+                        <button id="open-content-pack-modal-btn" class="download-btn" data-translate="Import / Export">Import / Export</button>
                         <div class="sort-control">
                             <label for="folder-sort-select" data-translate="Sort by:">Sort by:</label>
                             <select id="folder-sort-select">
@@ -303,6 +304,25 @@
                         </div>
                     </div>
                     <div id="songs-list" class.songs-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Song Content Pack -->
+        <div id="content-pack-modal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <button id="close-content-pack-modal" class="close-btn">×</button>
+                <h2 data-translate="Import / Export">Import / Export</h2>
+                <p data-translate="Share your songs, folders and chords using a content pack file.">
+                    Share your songs, folders and chords using a content pack file.
+                </p>
+                <div class="editor-actions" style="margin-top: 12px;">
+                    <button id="export-content-pack-btn" class="editor-action-btn btn-primary" data-translate="Export Content Pack">Export Content Pack</button>
+                </div>
+                <div class="editor-actions" style="margin-top: 12px;">
+                    <input id="import-content-pack-file" type="file" accept=".json,application/json" />
+                    <button id="import-content-pack-btn" class="editor-action-btn btn-secondary" data-translate="Import Content Pack">Import Content Pack</button>
                 </div>
             </div>
         </div>

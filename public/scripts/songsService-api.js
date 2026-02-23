@@ -133,6 +133,17 @@ const SONGS_SERVICE = (function() {
     async function getSongFolders(songId) {
         return await apiCall(`/songs/${songId}/folders`);
     }
+
+    async function exportContentPack() {
+        return await apiCall('/songs/content-pack/export');
+    }
+
+    async function importContentPack(contentPack) {
+        return await apiCall('/songs/content-pack/import', {
+            method: 'POST',
+            body: JSON.stringify(contentPack)
+        });
+    }
     
     // Initialize
     initialize();
@@ -150,6 +161,8 @@ const SONGS_SERVICE = (function() {
         updateSong,
         deleteSong,
         getSongChordDiagrams,
-        getSongFolders
+        getSongFolders,
+        exportContentPack,
+        importContentPack
     };
 })();

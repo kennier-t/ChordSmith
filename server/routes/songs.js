@@ -54,6 +54,26 @@ router.get('/folders/:id/songs', authMiddleware, async (req, res) => {
     }
 });
 
+router.get('/content-pack/export', authMiddleware, async (req, res) => {
+    try {
+        const pack = await songService.exportContentPack(req.user.id);
+        res.json(pack);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.post('/content-pack/import', authMiddleware, async (req, res) => {
+    try {
+        const result = await songService.importContentPack(req.body, req.user.id);
+        res.status(201).json(result);
+    } catch (error) {
+        console.error(error);
+        res.status(400).json({ message: error.message || 'Invalid content pack' });
+    }
+});
+
 router.post('/', authMiddleware, async (req, res) => {
     try {
         const song = await songService.createSong(req.body, req.user.id);

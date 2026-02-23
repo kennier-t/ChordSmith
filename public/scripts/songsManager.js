@@ -11,6 +11,10 @@
         document.getElementById('open-songs-btn').addEventListener('click', openSongsView);
         document.getElementById('close-songs-modal').addEventListener('click', closeSongsModal);
         document.getElementById('create-new-folder-btn').addEventListener('click', createNewFolder);
+        document.getElementById('open-content-pack-modal-btn').addEventListener('click', openContentPackModal);
+        document.getElementById('close-content-pack-modal').addEventListener('click', closeContentPackModal);
+        document.getElementById('export-content-pack-btn').addEventListener('click', exportContentPack);
+        document.getElementById('import-content-pack-btn').addEventListener('click', importContentPack);
         document.getElementById('create-new-song-btn').addEventListener('click', async () => {
             const folders = await SONGS_SERVICE.getAllFolders();
             if (folders.length === 0) {
@@ -33,6 +37,74 @@
     
     function closeSongsModal() {
         document.getElementById('songs-modal').classList.add('hidden');
+    }
+
+    function openContentPackModal() {
+        document.getElementById('content-pack-modal').classList.remove('hidden');
+    }
+
+    function closeContentPackModal() {
+        const fileInput = document.getElementById('import-content-pack-file');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        document.getElementById('content-pack-modal').classList.add('hidden');
+    }
+
+    function getContentPackFileName() {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const hh = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        return `chordsmith-content-pack-${yyyy}${mm}${dd}-${hh}${min}${ss}.json`;
+    }
+
+    async function exportContentPack() {
+        try {
+            const pack = await SONGS_SERVICE.exportContentPack();
+            const json = JSON.stringify(pack, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const downloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = getContentPackFileName();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(downloadUrl);
+        } catch (error) {
+            alert(error.message || 'Failed to export content pack');
+        }
+    }
+
+    async function importContentPack() {
+        const fileInput = document.getElementById('import-content-pack-file');
+        const selectedFile = fileInput && fileInput.files ? fileInput.files[0] : null;
+        if (!selectedFile) {
+            alert(translations[currentLanguage]['Please select a content pack file first.'] || 'Please select a content pack file first.');
+            return;
+        }
+
+        try {
+            const rawText = await selectedFile.text();
+            const parsedPack = JSON.parse(rawText);
+            const result = await SONGS_SERVICE.importContentPack(parsedPack);
+
+            const imported = result && result.imported ? result.imported : {};
+            const message = `${translations[currentLanguage]['Import completed.'] || 'Import completed.'}\n` +
+                `${translations[currentLanguage]['Folders created'] || 'Folders created'}: ${imported.foldersCreated || 0}\n` +
+                `${translations[currentLanguage]['Chords created'] || 'Chords created'}: ${imported.chordsCreated || 0}\n` +
+                `${translations[currentLanguage]['Songs created'] || 'Songs created'}: ${imported.songsCreated || 0}`;
+
+            alert(message);
+            closeContentPackModal();
+            await refreshFoldersList();
+        } catch (error) {
+            alert(error.message || (translations[currentLanguage]['Failed to import content pack.'] || 'Failed to import content pack.'));
+        }
     }
     
     async function showFoldersView() {
@@ -755,7 +827,11 @@
         handleAllSongsSortChange,
         toggleValueDropdown,
         toggleSortDropdown,
-        selectSortOption
+        selectSortOption,
+        openContentPackModal,
+        closeContentPackModal,
+        exportContentPack,
+        importContentPack
     };
 })();
 
