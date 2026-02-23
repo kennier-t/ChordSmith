@@ -459,8 +459,7 @@ function initializeUtilityButtons() {
     const chordAiBtn = document.getElementById('chord-ai-btn');
     if (chordAiBtn) {
         chordAiBtn.addEventListener('click', () => {
-            const modal = document.getElementById('chord-ai-modal');
-            modal.classList.remove('hidden');
+            window.open('chord-ai.html', '_blank');
         });
     }
 

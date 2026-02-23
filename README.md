@@ -34,6 +34,15 @@ ChordSmith is a web app to create, manage, share, and export guitar chords and s
 ### PDF to Text
 - Convert PDF files to text using `pdftotext -layout` while preserving spacing.
 
+### ChordAI (Local, Guitar-focused)
+- Open from the `ChordAI` button on the main page.
+- Analyze either a YouTube URL or a local MP3 (one source at a time).
+- Outputs:
+  - chord + lyrics text (ChordPro-style layout),
+  - player with real-time active chord highlighting,
+  - grid/beats view (4 beats per bar).
+- Runs locally and uses temporary files only (no DB writes).
+
 ## Tech Stack
 - Frontend: HTML, CSS, vanilla JavaScript.
 - Backend: Node.js + Express.
@@ -200,6 +209,74 @@ Then confirm `.env` has:
 DB_NAME=ChordSmith
 ```
 
+## ChordAI Prerequisites (Windows + macOS)
+
+ChordAI runs locally and requires additional tools:
+
+1. Python 3.10+  
+2. FFmpeg available in PATH  
+3. yt-dlp available in PATH (required for YouTube source)  
+4. Python packages from:
+   - `server/services/chordai/requirements.txt`
+
+### Install Python packages
+From project root:
+
+```bash
+python -m pip install -r server/services/chordai/requirements.txt
+```
+
+If your Python executable is not `python`, set:
+
+```env
+CHORDAI_PYTHON=python3
+```
+
+Optional tuning:
+
+```env
+CHORDAI_WHISPER_MODEL=small
+CHORDAI_WHISPER_COMPUTE_TYPE=int8
+```
+
+### FFmpeg install
+- Windows: install FFmpeg and add `bin` folder to PATH.
+- macOS (Homebrew):
+```bash
+brew install ffmpeg
+```
+
+### yt-dlp install
+- Windows:
+```powershell
+python -m pip install yt-dlp
+```
+- macOS:
+```bash
+python3 -m pip install yt-dlp
+```
+
+### Verify ChordAI runtime
+Start the app, log in, then call:
+- `GET /api/chordai/health` (authenticated)
+
+It should report:
+- `python: true`
+- `ffmpeg: true`
+- `ytDlp: true` (needed for YouTube input)
+
+## How to Use ChordAI
+1. Open the app and log in.
+2. Click `ChordAI` in the top bar.
+3. Enter a YouTube URL or upload an MP3.
+4. Choose language mode (`Auto-detect`, `English`, `Spanish`).
+5. Click `Analyze`.
+6. Review tabs:
+   - `Chord + Lyrics`
+   - `Player`
+   - `Grid / Beats`
+7. Use `Cleanup Temp Files` to remove temporary session files.
+
 ## PDF-to-Text Dependency (`pdftotext`)
 The `/api/convert-pdf` feature requires `pdftotext` in PATH.
 
@@ -233,6 +310,12 @@ pdftotext -v
 - `server/db.js`: MySQL connection and transaction layer
 - `server/routes/`: API routes
 - `server/services/`: business/data logic
+- `server/routes/chordai.js`: ChordAI API routes
+- `server/services/chordaiService.js`: ChordAI job orchestration and cleanup
+- `server/services/chordai/worker.py`: local audio analysis pipeline
+- `public/chord-ai.html`: ChordAI page
+- `public/scripts/chord-ai.js`: ChordAI UI logic and sync rendering
+- `public/styles/chord-ai.css`: ChordAI page styles
 - `database/setup-mysql.sql`: full DB bootstrap
 - `database/rename-db-chordsmith-studio-to-chordsmith.sql`: rename existing DB
 

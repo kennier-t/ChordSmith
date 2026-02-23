@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChordAI - ChordSmith</title>
+    <link rel="icon" type="image/webp" href="assets/guitar.webp">
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/guitar-pattern.css">
+    <link rel="stylesheet" href="styles/translation.css">
+    <link rel="stylesheet" href="styles/chord-ai.css">
+</head>
+<body>
+    <div id="app">
+        <div class="view chord-ai-view">
+            <div class="top-buttons-container">
+                <button id="back-btn" class="utility-btn" data-translate="← Back">← Back</button>
+            </div>
+
+            <h1 data-translate="ChordAI">ChordAI</h1>
+
+            <section class="chord-ai-card">
+                <h2 data-translate="Analyze Audio">Analyze Audio</h2>
+                <p class="muted" data-translate="Paste a YouTube URL or upload an MP3 file.">Paste a YouTube URL or upload an MP3 file.</p>
+
+                <div class="form-group">
+                    <label for="youtube-url" data-translate="YouTube URL">YouTube URL</label>
+                    <input type="url" id="youtube-url" placeholder="https://www.youtube.com/watch?v=..." />
+                </div>
+
+                <div class="separator"><span data-translate="OR">OR</span></div>
+
+                <div class="form-group">
+                    <label for="audio-file" data-translate="Upload MP3">Upload MP3</label>
+                    <input type="file" id="audio-file" accept=".mp3,audio/mpeg" />
+                </div>
+
+                <div class="form-group">
+                    <label for="language-mode" data-translate="Language">Language</label>
+                    <select id="language-mode">
+                        <option value="auto" data-translate="Auto-detect">Auto-detect</option>
+                        <option value="en" data-translate="English">English</option>
+                        <option value="es" data-translate="Spanish">Spanish</option>
+                    </select>
+                </div>
+
+                <div class="editor-actions">
+                    <button id="analyze-btn" class="editor-action-btn btn-primary" data-translate="Analyze">Analyze</button>
+                    <button id="cleanup-btn" class="editor-action-btn btn-secondary" data-translate="Cleanup Temp Files">Cleanup Temp Files</button>
+                </div>
+
+                <div id="status-wrapper" class="status-wrapper hidden">
+                    <div id="status-text" class="status-text">Queued...</div>
+                    <div class="progress-bar">
+                        <div id="status-progress" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="results-section" class="chord-ai-card hidden">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="lyrics" data-translate="Chord + Lyrics">Chord + Lyrics</button>
+                    <button class="tab-btn" data-tab="player" data-translate="Player">Player</button>
+                    <button class="tab-btn" data-tab="grid" data-translate="Grid / Beats">Grid / Beats</button>
+                </div>
+
+                <div id="tab-lyrics" class="tab-panel active">
+                    <div class="panel-actions">
+                        <button id="copy-chordpro-btn" class="download-btn" data-translate="Copy ChordPro">Copy ChordPro</button>
+                    </div>
+                    <pre id="chordpro-output" class="chordpro-output"></pre>
+                </div>
+
+                <div id="tab-player" class="tab-panel">
+                    <div class="player-current-chord">
+                        <span data-translate="Current Chord">Current Chord</span>
+                        <div id="current-chord-display">-</div>
+                    </div>
+                    <audio id="audio-player" controls></audio>
+                </div>
+
+                <div id="tab-grid" class="tab-panel">
+                    <div id="grid-container" class="grid-container"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="scripts/translation.js"></script>
+    <script src="scripts/chord-ai.js"></script>
+    <script src="scripts/guitar-pattern.js"></script>
+</body>
+</html>

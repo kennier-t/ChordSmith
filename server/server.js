@@ -17,6 +17,7 @@ const usersRoutes = require('./routes/users').router;
 const songsRoutes = require('./routes/songs');
 const chordsRoutes = require('./routes/chords');
 const sharesRoutes = require('./routes/shares');
+const chordaiRoutes = require('./routes/chordai');
 
 
 const app = express();
@@ -40,6 +41,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/songs', songsRoutes);
 app.use('/api/chords', chordsRoutes);
 app.use('/api/shares', sharesRoutes);
+app.use('/api/chordai', chordaiRoutes);
 
 
 

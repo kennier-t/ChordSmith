@@ -1,0 +1,143 @@
+.chord-ai-view {
+    max-width: 1080px;
+    margin: 0 auto;
+}
+
+.chord-ai-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.muted {
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.separator {
+    text-align: center;
+    color: var(--text-secondary);
+    margin: 8px 0 14px;
+}
+
+.status-wrapper {
+    margin-top: 12px;
+}
+
+.status-text {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    transition: width 0.2s ease;
+}
+
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tab-btn {
+    border: 1px solid var(--border);
+    background: var(--bg-main);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    cursor: pointer;
+    font-family: 'Helvetica Neue', 'Arial', sans-serif;
+}
+
+.tab-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.panel-actions {
+    margin-bottom: 10px;
+}
+
+.chordpro-output {
+    white-space: pre;
+    overflow: auto;
+    max-height: 420px;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    padding: 12px;
+    font-family: "Courier New", monospace;
+    line-height: 1.5;
+}
+
+.player-current-chord {
+    margin-bottom: 14px;
+}
+
+#current-chord-display {
+    margin-top: 8px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+#audio-player {
+    width: 100%;
+}
+
+.grid-container {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+}
+
+.beats-grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.beats-grid th,
+.beats-grid td {
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    text-align: center;
+    font-size: 0.86rem;
+}
+
+.beats-grid th {
+    background: var(--bg-main);
+}
+
+.beat-cell.active {
+    background: rgba(139, 111, 71, 0.2);
+}
+
+@media (max-width: 768px) {
+    .chord-ai-card {
+        padding: 16px;
+    }
+    #current-chord-display {
+        font-size: 1.8rem;
+    }
+}
