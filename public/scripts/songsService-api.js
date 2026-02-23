@@ -134,14 +134,22 @@ const SONGS_SERVICE = (function() {
         return await apiCall(`/songs/${songId}/folders`);
     }
 
-    async function exportContentPack() {
-        return await apiCall('/songs/content-pack/export');
+    async function exportContentPack(songIds = []) {
+        const normalizedSongIds = Array.isArray(songIds)
+            ? songIds.map(id => Number.parseInt(id, 10)).filter(id => Number.isFinite(id) && id > 0)
+            : [];
+
+        const query = normalizedSongIds.length > 0
+            ? `?songIds=${normalizedSongIds.join(',')}`
+            : '';
+
+        return await apiCall(`/songs/content-pack/export${query}`);
     }
 
-    async function importContentPack(contentPack) {
+    async function importContentPack(contentPack, options = {}) {
         return await apiCall('/songs/content-pack/import', {
             method: 'POST',
-            body: JSON.stringify(contentPack)
+            body: JSON.stringify({ contentPack, options })
         });
     }
     

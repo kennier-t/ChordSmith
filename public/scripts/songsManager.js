@@ -5,6 +5,7 @@
     let currentSortMode = 'date-asc'; // Default: oldest first for folders
     let currentAllSongsSortMode = 'key'; // Default: sort by key for ALL view
     let selectedValues = {}; // Selected values for each sort mode, e.g. {key: ['A', 'C'], folder: ['Folder1']}
+    let cachedImportPack = null;
     const ALL_FOLDER_ID = '__ALL__'; // Special ID for the ALL folder
     
     function initialize() {
@@ -13,8 +14,15 @@
         document.getElementById('create-new-folder-btn').addEventListener('click', createNewFolder);
         document.getElementById('open-content-pack-modal-btn').addEventListener('click', openContentPackModal);
         document.getElementById('close-content-pack-modal').addEventListener('click', closeContentPackModal);
-        document.getElementById('export-content-pack-btn').addEventListener('click', exportContentPack);
-        document.getElementById('import-content-pack-btn').addEventListener('click', importContentPack);
+        document.getElementById('prepare-export-content-pack-btn').addEventListener('click', prepareExportContentPack);
+        document.getElementById('export-content-pack-confirm-btn').addEventListener('click', exportContentPack);
+        document.getElementById('prepare-import-content-pack-btn').addEventListener('click', prepareImportContentPack);
+        document.getElementById('import-content-pack-confirm-btn').addEventListener('click', importContentPack);
+        document.getElementById('import-content-pack-file').addEventListener('change', async (event) => {
+            if (event.target && event.target.files && event.target.files[0]) {
+                await prepareImportContentPack();
+            }
+        });
         document.getElementById('create-new-song-btn').addEventListener('click', async () => {
             const folders = await SONGS_SERVICE.getAllFolders();
             if (folders.length === 0) {
@@ -40,15 +48,137 @@
     }
 
     function openContentPackModal() {
+        resetContentPackModal();
         document.getElementById('content-pack-modal').classList.remove('hidden');
     }
 
     function closeContentPackModal() {
+        resetContentPackModal();
+        document.getElementById('content-pack-modal').classList.add('hidden');
+    }
+
+    function resetContentPackModal() {
         const fileInput = document.getElementById('import-content-pack-file');
         if (fileInput) {
             fileInput.value = '';
         }
-        document.getElementById('content-pack-modal').classList.add('hidden');
+        cachedImportPack = null;
+        const exportSection = document.getElementById('export-content-pack-selection');
+        const importSection = document.getElementById('import-content-pack-selection');
+        const exportSongs = document.getElementById('export-content-pack-songs');
+        const importSongs = document.getElementById('import-content-pack-songs');
+        const folderSelect = document.getElementById('import-destination-folder-select');
+
+        if (exportSection) exportSection.classList.add('hidden');
+        if (importSection) importSection.classList.add('hidden');
+        if (exportSongs) exportSongs.innerHTML = '';
+        if (importSongs) importSongs.innerHTML = '';
+        if (folderSelect) folderSelect.innerHTML = '';
+    }
+
+    function formatSongLabel(song) {
+        const title = song.Title || song.title || '';
+        const key = song.SongKey || song.songKey || '';
+        return key ? `${title} (${key})` : title;
+    }
+
+    function renderSongSelection(containerId, songs, inputName, checkedByDefault = true) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = '';
+        if (!songs || songs.length === 0) {
+            container.innerHTML = `<div class="empty-message">${translations[currentLanguage]['No songs available.'] || 'No songs available.'}</div>`;
+            return;
+        }
+
+        const sortedSongs = [...songs].sort((a, b) => formatSongLabel(a).localeCompare(formatSongLabel(b)));
+        for (const song of sortedSongs) {
+            const songId = Number.parseInt(song.Id || song.id, 10);
+            if (!Number.isFinite(songId) || songId <= 0) continue;
+
+            const label = document.createElement('label');
+            label.className = 'folder-checkbox-label';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'folder-checkbox';
+            checkbox.name = inputName;
+            checkbox.value = String(songId);
+            checkbox.checked = checkedByDefault;
+
+            const span = document.createElement('span');
+            span.textContent = formatSongLabel(song);
+
+            label.appendChild(checkbox);
+            label.appendChild(span);
+            container.appendChild(label);
+        }
+    }
+
+    function getCheckedSongIds(inputName) {
+        const checked = document.querySelectorAll(`input[name="${inputName}"]:checked`);
+        return Array.from(checked)
+            .map(input => Number.parseInt(input.value, 10))
+            .filter(id => Number.isFinite(id) && id > 0);
+    }
+
+    async function prepareExportContentPack() {
+        const songs = await SONGS_SERVICE.getAllSongs();
+        if (!songs || songs.length === 0) {
+            alert(translations[currentLanguage]['No songs available.'] || 'No songs available.');
+            return;
+        }
+
+        renderSongSelection('export-content-pack-songs', songs, 'content-pack-export-song', true);
+        document.getElementById('import-content-pack-selection').classList.add('hidden');
+        document.getElementById('export-content-pack-selection').classList.remove('hidden');
+    }
+
+    async function prepareImportContentPack() {
+        const fileInput = document.getElementById('import-content-pack-file');
+        const selectedFile = fileInput && fileInput.files ? fileInput.files[0] : null;
+        if (!selectedFile) {
+            alert(translations[currentLanguage]['Please select a content pack file first.'] || 'Please select a content pack file first.');
+            return;
+        }
+
+        try {
+            const rawText = await selectedFile.text();
+            const parsedPack = JSON.parse(rawText);
+            const songs = parsedPack && parsedPack.data && Array.isArray(parsedPack.data.songs)
+                ? parsedPack.data.songs
+                : [];
+
+            if (!songs.length) {
+                alert(translations[currentLanguage]['No songs found in this content pack.'] || 'No songs found in this content pack.');
+                return;
+            }
+
+            const folders = await SONGS_SERVICE.getAllFolders();
+            if (!folders.length) {
+                alert(translations[currentLanguage]['Please create at least one folder before importing songs.'] || 'Please create at least one folder before importing songs.');
+                return;
+            }
+
+            cachedImportPack = parsedPack;
+            renderSongSelection('import-content-pack-songs', songs, 'content-pack-import-song', true);
+
+            const folderSelect = document.getElementById('import-destination-folder-select');
+            folderSelect.innerHTML = '';
+            const sortedFolders = [...folders].sort((a, b) => String(a.Name).localeCompare(String(b.Name)));
+            for (const folder of sortedFolders) {
+                const option = document.createElement('option');
+                option.value = String(folder.Id);
+                option.textContent = folder.Name;
+                folderSelect.appendChild(option);
+            }
+
+            document.getElementById('export-content-pack-selection').classList.add('hidden');
+            document.getElementById('import-content-pack-selection').classList.remove('hidden');
+        } catch (error) {
+            alert(error.message || (translations[currentLanguage]['Failed to import content pack.'] || 'Failed to import content pack.'));
+        }
     }
 
     function getContentPackFileName() {
@@ -64,7 +194,13 @@
 
     async function exportContentPack() {
         try {
-            const pack = await SONGS_SERVICE.exportContentPack();
+            const selectedSongIds = getCheckedSongIds('content-pack-export-song');
+            if (!selectedSongIds.length) {
+                alert(translations[currentLanguage]['Please select at least one song.'] || 'Please select at least one song.');
+                return;
+            }
+
+            const pack = await SONGS_SERVICE.exportContentPack(selectedSongIds);
             const json = JSON.stringify(pack, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const downloadUrl = URL.createObjectURL(blob);
@@ -81,23 +217,36 @@
     }
 
     async function importContentPack() {
-        const fileInput = document.getElementById('import-content-pack-file');
-        const selectedFile = fileInput && fileInput.files ? fileInput.files[0] : null;
-        if (!selectedFile) {
+        if (!cachedImportPack) {
             alert(translations[currentLanguage]['Please select a content pack file first.'] || 'Please select a content pack file first.');
             return;
         }
 
         try {
-            const rawText = await selectedFile.text();
-            const parsedPack = JSON.parse(rawText);
-            const result = await SONGS_SERVICE.importContentPack(parsedPack);
+            const selectedSongIds = getCheckedSongIds('content-pack-import-song');
+            if (!selectedSongIds.length) {
+                alert(translations[currentLanguage]['Please select at least one song.'] || 'Please select at least one song.');
+                return;
+            }
+
+            const destinationFolderSelect = document.getElementById('import-destination-folder-select');
+            const destinationFolderId = Number.parseInt(destinationFolderSelect.value, 10);
+            if (!Number.isFinite(destinationFolderId) || destinationFolderId <= 0) {
+                alert(translations[currentLanguage]['Please select a destination folder.'] || 'Please select a destination folder.');
+                return;
+            }
+
+            const result = await SONGS_SERVICE.importContentPack(cachedImportPack, {
+                songIds: selectedSongIds,
+                destinationFolderId
+            });
 
             const imported = result && result.imported ? result.imported : {};
             const message = `${translations[currentLanguage]['Import completed.'] || 'Import completed.'}\n` +
-                `${translations[currentLanguage]['Folders created'] || 'Folders created'}: ${imported.foldersCreated || 0}\n` +
                 `${translations[currentLanguage]['Chords created'] || 'Chords created'}: ${imported.chordsCreated || 0}\n` +
-                `${translations[currentLanguage]['Songs created'] || 'Songs created'}: ${imported.songsCreated || 0}`;
+                `${translations[currentLanguage]['Songs created'] || 'Songs created'}: ${imported.songsCreated || 0}\n` +
+                `${translations[currentLanguage]['Songs linked (already existed)'] || 'Songs linked (already existed)'}: ${imported.linkedExistingSongs || 0}\n` +
+                `${translations[currentLanguage]['Songs assigned to folder'] || 'Songs assigned to folder'}: ${imported.assignedToFolder || 0}`;
 
             alert(message);
             closeContentPackModal();

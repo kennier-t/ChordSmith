@@ -56,7 +56,11 @@ router.get('/folders/:id/songs', authMiddleware, async (req, res) => {
 
 router.get('/content-pack/export', authMiddleware, async (req, res) => {
     try {
-        const pack = await songService.exportContentPack(req.user.id);
+        const queryValue = req.query.songIds;
+        const selectedSongIds = typeof queryValue === 'string' && queryValue.trim()
+            ? queryValue.split(',').map(v => v.trim()).filter(Boolean)
+            : [];
+        const pack = await songService.exportContentPack(req.user.id, selectedSongIds);
         res.json(pack);
     } catch (error) {
         console.error(error);
@@ -66,7 +70,9 @@ router.get('/content-pack/export', authMiddleware, async (req, res) => {
 
 router.post('/content-pack/import', authMiddleware, async (req, res) => {
     try {
-        const result = await songService.importContentPack(req.body, req.user.id);
+        const contentPack = req.body && req.body.contentPack ? req.body.contentPack : req.body;
+        const options = req.body && req.body.contentPack ? (req.body.options || {}) : {};
+        const result = await songService.importContentPack(contentPack, req.user.id, options);
         res.status(201).json(result);
     } catch (error) {
         console.error(error);

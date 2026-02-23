@@ -530,6 +530,26 @@ async function getSongFolders(songId, userId) {
     return result.recordset;
 }
 
+function normalizeTextValue(value) {
+    if (value === null || value === undefined) return '';
+    return String(value);
+}
+
+function normalizeNumericValue(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function arraysEqual(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
 async function getAccessibleChordsWithDetails(userId) {
     const chordsResult = await db.query(
         `
@@ -591,14 +611,29 @@ async function getAccessibleChordsWithDetails(userId) {
     });
 }
 
-async function exportContentPack(userId) {
+function normalizeIdArray(values) {
+    if (!Array.isArray(values)) return [];
+    const unique = new Set();
+    for (const value of values) {
+        const id = toInt(value, 0);
+        if (id > 0) unique.add(id);
+    }
+    return Array.from(unique);
+}
+
+async function exportContentPack(userId, selectedSongIds = []) {
     const user = await userService.findUserById(userId);
-    const folders = await getAllFolders(userId);
     const songs = await getSongsByUserId(userId);
+    const requestedSongIds = normalizeIdArray(selectedSongIds);
+    const requestedSongIdSet = new Set(requestedSongIds);
     const detailedSongs = [];
     const requiredChordIds = new Set();
 
     for (const song of songs) {
+        if (requestedSongIdSet.size > 0 && !requestedSongIdSet.has(toInt(song.Id, 0))) {
+            continue;
+        }
+
         const fullSong = await getSongById(song.Id, userId);
         if (!fullSong) continue;
         detailedSongs.push({
@@ -615,7 +650,6 @@ async function exportContentPack(userId) {
             layoutDividerRatio: toNumber(fullSong.LayoutDividerRatio, 0.5),
             contentTextColumn1: fullSong.ContentTextColumn1 || '',
             contentTextColumn2: fullSong.ContentTextColumn2 || '',
-            folderIds: Array.isArray(fullSong.folderIds) ? fullSong.folderIds : [],
             chordIds: Array.isArray(fullSong.chordIds) ? fullSong.chordIds : []
         });
 
@@ -644,7 +678,6 @@ async function exportContentPack(userId) {
             username: user.username
         },
         data: {
-            folders: folders.map(f => ({ id: f.Id, name: f.Name })),
             chords: packChords,
             songs: detailedSongs
         }
@@ -705,51 +738,52 @@ async function findMatchingChordId(tx, chord, userId) {
     return null;
 }
 
-async function importContentPack(pack, userId) {
+async function importContentPack(pack, userId, options = {}) {
     if (!pack || pack.format !== 'chordsmith-content-pack' || !pack.data) {
         throw new Error('Invalid content pack format');
     }
 
-    const foldersPayload = Array.isArray(pack.data.folders) ? pack.data.folders : [];
     const chordsPayload = Array.isArray(pack.data.chords) ? pack.data.chords : [];
-    const songsPayload = Array.isArray(pack.data.songs) ? pack.data.songs : [];
+    const allSongsPayload = Array.isArray(pack.data.songs) ? pack.data.songs : [];
+    const selectedSongIds = normalizeIdArray(options.songIds);
+    const selectedSongIdSet = new Set(selectedSongIds);
+    const songsPayload = selectedSongIdSet.size > 0
+        ? allSongsPayload.filter(song => selectedSongIdSet.has(toInt(song.id || song.Id, 0)))
+        : allSongsPayload;
+    const requiredChordIdSet = new Set();
+    for (const song of songsPayload) {
+        const songChordIds = Array.isArray(song.chordIds)
+            ? song.chordIds
+            : (Array.isArray(song.ChordIds) ? song.ChordIds : []);
+        for (const chordId of songChordIds) {
+            const parsedId = toInt(chordId, 0);
+            if (parsedId > 0) requiredChordIdSet.add(parsedId);
+        }
+    }
+    const destinationFolderId = toInt(options.destinationFolderId, 0);
 
     const tx = await db.beginTransaction();
-    const folderIdMap = new Map();
     const chordIdMap = new Map();
-    let createdFolders = 0;
     let createdChords = 0;
     let createdSongs = 0;
+    let assignedToFolder = 0;
+    let linkedExistingSongs = 0;
 
     try {
-        for (const folder of foldersPayload) {
-            const originalId = toInt(folder.id || folder.Id, 0);
-            const folderName = String(folder.name || folder.Name || '').trim();
-            if (!folderName || originalId <= 0) continue;
-
-            const existingFolder = await tx.query(
-                'SELECT Id FROM Folders WHERE creator_id = @userId AND Name = @name',
-                { userId, name: folderName }
+        if (destinationFolderId > 0) {
+            const folderCheck = await tx.query(
+                'SELECT Id FROM Folders WHERE Id = @folderId AND creator_id = @userId',
+                { folderId: destinationFolderId, userId }
             );
-
-            let mappedId;
-            if (existingFolder.recordset.length > 0) {
-                mappedId = existingFolder.recordset[0].Id;
-            } else {
-                const insertFolder = await tx.query(
-                    'INSERT INTO Folders (Name, creator_id) VALUES (@name, @userId)',
-                    { name: folderName, userId }
-                );
-                mappedId = insertFolder.insertId;
-                createdFolders += 1;
+            if (folderCheck.recordset.length === 0) {
+                throw new Error('Selected destination folder does not exist');
             }
-
-            folderIdMap.set(originalId, mappedId);
         }
 
         for (const chordRaw of chordsPayload) {
             const originalId = toInt(chordRaw.id || chordRaw.Id, 0);
             if (originalId <= 0) continue;
+            if (requiredChordIdSet.size > 0 && !requiredChordIdSet.has(originalId)) continue;
 
             const chord = normalizeChordPayload(chordRaw);
             if (!chord.name) continue;
@@ -809,6 +843,7 @@ async function importContentPack(pack, userId) {
         for (const songRaw of songsPayload) {
             const title = String(songRaw.title || songRaw.Title || '').trim();
             if (!title) continue;
+            const sourceSongId = toInt(songRaw.id || songRaw.Id, 0);
 
             const {
                 layoutColumnCount,
@@ -816,6 +851,71 @@ async function importContentPack(pack, userId) {
                 contentTextColumn1,
                 contentTextColumn2
             } = normalizeSongLayoutInput(songRaw);
+
+            const rawChordIds = Array.isArray(songRaw.chordIds)
+                ? songRaw.chordIds
+                : (Array.isArray(songRaw.ChordIds) ? songRaw.ChordIds : []);
+            const mappedChordIds = rawChordIds
+                .map(chordId => chordIdMap.get(toInt(chordId, 0)))
+                .filter(chordId => Number.isFinite(chordId) && chordId > 0);
+
+            if (sourceSongId > 0) {
+                const existingSongResult = await tx.query(
+                    `SELECT Id, Title, SongDate, Notes, SongKey, Capo, BPM, Effects, SongContentFontSizePt,
+                            LayoutColumnCount, LayoutDividerRatio, ContentTextColumn1, ContentTextColumn2
+                     FROM Songs WHERE Id = @songId`,
+                    { songId: sourceSongId }
+                );
+
+                if (existingSongResult.recordset.length > 0) {
+                    const existingSong = existingSongResult.recordset[0];
+                    const existingChordIdsResult = await tx.query(
+                        'SELECT ChordId FROM SongChordDiagrams WHERE SongId = @songId ORDER BY DisplayOrder',
+                        { songId: sourceSongId }
+                    );
+                    const existingChordIds = existingChordIdsResult.recordset.map(row => toInt(row.ChordId, 0));
+
+                    const songContentMatches =
+                        normalizeTextValue(existingSong.Title) === normalizeTextValue(title) &&
+                        normalizeTextValue(existingSong.SongDate) === normalizeTextValue(songRaw.songDate || songRaw.SongDate || '') &&
+                        normalizeTextValue(existingSong.Notes) === normalizeTextValue(songRaw.notes || songRaw.Notes || '') &&
+                        normalizeTextValue(existingSong.SongKey) === normalizeTextValue(songRaw.songKey || songRaw.SongKey || '') &&
+                        normalizeTextValue(existingSong.Capo) === normalizeTextValue(songRaw.capo || songRaw.Capo || '') &&
+                        normalizeTextValue(existingSong.BPM) === normalizeTextValue(songRaw.bpm || songRaw.BPM || '') &&
+                        normalizeTextValue(existingSong.Effects) === normalizeTextValue(songRaw.effects || songRaw.Effects || '') &&
+                        normalizeNumericValue(existingSong.SongContentFontSizePt) === normalizeNumericValue(songRaw.songContentFontSizePt || songRaw.SongContentFontSizePt || null) &&
+                        toInt(existingSong.LayoutColumnCount, 1) === toInt(layoutColumnCount, 1) &&
+                        toNumber(existingSong.LayoutDividerRatio, 0.5) === toNumber(dividerRatio, 0.5) &&
+                        normalizeTextValue(existingSong.ContentTextColumn1) === normalizeTextValue(contentTextColumn1) &&
+                        normalizeTextValue(existingSong.ContentTextColumn2) === normalizeTextValue(contentTextColumn2) &&
+                        arraysEqual(existingChordIds, mappedChordIds);
+
+                    if (songContentMatches) {
+                        await tx.query(
+                            'INSERT IGNORE INTO UserSongs (user_id, song_id, is_creator) VALUES (@userId, @songId, 0)',
+                            { userId, songId: sourceSongId }
+                        );
+
+                        for (const chordId of mappedChordIds) {
+                            await tx.query(
+                                'INSERT IGNORE INTO UserChords (user_id, chord_id, is_creator) VALUES (@userId, @chordId, 0)',
+                                { userId, chordId }
+                            );
+                        }
+
+                        if (destinationFolderId > 0) {
+                            await tx.query(
+                                'INSERT IGNORE INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)',
+                                { songId: sourceSongId, folderId: destinationFolderId }
+                            );
+                            assignedToFolder += 1;
+                        }
+
+                        linkedExistingSongs += 1;
+                        continue;
+                    }
+                }
+            }
 
             const insertSong = await tx.query(
                 `
@@ -854,7 +954,6 @@ async function importContentPack(pack, userId) {
                 { userId, songId: newSongId }
             );
 
-            const rawChordIds = Array.isArray(songRaw.chordIds) ? songRaw.chordIds : [];
             for (let i = 0; i < rawChordIds.length; i++) {
                 const oldChordId = toInt(rawChordIds[i], 0);
                 const newChordId = chordIdMap.get(oldChordId);
@@ -865,17 +964,12 @@ async function importContentPack(pack, userId) {
                     { songId: newSongId, chordId: newChordId, displayOrder: i }
                 );
             }
-
-            const rawFolderIds = Array.isArray(songRaw.folderIds) ? songRaw.folderIds : [];
-            for (const oldFolderIdRaw of rawFolderIds) {
-                const oldFolderId = toInt(oldFolderIdRaw, 0);
-                const newFolderId = folderIdMap.get(oldFolderId);
-                if (!newFolderId) continue;
-
+            if (destinationFolderId > 0) {
                 await tx.query(
                     'INSERT IGNORE INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)',
-                    { songId: newSongId, folderId: newFolderId }
+                    { songId: newSongId, folderId: destinationFolderId }
                 );
+                assignedToFolder += 1;
             }
         }
 
@@ -883,9 +977,10 @@ async function importContentPack(pack, userId) {
         return {
             success: true,
             imported: {
-                foldersCreated: createdFolders,
                 chordsCreated: createdChords,
-                songsCreated: createdSongs
+                songsCreated: createdSongs,
+                assignedToFolder,
+                linkedExistingSongs
             }
         };
     } catch (error) {

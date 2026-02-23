@@ -314,15 +314,33 @@
             <div class="modal-content">
                 <button id="close-content-pack-modal" class="close-btn">×</button>
                 <h2 data-translate="Import / Export">Import / Export</h2>
-                <p data-translate="Share your songs, folders and chords using a content pack file.">
-                    Share your songs, folders and chords using a content pack file.
+                <p data-translate="Share your songs and chords using a content pack file.">
+                    Share your songs and chords using a content pack file.
                 </p>
                 <div class="editor-actions" style="margin-top: 12px;">
-                    <button id="export-content-pack-btn" class="editor-action-btn btn-primary" data-translate="Export Content Pack">Export Content Pack</button>
+                    <button id="prepare-export-content-pack-btn" class="editor-action-btn btn-primary" data-translate="Export Content Pack">Export Content Pack</button>
                 </div>
                 <div class="editor-actions" style="margin-top: 12px;">
                     <input id="import-content-pack-file" type="file" accept=".json,application/json" />
-                    <button id="import-content-pack-btn" class="editor-action-btn btn-secondary" data-translate="Import Content Pack">Import Content Pack</button>
+                    <button id="prepare-import-content-pack-btn" class="editor-action-btn btn-primary" data-translate="Import Content Pack">Import Content Pack</button>
+                </div>
+                <div id="export-content-pack-selection" class="folder-selection hidden" style="margin-top: 12px;">
+                    <h4 data-translate="Select songs to export">Select songs to export</h4>
+                    <div id="export-content-pack-songs" class="content-pack-song-list"></div>
+                    <div class="editor-actions" style="margin-top: 12px;">
+                        <button id="export-content-pack-confirm-btn" class="editor-action-btn btn-primary" data-translate="Download Selected Songs">Download Selected Songs</button>
+                    </div>
+                </div>
+                <div id="import-content-pack-selection" class="folder-selection hidden" style="margin-top: 12px;">
+                    <h4 data-translate="Select songs to import">Select songs to import</h4>
+                    <div id="import-content-pack-songs" class="content-pack-song-list"></div>
+                    <div class="form-group" style="margin-top: 12px;">
+                        <label for="import-destination-folder-select" data-translate="Destination folder">Destination folder</label>
+                        <select id="import-destination-folder-select"></select>
+                    </div>
+                    <div class="editor-actions" style="margin-top: 12px;">
+                        <button id="import-content-pack-confirm-btn" class="editor-action-btn btn-primary" data-translate="Import Selected Songs">Import Selected Songs</button>
+                    </div>
                 </div>
             </div>
         </div>

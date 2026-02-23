@@ -1708,6 +1708,14 @@ h2::after {
     margin-bottom: 12px;
 }
 
+.content-pack-song-list {
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    padding: 10px 12px;
+}
+
 .folder-checkbox-label {
     display: flex;
     align-items: center;
