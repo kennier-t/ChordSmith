@@ -1,14 +1,14 @@
 -- =============================================
--- ChordSmith Studio - Complete Database Setup Script
+-- ChordSmith - Complete Database Setup Script
 -- MySQL 8+
 -- =============================================
 
-DROP DATABASE IF EXISTS `Chordsmith Studio`;
-CREATE DATABASE `Chordsmith Studio`
+DROP DATABASE IF EXISTS `ChordSmith`;
+CREATE DATABASE `ChordSmith`
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE `Chordsmith Studio`;
+USE `ChordSmith`;
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
@@ -22,7 +22,7 @@ CREATE TABLE Users (
     password_hash VARCHAR(256) NULL,
     language_pref CHAR(2) NULL DEFAULT 'en',
     user_type VARCHAR(20) NOT NULL DEFAULT 'user',
-    is_verified TINYINT(1) NULL DEFAULT 0,
+    is_verified TINYINT NULL DEFAULT 0,
     created_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY UX_Users_username (username),
     UNIQUE KEY UX_Users_email (email)
@@ -59,8 +59,8 @@ CREATE TABLE Chords (
     Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     Name VARCHAR(50) NOT NULL,
     BaseFret INT NOT NULL DEFAULT 1,
-    IsOriginal TINYINT(1) NOT NULL DEFAULT 0,
-    IsDefault TINYINT(1) NOT NULL DEFAULT 0,
+    IsOriginal TINYINT NOT NULL DEFAULT 0,
+    IsDefault TINYINT NOT NULL DEFAULT 0,
     creator_id INT NULL,
     created_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NULL,
@@ -155,7 +155,7 @@ CREATE TABLE UserSongs (
     user_id INT NOT NULL,
     song_id INT NOT NULL,
     assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    is_creator TINYINT(1) DEFAULT 0,
+    is_creator TINYINT DEFAULT 0,
     CONSTRAINT FK_UserSongs_User FOREIGN KEY (user_id) REFERENCES Users(id),
     CONSTRAINT FK_UserSongs_Song FOREIGN KEY (song_id) REFERENCES Songs(id) ON DELETE CASCADE,
     UNIQUE KEY UX_UserSongs_user_song (user_id, song_id)
@@ -166,7 +166,7 @@ CREATE TABLE UserChords (
     user_id INT NOT NULL,
     chord_id INT NOT NULL,
     assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    is_creator TINYINT(1) DEFAULT 0,
+    is_creator TINYINT DEFAULT 0,
     CONSTRAINT FK_UserChords_User FOREIGN KEY (user_id) REFERENCES Users(id),
     CONSTRAINT FK_UserChords_Chord FOREIGN KEY (chord_id) REFERENCES Chords(id) ON DELETE CASCADE,
     UNIQUE KEY UX_UserChords_user_chord (user_id, chord_id)

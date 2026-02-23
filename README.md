@@ -1,12 +1,6 @@
-# ChordSmith Studio
+# ChordSmith
 
-ChordSmith Studio is a web app to create, manage, share, and export guitar chords and songs.
-
-## What changed
-- Backend database is now MySQL (cross-platform for Windows and macOS).
-- DB access is environment-driven (`.env`), no hardcoded machine/SQL Server instance.
-- Existing API routes and user-facing behavior are preserved.
-- PDF generation logic remains client-side and unchanged.
+ChordSmith is a web app to create, manage, share, and export guitar chords and songs.
 
 ## Features
 
@@ -70,53 +64,18 @@ npm start
 - `database/setup-mysql.sql`
 
 This script:
-- drops and recreates database `Chordsmith Studio`,
+- drops and recreates database `ChordSmith`,
 - creates all schema objects,
 - seeds chord families/chords mappings,
 - creates compatibility views.
 
-## Data migration from SQL Server to MySQL
-
-### Prerequisites
-- Source SQL Server DB (old `ChordSmith`) reachable.
-- Target MySQL DB already created with `database/setup-mysql.sql`.
-- `.env` includes `SRC_MSSQL_*` variables and `DB_*` target variables.
-
-### Run migration
-```bash
-npm run migrate:sqlserver-to-mysql
-```
-
-What it does:
-- opens a SQL Server source connection,
-- opens a MySQL target connection,
-- migrates all relevant tables preserving IDs,
-- verifies row counts table-by-table,
-- commits on success,
-- rolls back on any failure.
-
-### Verification checklist
-- Confirm migration command ends with: `Migration completed successfully. Row counts verified.`
-- Login with migrated users.
-- Open songs list, edit a song, save, reopen.
-- Open chord families and verify diagrams/fingerings.
-- Test share accept/reject flows.
-
-## Rollback procedure
-
-If migration fails or app behavior regresses:
-
-1. Stop the Node app.
-2. Restore SQL Server as source of truth (unchanged by migration script).
-3. Recreate MySQL target from scratch:
-- rerun `database/setup-mysql.sql` in MySQL Workbench.
-4. Re-run migration only after fixing the issue.
-5. To temporarily use old environment, switch back to the original SQL Server project copy.
+## Existing DB rename script
+If you already created the database as `Chordsmith Studio`, run:
+- `database/rename-db-chordsmith-studio-to-chordsmith.sql`
 
 ## Troubleshooting
 - `ER_ACCESS_DENIED_ERROR`: Check `DB_USER` / `DB_PASSWORD` in `.env`.
-- `Unknown database 'Chordsmith Studio'`: Run `database/setup-mysql.sql` first.
-- `Migration failed: Missing SQL Server source config vars`: fill `SRC_MSSQL_*` in `.env`.
+- `Unknown database 'ChordSmith'`: Run `database/setup-mysql.sql` first.
 - `pdftotext command failed`: install Poppler and ensure `pdftotext` is in PATH.
 
 ## Key Project Paths
@@ -126,7 +85,6 @@ If migration fails or app behavior regresses:
 - `server/services/`: Business/data logic.
 - `public/scripts/songPDFGenerator.js`: PDF generation (unchanged).
 - `database/setup-mysql.sql`: MySQL bootstrap schema and seed script.
-- `scripts/migrate-sqlserver-to-mysql.js`: data migration tool.
 
 ## License
 Personal educational project.
