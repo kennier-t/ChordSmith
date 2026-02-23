@@ -5,10 +5,10 @@ async function createUser(user) {
   const { username, email, first_name, last_name, password } = user;
   const password_hash = await bcrypt.hash(password, 10);
   const result = await db.query(
-    'INSERT INTO Users (username, email, first_name, last_name, password_hash) OUTPUT INSERTED.id VALUES (@username, @email, @first_name, @last_name, @password_hash)',
+    'INSERT INTO Users (username, email, first_name, last_name, password_hash) VALUES (@username, @email, @first_name, @last_name, @password_hash)',
     { username, email, first_name, last_name, password_hash }
   );
-  return { id: result.recordset[0].id };
+  return { id: result.insertId };
 }
 
 async function findUserByEmail(email) {
@@ -54,7 +54,7 @@ async function updateUserPassword(id, password) {
 }
 
 async function createVerificationToken(userId, token) {
-    const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const expires_at = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const result = await db.query(
         'INSERT INTO UserVerificationTokens (user_id, token, expires_at) VALUES (@userId, @token, @expires_at)',
         { userId, token, expires_at }
@@ -68,12 +68,12 @@ async function findVerificationToken(token) {
 }
 
 async function markTokenAsUsed(tokenId) {
-    const result = await db.query('UPDATE UserVerificationTokens SET used_at = GETDATE() WHERE id = @tokenId', { tokenId });
+    const result = await db.query('UPDATE UserVerificationTokens SET used_at = UTC_TIMESTAMP() WHERE id = @tokenId', { tokenId });
     return result;
 }
 
 async function createPasswordResetToken(userId, token) {
-    const expires_at = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 hour
+    const expires_at = new Date(Date.now() + 1 * 60 * 60 * 1000);
     const result = await db.query(
         'INSERT INTO PasswordResetTokens (user_id, token, expires_at) VALUES (@userId, @token, @expires_at)',
         { userId, token, expires_at }
@@ -87,7 +87,7 @@ async function findPasswordResetToken(token) {
 }
 
 async function markPasswordResetTokenAsUsed(tokenId) {
-    const result = await db.query('UPDATE PasswordResetTokens SET used_at = GETDATE() WHERE id = @tokenId', { tokenId });
+    const result = await db.query('UPDATE PasswordResetTokens SET used_at = UTC_TIMESTAMP() WHERE id = @tokenId', { tokenId });
     return result;
 }
 
