@@ -39,52 +39,202 @@ ChordSmith is a web app to create, manage, share, and export guitar chords and s
 - Backend: Node.js + Express.
 - Database: MySQL 8+.
 
-## Quick Start (Windows and macOS)
+## What You Need
+- A computer with Windows or macOS
+- Internet connection (for downloading installers and packages)
+- MySQL Server 8+
+- MySQL Workbench
+- Node.js 20 LTS (recommended)
 
-1. Install MySQL Server 8+.
+## Important Notes Before You Start
+- ChordSmith uses MySQL only.
+- The database name used by default is `ChordSmith`.
+- The setup script `database/setup-mysql.sql` recreates the database from scratch.
+- If you already had a database named `Chordsmith Studio`, use `database/rename-db-chordsmith-studio-to-chordsmith.sql`.
+
+## 0 to 100 Setup: Windows
+
+### 1. Install Node.js
+1. Open https://nodejs.org
+2. Download and install Node.js LTS.
+3. Open PowerShell and verify:
+```powershell
+node -v
+npm -v
+```
+
+### 2. Install MySQL Server and Workbench
+1. Install MySQL Server 8+ (MySQL Installer or official package).
 2. Install MySQL Workbench.
-3. Clone this repo.
-4. Create `.env` from `.env.example` and set your credentials.
-5. In MySQL Workbench:
-- Open a SQL tab connected to your local server.
-- File -> Open SQL Script -> select `database/setup-mysql.sql`.
-- Click Execute (lightning icon).
-6. Install dependencies:
-```bash
+3. Start MySQL Server service.
+
+### 3. Download ChordSmith
+If using Git:
+```powershell
+git clone <your-repo-url>
+cd ChordSmith
+```
+If you already have the folder, open PowerShell in that folder.
+
+### 4. Configure environment file
+1. In the project root, copy `.env.example` to `.env`.
+2. Open `.env` and set at least:
+```env
+PORT=3000
+JWT_SECRET=put_a_long_random_secret_here
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=ChordSmith
+DB_CONNECTION_LIMIT=10
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USER=user@example.com
+EMAIL_PASS=your_email_password
+EMAIL_FROM="ChordSmith <user@example.com>"
+```
+If you do not plan to use registration/password emails now, you can still run the app and set email values later.
+
+### 5. Create database schema and seed data
+1. Open MySQL Workbench.
+2. Connect to your local MySQL server.
+3. Go to `File` -> `Open SQL Script...`.
+4. Open `database/setup-mysql.sql`.
+5. Click the lightning bolt Execute button.
+6. Confirm script runs without errors.
+
+### 6. Install project dependencies
+In PowerShell inside project root:
+```powershell
 npm install
 ```
-7. Start app:
-```bash
+
+### 7. Start the app
+```powershell
 npm start
 ```
-8. Open:
+
+### 8. Open the app
+Open browser at:
 - `http://localhost:3000`
 
-## MySQL bootstrap script
-- `database/setup-mysql.sql`
+### 9. Verify everything works
+1. Register/login.
+2. Open chord families and a chord detail.
+3. Create a song and save it.
+4. Reopen the song and confirm content/layout persists.
+5. Preview/download PDF.
+6. Test sharing flow if using multiple users.
 
-This script:
-- drops and recreates database `ChordSmith`,
-- creates all schema objects,
-- seeds chord families/chords mappings,
-- creates compatibility views.
+## 0 to 100 Setup: macOS
 
-## Existing DB rename script
-If you already created the database as `Chordsmith Studio`, run:
+### 1. Install Node.js
+Option A (website):
+1. Open https://nodejs.org
+2. Download and install Node.js LTS.
+
+Option B (Homebrew):
+```bash
+brew install node
+```
+
+Verify:
+```bash
+node -v
+npm -v
+```
+
+### 2. Install MySQL Server and Workbench
+Option A (official installers):
+- Install MySQL Server 8+
+- Install MySQL Workbench
+
+Option B (Homebrew for server + official Workbench app):
+```bash
+brew install mysql
+brew services start mysql
+```
+
+### 3. Download ChordSmith
+If using Git:
+```bash
+git clone <your-repo-url>
+cd ChordSmith
+```
+If already downloaded, open Terminal in the project folder.
+
+### 4. Configure environment file
+1. Copy `.env.example` to `.env`.
+2. Update values (same fields as Windows), especially:
+- `JWT_SECRET`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_NAME=ChordSmith`
+
+### 5. Create database schema and seed data
+1. Open MySQL Workbench.
+2. Connect to local MySQL server.
+3. `File` -> `Open SQL Script...`.
+4. Select `database/setup-mysql.sql`.
+5. Click Execute (lightning icon).
+
+### 6. Install dependencies and run
+```bash
+npm install
+npm start
+```
+
+### 7. Open app
+- `http://localhost:3000`
+
+### 8. Verify flows
+Run the same checks listed in Windows step 9.
+
+## Optional: If your DB is still named `Chordsmith Studio`
+Run in MySQL Workbench:
 - `database/rename-db-chordsmith-studio-to-chordsmith.sql`
 
-## Troubleshooting
-- `ER_ACCESS_DENIED_ERROR`: Check `DB_USER` / `DB_PASSWORD` in `.env`.
-- `Unknown database 'ChordSmith'`: Run `database/setup-mysql.sql` first.
-- `pdftotext command failed`: install Poppler and ensure `pdftotext` is in PATH.
+Then confirm `.env` has:
+```env
+DB_NAME=ChordSmith
+```
 
-## Key Project Paths
-- `server/server.js`: API bootstrap.
-- `server/db.js`: MySQL DB connection and transactions.
-- `server/routes/`: Auth, users, songs, chords, shares routes.
-- `server/services/`: Business/data logic.
-- `public/scripts/songPDFGenerator.js`: PDF generation (unchanged).
-- `database/setup-mysql.sql`: MySQL bootstrap schema and seed script.
+## PDF-to-Text Dependency (`pdftotext`)
+The `/api/convert-pdf` feature requires `pdftotext` in PATH.
+
+Windows:
+1. Install Poppler for Windows.
+2. Add Poppler `bin` folder to system PATH.
+3. Restart terminal.
+4. Verify:
+```powershell
+pdftotext -v
+```
+
+macOS:
+```bash
+brew install poppler
+pdftotext -v
+```
+
+## Common Errors and Fixes
+- `ER_ACCESS_DENIED_ERROR`
+  - Check `DB_USER` and `DB_PASSWORD` in `.env`.
+- `Unknown database 'ChordSmith'`
+  - Run `database/setup-mysql.sql` again.
+- App starts but login/register fails with email errors
+  - Set valid SMTP values in `.env`, or postpone email-dependent flows.
+- `pdftotext command failed`
+  - Install Poppler and confirm command is in PATH.
+
+## Key Files
+- `server/server.js`: API bootstrap
+- `server/db.js`: MySQL connection and transaction layer
+- `server/routes/`: API routes
+- `server/services/`: business/data logic
+- `database/setup-mysql.sql`: full DB bootstrap
+- `database/rename-db-chordsmith-studio-to-chordsmith.sql`: rename existing DB
 
 ## License
 Personal educational project.
