@@ -198,17 +198,6 @@ CREATE TABLE ChordShares (
     CONSTRAINT FK_ChordShares_Sender FOREIGN KEY (sender_user_id) REFERENCES Users(id)
 ) ENGINE=InnoDB;
 
-INSERT INTO Users (username, email, first_name, last_name, password_hash, is_verified, user_type)
-VALUES (
-    'kennier',
-    'kennier.trejos@gmail.com',
-    'Kennier',
-    'Trejos',
-    '$2b$10$ygDy/ILMcdOhewajngWBOONoFrZe9.sPJusJ/o4uXch7AxDwP.ig6',
-    1,
-    'admin'
-);
-
 INSERT INTO Families (Name) VALUES
 ('C'), ('D'), ('E'), ('F'), ('G'), ('A'), ('B');
 
