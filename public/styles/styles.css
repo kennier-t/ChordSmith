@@ -1481,6 +1481,28 @@ h2::after {
     outline: 1px solid var(--primary);
 }
 
+.song-version-control-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.song-version-control-wrap select {
+    flex: 1;
+    min-width: 180px;
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    font-family: inherit;
+    font-size: inherit;
+    background: white;
+}
+
+.song-version-control-wrap select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(139, 111, 71, 0.1);
+}
+
 #song-content-textarea,
 .song-column-textarea {
     width: 100%;
@@ -1943,6 +1965,28 @@ h2::after {
     text-align: center;
     color: var(--text-secondary);
     margin-bottom: 16px;
+}
+
+.pdf-version-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.pdf-version-control label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.pdf-version-control select {
+    min-width: 180px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text-primary);
+    padding: 6px 10px;
+    font-size: 0.875rem;
 }
 
 .pdf-preview-frame {

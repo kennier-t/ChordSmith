@@ -86,6 +86,87 @@ function toNumber(value, fallback = 0) {
     return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function createAppError(message, code, status = 400) {
+    const error = new Error(message);
+    error.code = code;
+    error.status = status;
+    return error;
+}
+
+function normalizeSongTitle(value) {
+    return String(value || '').trim().toLocaleLowerCase();
+}
+
+function isSameNormalizedTitle(left, right) {
+    return normalizeSongTitle(left) === normalizeSongTitle(right);
+}
+
+async function findSongByNormalizedTitle(title, options = {}) {
+    const normalizedTitle = String(title || '').trim();
+    if (!normalizeSongTitle(normalizedTitle)) return null;
+
+    const excludeSongIds = Array.isArray(options.excludeSongIds)
+        ? options.excludeSongIds.map((id) => toInt(id, 0)).filter((id) => id > 0)
+        : [];
+
+    const conditions = ['LOWER(TRIM(s.Title)) = LOWER(TRIM(@title))'];
+    if (excludeSongIds.length > 0) {
+        conditions.push(`s.Id NOT IN (${excludeSongIds.join(',')})`);
+    }
+
+    const result = await db.query(
+        `
+        SELECT s.Id
+        FROM Songs s
+        WHERE ${conditions.join(' AND ')}
+        LIMIT 1
+    `,
+        { title: normalizedTitle }
+    );
+    return result.recordset[0] || null;
+}
+
+async function getVersionGroupSongRows(creatorId, title, userId = null) {
+    const params = {
+        creatorId,
+        title: String(title || '').trim()
+    };
+    const userJoin = userId
+        ? 'JOIN UserSongs us ON us.song_id = s.Id AND us.user_id = @userId'
+        : '';
+
+    if (userId) {
+        params.userId = userId;
+    }
+
+    const result = await db.query(
+        `
+        SELECT s.Id, s.Title, s.Version, s.created_at, s.updated_at, s.CreatedDate, s.ModifiedDate
+        FROM Songs s
+        ${userJoin}
+        WHERE s.creator_id = @creatorId
+          AND LOWER(TRIM(s.Title)) = LOWER(TRIM(@title))
+        ORDER BY s.Version ASC, s.Id ASC
+    `,
+        params
+    );
+
+    return result.recordset;
+}
+
+async function getOriginalSongIdForGroup(creatorId, title) {
+    const result = await db.query(
+        `
+        SELECT MIN(s.Id) AS OriginalSongId
+        FROM Songs s
+        WHERE s.creator_id = @creatorId
+          AND LOWER(TRIM(s.Title)) = LOWER(TRIM(@title))
+    `,
+        { creatorId, title: String(title || '').trim() }
+    );
+    return toInt(result.recordset[0] && result.recordset[0].OriginalSongId, 0);
+}
+
 function normalizeChordPayload(chord) {
     const frets = Array.isArray(chord.frets) ? chord.frets.slice(0, 6) : [];
     const fingers = Array.isArray(chord.fingers) ? chord.fingers.slice(0, 6) : [];
@@ -122,6 +203,16 @@ function chordSignature(chord) {
 
 async function createSong(song, userId) {
     const { title, songDate, notes, songKey, capo, bpm, effects, songContentFontSizePt, chordIds, folderIds } = song;
+    const normalizedTitle = String(title || '').trim();
+    if (!normalizedTitle) {
+        throw createAppError('Title is required', 'VALIDATION_ERROR', 400);
+    }
+
+    const existingSong = await findSongByNormalizedTitle(normalizedTitle);
+    if (existingSong) {
+        throw createAppError('A song with this title already exists. Use Add new version instead.', 'DUPLICATE_SONG_TITLE', 409);
+    }
+
     const {
         layoutColumnCount,
         dividerRatio,
@@ -136,18 +227,18 @@ async function createSong(song, userId) {
                 INSERT INTO Songs (
                     Title, SongDate, Notes, SongKey, Capo, BPM, Effects,
                     SongContentFontSizePt, LayoutColumnCount,
-                    LayoutDividerRatio, ContentTextColumn1, ContentTextColumn2,
+                    LayoutDividerRatio, ContentTextColumn1, ContentTextColumn2, Version,
                     creator_id, created_at, updated_at
                 )
                 VALUES (
                     @title, @songDate, @notes, @songKey, @capo, @bpm, @effects,
                     @songContentFontSizePt, @layoutColumnCount,
-                    @layoutDividerRatio, @contentTextColumn1, @contentTextColumn2,
+                    @layoutDividerRatio, @contentTextColumn1, @contentTextColumn2, 1,
                     @creator_id, UTC_TIMESTAMP(), UTC_TIMESTAMP()
                 )
             `,
             {
-                title,
+                title: normalizedTitle,
                 songDate: songDate || '',
                 notes: notes || '',
                 songKey: songKey || '',
@@ -233,6 +324,16 @@ async function getSongById(songId, userId) {
     if (song) {
         song.folderIds = song.folderIds ? song.folderIds.split(',').map(Number) : [];
         song.chordIds = song.chordIds ? song.chordIds.split(',').map(Number) : [];
+        const versions = await getVersionGroupSongRows(song.creator_id, song.Title, userId);
+        const originalSongId = await getOriginalSongIdForGroup(song.creator_id, song.Title);
+        song.versions = versions.map((versionRow) => ({
+            Id: versionRow.Id,
+            Version: toInt(versionRow.Version, 1),
+            IsOriginal: versionRow.Id === originalSongId
+        }));
+        song.originalSongId = originalSongId;
+        song.isOriginalVersion = song.Id === originalSongId;
+        song.canEditTitleAndFolders = song.creator_id === userId && song.isOriginalVersion;
         applyLegacyContentCompatibility(song);
     }
     return song;
@@ -244,6 +345,7 @@ async function getSongsByUserId(userId) {
         SELECT s.*, us.is_creator FROM Songs s
         JOIN UserSongs us ON s.id = us.song_id
         WHERE us.user_id = @userId
+        ORDER BY LOWER(TRIM(s.Title)), s.Version, s.Id
     `,
         { userId }
     );
@@ -253,7 +355,7 @@ async function getSongsByUserId(userId) {
 async function updateSong(songId, song, userId) {
     const originalSong = await getSongById(songId, userId);
     if (!originalSong) {
-        throw new Error('Song not found');
+        throw createAppError('Song not found', 'NOT_FOUND', 404);
     }
 
     if (originalSong.creator_id !== userId) {
@@ -267,6 +369,40 @@ async function updateSong(songId, song, userId) {
         contentTextColumn1,
         contentTextColumn2
     } = normalizeSongLayoutInput(song);
+    const requestedTitle = String(title || '').trim();
+    if (!requestedTitle) {
+        throw createAppError('Title is required', 'VALIDATION_ERROR', 400);
+    }
+
+    const currentGroupRows = await getVersionGroupSongRows(originalSong.creator_id, originalSong.Title);
+    const groupSongIds = currentGroupRows.map((row) => toInt(row.Id, 0)).filter((id) => id > 0);
+    const originalGroupSongId = await getOriginalSongIdForGroup(originalSong.creator_id, originalSong.Title);
+    const isOriginalVersion = toInt(songId, 0) === originalGroupSongId;
+    const effectiveFolderIds = Array.isArray(folderIds)
+        ? folderIds
+        : (await getSongFolders(songId, userId)).map((folder) => folder.Id);
+
+    if (!isOriginalVersion) {
+        if (!isSameNormalizedTitle(requestedTitle, originalSong.Title)) {
+            throw createAppError('Only the original version can change title or folders.', 'VERSION_EDIT_RESTRICTED', 400);
+        }
+        if (Array.isArray(folderIds)) {
+            const existingFolders = await getSongFolders(songId, userId);
+            const existingFolderIds = existingFolders.map((folder) => toInt(folder.Id, 0)).filter((id) => id > 0).sort((a, b) => a - b);
+            const requestedFolderIds = folderIds.map((id) => toInt(id, 0)).filter((id) => id > 0).sort((a, b) => a - b);
+            if (!arraysEqual(existingFolderIds, requestedFolderIds)) {
+                throw createAppError('Only the original version can change title or folders.', 'VERSION_EDIT_RESTRICTED', 400);
+            }
+        }
+    }
+
+    const nextTitle = isOriginalVersion ? requestedTitle : originalSong.Title;
+    if (isOriginalVersion && !isSameNormalizedTitle(nextTitle, originalSong.Title)) {
+        const conflictingSong = await findSongByNormalizedTitle(nextTitle, { excludeSongIds: groupSongIds });
+        if (conflictingSong) {
+            throw createAppError('A song with this title already exists. Use Add new version instead.', 'DUPLICATE_SONG_TITLE', 409);
+        }
+    }
 
     const tx = await db.beginTransaction();
     try {
@@ -283,7 +419,7 @@ async function updateSong(songId, song, userId) {
             `,
             {
                 id: songId,
-                title,
+                title: nextTitle,
                 songDate: songDate || '',
                 notes: notes || '',
                 songKey: songKey || '',
@@ -299,7 +435,104 @@ async function updateSong(songId, song, userId) {
         );
 
         await tx.query('DELETE FROM SongChordDiagrams WHERE SongId = @songId', { songId });
-        await tx.query('DELETE FROM SongFolderMapping WHERE SongId = @songId', { songId });
+
+        if (chordIds && chordIds.length > 0) {
+            for (let i = 0; i < chordIds.length; i++) {
+                if (chordIds[i] && chordIds[i] !== 'undefined' && !isNaN(parseInt(chordIds[i], 10))) {
+                    await tx.query('INSERT INTO SongChordDiagrams (SongId, ChordId, DisplayOrder) VALUES (@songId, @chordId, @displayOrder)', {
+                        songId,
+                        chordId: parseInt(chordIds[i], 10),
+                        displayOrder: i
+                    });
+                }
+            }
+        }
+
+        if (isOriginalVersion) {
+            for (const groupSongId of groupSongIds) {
+                if (groupSongId === toInt(songId, 0)) continue;
+                await tx.query('UPDATE Songs SET Title = @title WHERE Id = @songId', {
+                    title: nextTitle,
+                    songId: groupSongId
+                });
+            }
+
+            for (const groupSongId of groupSongIds) {
+                await tx.query('DELETE FROM SongFolderMapping WHERE SongId = @songId', { songId: groupSongId });
+            }
+
+            if (effectiveFolderIds && effectiveFolderIds.length > 0) {
+                for (const groupSongId of groupSongIds) {
+                    for (const folderId of effectiveFolderIds) {
+                        if (folderId && folderId !== 'undefined' && !isNaN(parseInt(folderId, 10))) {
+                            await tx.query('INSERT INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)', {
+                                songId: groupSongId,
+                                folderId: parseInt(folderId, 10)
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        await tx.commit();
+        return { id: songId };
+    } catch (error) {
+        await tx.rollback();
+        throw error;
+    } finally {
+        tx.release();
+    }
+}
+
+async function forkSong(originalSongId, song, userId) {
+    const { title, songDate, notes, songKey, capo, bpm, effects, songContentFontSizePt, chordIds, folderIds } = song;
+    const {
+        layoutColumnCount,
+        dividerRatio,
+        contentTextColumn1,
+        contentTextColumn2
+    } = normalizeSongLayoutInput(song);
+
+    const tx = await db.beginTransaction();
+    try {
+        const songResult = await tx.query(
+            `
+                INSERT INTO Songs (
+                    Title, SongDate, Notes, SongKey, Capo, BPM, Effects,
+                    SongContentFontSizePt, LayoutColumnCount,
+                    LayoutDividerRatio, ContentTextColumn1, ContentTextColumn2, Version,
+                    creator_id, created_at, updated_at
+                )
+                VALUES (
+                    @title, @songDate, @notes, @songKey, @capo, @bpm, @effects,
+                    @songContentFontSizePt, @layoutColumnCount,
+                    @layoutDividerRatio, @contentTextColumn1, @contentTextColumn2, 1,
+                    @creator_id, UTC_TIMESTAMP(), UTC_TIMESTAMP()
+                )
+            `,
+            {
+                title: String(title || '').trim(),
+                songDate: songDate || '',
+                notes: notes || '',
+                songKey: songKey || '',
+                capo: capo || '',
+                bpm: bpm || '',
+                effects: effects || '',
+                songContentFontSizePt: songContentFontSizePt ? parseFloat(songContentFontSizePt) : null,
+                layoutColumnCount,
+                layoutDividerRatio: dividerRatio,
+                contentTextColumn1,
+                contentTextColumn2,
+                creator_id: userId
+            }
+        );
+
+        const songId = songResult.insertId;
+        await tx.query('INSERT INTO UserSongs (user_id, song_id, is_creator) VALUES (@user_id, @song_id, 1)', {
+            user_id: userId,
+            song_id: songId
+        });
 
         if (chordIds && chordIds.length > 0) {
             for (let i = 0; i < chordIds.length; i++) {
@@ -334,9 +567,152 @@ async function updateSong(songId, song, userId) {
     }
 }
 
-async function forkSong(originalSongId, song, userId) {
-    const newSong = await createSong(song, userId);
-    return newSong;
+async function getSongVersions(songId, userId) {
+    const song = await getSongById(songId, userId);
+    if (!song) return [];
+    return Array.isArray(song.versions) ? song.versions : [];
+}
+
+async function addSongVersion(songId, song, userId) {
+    const baseSong = await getSongById(songId, userId);
+    if (!baseSong) {
+        throw createAppError('Song not found', 'NOT_FOUND', 404);
+    }
+    if (baseSong.creator_id !== userId) {
+        throw createAppError('Only the creator can add song versions.', 'FORBIDDEN', 403);
+    }
+
+    const {
+        layoutColumnCount,
+        dividerRatio,
+        contentTextColumn1,
+        contentTextColumn2
+    } = normalizeSongLayoutInput(song);
+    const { songDate, notes, songKey, capo, bpm, effects, songContentFontSizePt, chordIds } = song;
+
+    const versionRows = await getVersionGroupSongRows(baseSong.creator_id, baseSong.Title);
+    const maxVersion = versionRows.reduce((max, row) => Math.max(max, toInt(row.Version, 1)), 1);
+    const nextVersion = maxVersion + 1;
+
+    const tx = await db.beginTransaction();
+    try {
+        const songResult = await tx.query(
+            `
+                INSERT INTO Songs (
+                    Title, SongDate, Notes, SongKey, Capo, BPM, Effects,
+                    SongContentFontSizePt, LayoutColumnCount,
+                    LayoutDividerRatio, ContentTextColumn1, ContentTextColumn2, Version,
+                    creator_id, created_at, updated_at
+                )
+                VALUES (
+                    @title, @songDate, @notes, @songKey, @capo, @bpm, @effects,
+                    @songContentFontSizePt, @layoutColumnCount,
+                    @layoutDividerRatio, @contentTextColumn1, @contentTextColumn2, @version,
+                    @creator_id, UTC_TIMESTAMP(), UTC_TIMESTAMP()
+                )
+            `,
+            {
+                title: baseSong.Title,
+                songDate: songDate || '',
+                notes: notes || '',
+                songKey: songKey || '',
+                capo: capo || '',
+                bpm: bpm || '',
+                effects: effects || '',
+                songContentFontSizePt: songContentFontSizePt ? parseFloat(songContentFontSizePt) : null,
+                layoutColumnCount,
+                layoutDividerRatio: dividerRatio,
+                contentTextColumn1,
+                contentTextColumn2,
+                version: nextVersion,
+                creator_id: userId
+            }
+        );
+
+        const newSongId = songResult.insertId;
+        const userSongRows = await tx.query('SELECT user_id, is_creator FROM UserSongs WHERE song_id = @songId', { songId });
+        for (const row of userSongRows.recordset) {
+            await tx.query(
+                'INSERT IGNORE INTO UserSongs (user_id, song_id, is_creator) VALUES (@userId, @songId, @isCreator)',
+                {
+                    userId: row.user_id,
+                    songId: newSongId,
+                    isCreator: row.user_id === userId ? 1 : 0
+                }
+            );
+        }
+
+        if (chordIds && chordIds.length > 0) {
+            for (let i = 0; i < chordIds.length; i++) {
+                if (chordIds[i] && chordIds[i] !== 'undefined' && !isNaN(parseInt(chordIds[i], 10))) {
+                    await tx.query('INSERT INTO SongChordDiagrams (SongId, ChordId, DisplayOrder) VALUES (@songId, @chordId, @displayOrder)', {
+                        songId: newSongId,
+                        chordId: parseInt(chordIds[i], 10),
+                        displayOrder: i
+                    });
+                }
+            }
+        }
+
+        const sourceFolders = await tx.query('SELECT FolderId FROM SongFolderMapping WHERE SongId = @songId', { songId });
+        for (const folderRow of sourceFolders.recordset) {
+            await tx.query(
+                'INSERT IGNORE INTO SongFolderMapping (SongId, FolderId) VALUES (@songId, @folderId)',
+                { songId: newSongId, folderId: folderRow.FolderId }
+            );
+        }
+
+        await tx.commit();
+        return { id: newSongId, version: nextVersion };
+    } catch (error) {
+        await tx.rollback();
+        throw error;
+    } finally {
+        tx.release();
+    }
+}
+
+async function reorderSongVersions(songId, orderedSongIds, userId) {
+    const song = await getSongById(songId, userId);
+    if (!song) {
+        throw createAppError('Song not found', 'NOT_FOUND', 404);
+    }
+    if (song.creator_id !== userId) {
+        throw createAppError('Only the creator can reorder versions.', 'FORBIDDEN', 403);
+    }
+
+    const existingVersions = await getVersionGroupSongRows(song.creator_id, song.Title);
+    const existingIds = existingVersions.map((row) => toInt(row.Id, 0)).filter((id) => id > 0);
+    const requestedIds = Array.isArray(orderedSongIds)
+        ? orderedSongIds.map((id) => toInt(id, 0)).filter((id) => id > 0)
+        : [];
+
+    if (requestedIds.length !== existingIds.length) {
+        throw createAppError('Invalid version order payload.', 'VALIDATION_ERROR', 400);
+    }
+
+    const requestedIdSet = new Set(requestedIds);
+    if (requestedIdSet.size !== requestedIds.length || existingIds.some((id) => !requestedIdSet.has(id))) {
+        throw createAppError('Invalid version order payload.', 'VALIDATION_ERROR', 400);
+    }
+
+    const tx = await db.beginTransaction();
+    try {
+        for (let index = 0; index < requestedIds.length; index++) {
+            const versionSongId = requestedIds[index];
+            await tx.query(
+                'UPDATE Songs SET Version = @version, updated_at = UTC_TIMESTAMP() WHERE Id = @songId',
+                { version: index + 1, songId: versionSongId }
+            );
+        }
+        await tx.commit();
+        return { success: true };
+    } catch (error) {
+        await tx.rollback();
+        throw error;
+    } finally {
+        tx.release();
+    }
 }
 
 async function deleteSong(songId, userId) {
@@ -994,6 +1370,9 @@ async function importContentPack(pack, userId, options = {}) {
 module.exports = {
     createSong,
     getSongById,
+    getSongVersions,
+    addSongVersion,
+    reorderSongVersions,
     getSongsByUserId,
     updateSong,
     deleteSong,

@@ -78,6 +78,9 @@ const translations = {
         'Create/Edit Song': 'Create/Edit Song',
         'Metadata': 'Metadata',
         'Title:': 'Title:',
+        'Version:': 'Version:',
+        'Version': 'Version',
+        'Original': 'Original',
         'Date:': 'Date:',
         'Notes:': 'Notes:',
         'Key:': 'Key:',
@@ -99,6 +102,19 @@ const translations = {
         'Selected Chords (up to 8)': 'Selected Chords (up to 8)',
         'Available Chords': 'Available Chords',
         'Save Song': 'Save Song',
+        'Add new version': 'Add new version',
+        'Move version up': 'Move version up',
+        'Move version down': 'Move version down',
+        'Song not found': 'Song not found',
+        'Song updated successfully!': 'Song updated successfully!',
+        'Song created successfully!': 'Song created successfully!',
+        'Song version created successfully!': 'Song version created successfully!',
+        'Song content cannot be empty': 'Song content cannot be empty',
+        'Title is required': 'Title is required',
+        'Maximum 8 chords allowed': 'Maximum 8 chords allowed',
+        'A song with this title already exists. Use Add new version instead.': 'A song with this title already exists. Use Add new version instead.',
+        'Only the original version can change title or folders.': 'Only the original version can change title or folders.',
+        'Error saving song: ': 'Error saving song: ',
                 'Edit': 'Edit',
                 'Rename': 'Rename',
                 'Save to folders': 'Save to folders',
@@ -300,10 +316,13 @@ const translations = {
                         'Songs (Most First)': 'Canciones (M\u00e1s Primero)',
                         'Songs (Least First)': 'Canciones (Menos Primero)',
                         'Back to Folders': 'Volver a las Carpetas',
-                        'Create/Edit Song': 'Crear/Editar Canci\u00f3n',
-                        'Metadata': 'Metadatos',
-                        'Title:': 'T\u00edtulo:',
-                        'Date:': 'Fecha:',
+	                        'Create/Edit Song': 'Crear/Editar Canci\u00f3n',
+	                        'Metadata': 'Metadatos',
+	                        'Title:': 'T\u00edtulo:',
+	                        'Version:': 'Versi\u00f3n:',
+	                        'Version': 'Versi\u00f3n',
+	                        'Original': 'Original',
+	                        'Date:': 'Fecha:',
                         'Notes:': 'Notas:',
                         'Key:': 'Tonalidad:',
                         'Capo:': 'Capo:',
@@ -321,9 +340,12 @@ const translations = {
                         'Paste or type your song here...': 'Pega o escribe tu canci\u00f3n aqu\u00ed...',
                         'Chords go on the line above lyrics.': 'Los acordes van en la l\u00ednea sobre la letra.',
                         'Double line break separates sections.': 'El doble salto de l\u00ednea separa las secciones.',
-                        'Selected Chords (up to 8)': 'Acordes Seleccionados (hasta 8)',
-                        'Available Chords': 'Acordes Disponibles',
-                        'Save Song': 'Guardar Canci\u00f3n',
+	                        'Selected Chords (up to 8)': 'Acordes Seleccionados (hasta 8)',
+	                        'Available Chords': 'Acordes Disponibles',
+	                        'Save Song': 'Guardar Canci\u00f3n',
+	                        'Add new version': 'Agregar nueva versi\u00f3n',
+	                        'Move version up': 'Mover versi\u00f3n arriba',
+	                        'Move version down': 'Mover versi\u00f3n abajo',
                         'Edit': 'Editar',
                         'Rename': 'Renombrar',
                         'Save to folders': 'Guardar en carpetas',
@@ -431,6 +453,9 @@ const translations = {
                         'Song not found': 'Canci\u00f3n no encontrada',
                         'Song updated successfully!': '\u00a1Canci\u00f3n actualizada exitosamente!',
                         'Song created successfully!': '\u00a1Canci\u00f3n creada exitosamente!',
+                        'Song version created successfully!': '\u00a1Nueva versi\u00f3n creada exitosamente!',
+                        'A song with this title already exists. Use Add new version instead.': 'Ya existe una canci\u00f3n con este t\u00edtulo. Usa Agregar nueva versi\u00f3n.',
+                        'Only the original version can change title or folders.': 'Solo la versi\u00f3n original puede cambiar el t\u00edtulo o las carpetas.',
                         'Error saving song: ': 'Error guardando canci\u00f3n: ',
                         'song': 'canci\u00f3n',
                         'songs': 'canciones',
@@ -541,6 +566,14 @@ function translatePage() {
         const key = el.getAttribute('data-translate');
         if (translations[currentLanguage] && translations[currentLanguage][key]) {
             el.textContent = translations[currentLanguage][key];
+        }
+    });
+
+    const titleElements = document.querySelectorAll('[data-translate-title]');
+    titleElements.forEach(el => {
+        const key = el.getAttribute('data-translate-title');
+        if (translations[currentLanguage] && translations[currentLanguage][key]) {
+            el.title = translations[currentLanguage][key];
         }
     });
 

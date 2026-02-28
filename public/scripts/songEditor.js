@@ -3,6 +3,10 @@ const SongEditor = (function() {
     
     // Editor State
     let currentSongId = null;
+    let currentEditSongId = null;
+    let versionSourceSongId = null;
+    let versionList = [];
+    let isAddVersionMode = false;
     let selectedChordIds = [];
     let layoutColumnCount = 1;
     let layoutDividerRatio = 0.5;
@@ -27,11 +31,19 @@ const SongEditor = (function() {
         const closeBtn = document.getElementById('close-song-editor-modal');
         const saveBtn = document.getElementById('save-song-btn');
         const cancelBtn = document.getElementById('cancel-song-edit-btn');
+        const versionSelect = document.getElementById('song-version-select');
+        const versionUpBtn = document.getElementById('song-version-up-btn');
+        const versionDownBtn = document.getElementById('song-version-down-btn');
+        const addVersionBtn = document.getElementById('add-song-version-btn');
         // ... other elements ...
         
         if (closeBtn) closeBtn.addEventListener('click', closeEditor);
         if (saveBtn) saveBtn.addEventListener('click', saveSong);
         if (cancelBtn) cancelBtn.addEventListener('click', closeEditor);
+        if (versionSelect) versionSelect.addEventListener('change', handleVersionSelectionChange);
+        if (versionUpBtn) versionUpBtn.addEventListener('click', () => moveSelectedVersion(-1));
+        if (versionDownBtn) versionDownBtn.addEventListener('click', () => moveSelectedVersion(1));
+        if (addVersionBtn) addVersionBtn.addEventListener('click', openAddVersionForm);
         
         // --- PREVIOUSLY UNCHANGED INITIALIZE LOGIC ---
         const keyInput = document.getElementById('song-key-input');
@@ -528,44 +540,239 @@ const SongEditor = (function() {
         });
     }
 
+    function getSongVersionValue(song) {
+        const parsed = parseInt(song && song.Version, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+    }
+
+    function formatVersionLabel(versionItem) {
+        const versionLabel = translations[currentLanguage]['Version'] || 'Version';
+        const isOriginal = !!versionItem.IsOriginal;
+        const originalSuffix = isOriginal
+            ? ` (${translations[currentLanguage]['Original'] || 'Original'})`
+            : '';
+        return `${versionLabel} ${getSongVersionValue(versionItem)}${originalSuffix}`;
+    }
+
+    function getSelectedVersionIndex() {
+        const versionId = parseInt(currentSongId, 10);
+        return versionList.findIndex((row) => parseInt(row.Id, 10) === versionId);
+    }
+
+    function setTitleAndFolderReadOnlyState(readOnly) {
+        const titleInput = document.getElementById('song-title-input');
+        if (titleInput) {
+            titleInput.disabled = !!readOnly;
+        }
+        document.querySelectorAll('.folder-checkbox').forEach((checkbox) => {
+            checkbox.disabled = !!readOnly;
+        });
+    }
+
+    function updateVersionButtonsState() {
+        const upBtn = document.getElementById('song-version-up-btn');
+        const downBtn = document.getElementById('song-version-down-btn');
+        const selectedIndex = getSelectedVersionIndex();
+        const hasMultipleVersions = versionList.length > 1;
+        if (upBtn) {
+            upBtn.disabled = !hasMultipleVersions || selectedIndex <= 0;
+        }
+        if (downBtn) {
+            downBtn.disabled = !hasMultipleVersions || selectedIndex < 0 || selectedIndex >= versionList.length - 1;
+        }
+    }
+
+    function renderVersionControls(song) {
+        const versionRow = document.getElementById('song-version-control-row');
+        const versionSelect = document.getElementById('song-version-select');
+        const addVersionBtn = document.getElementById('add-song-version-btn');
+        const hasMultipleVersions = versionList.length > 1;
+        const isEditing = !!currentEditSongId;
+        const isOriginalVersion = !!(song && song.isOriginalVersion);
+
+        if (versionRow) {
+            versionRow.classList.toggle('hidden', !hasMultipleVersions || !isEditing);
+        }
+
+        if (addVersionBtn) {
+            addVersionBtn.classList.toggle('hidden', !isEditing || isAddVersionMode);
+        }
+
+        if (!versionSelect) return;
+        versionSelect.innerHTML = '';
+        versionSelect.disabled = isAddVersionMode;
+        if (hasMultipleVersions && isEditing) {
+            versionList.forEach((versionItem) => {
+                const option = document.createElement('option');
+                option.value = String(versionItem.Id);
+                option.textContent = formatVersionLabel(versionItem);
+                versionSelect.appendChild(option);
+            });
+            versionSelect.value = String(currentSongId);
+        }
+
+        const shouldLockTitleAndFolders = isAddVersionMode || (isEditing && !isOriginalVersion);
+        setTitleAndFolderReadOnlyState(shouldLockTitleAndFolders);
+        updateVersionButtonsState();
+        if (isAddVersionMode) {
+            const upBtn = document.getElementById('song-version-up-btn');
+            const downBtn = document.getElementById('song-version-down-btn');
+            if (upBtn) upBtn.disabled = true;
+            if (downBtn) downBtn.disabled = true;
+        }
+    }
+
+    function applySongToForm(song) {
+        if (!song) return;
+        const savedColumnCount = parseInt(song.LayoutColumnCount, 10) === 2 ? 2 : 1;
+        const savedDividerRatio = clampDividerRatio(song.LayoutDividerRatio);
+
+        document.getElementById('song-title-input').value = song.Title || '';
+        document.getElementById('song-date-input').value = song.SongDate || '';
+        document.getElementById('song-notes-input').value = song.Notes || '';
+        document.getElementById('song-key-input').value = song.SongKey || '';
+        document.getElementById('song-capo-input').value = song.Capo || '';
+        document.getElementById('song-bpm-input').value = song.BPM || '';
+        document.getElementById('song-effects-input').value = song.Effects || '';
+        document.getElementById('song-content-font-size-input').value = song.SongContentFontSizePt || '';
+        const contentColumn1 = song.ContentTextColumn1 || song.ContentText || '';
+        document.getElementById('song-content-textarea').value = contentColumn1;
+        document.getElementById('song-content-column1-textarea').value = contentColumn1;
+        document.getElementById('song-content-column2-textarea').value = song.ContentTextColumn2 || '';
+
+        layoutDividerRatio = savedDividerRatio;
+        resetDefaultEditorHeights();
+        setLayoutColumnCount(savedColumnCount);
+        applyDividerPosition();
+        updateContentFontSize();
+        refreshLineNumberGutters();
+        selectedChordIds = song.chordIds || [];
+    }
+
+    async function loadSongForEditing(songId) {
+        const song = await SONGS_SERVICE.getSongById(songId);
+        if (!song) {
+            alert(translations[currentLanguage]['Song not found'] || 'Song not found');
+            return false;
+        }
+
+        currentSongId = parseInt(song.Id, 10);
+        applySongToForm(song);
+        await updateSelectedChordsList();
+        const folderIds = song.folderIds || [];
+        document.querySelectorAll('.folder-checkbox').forEach(cb => {
+            cb.checked = folderIds.includes(parseInt(cb.value, 10));
+        });
+
+        versionList = Array.isArray(song.versions) ? [...song.versions].sort((a, b) => getSongVersionValue(a) - getSongVersionValue(b)) : [];
+        if (!versionList.length) {
+            versionList = [{ Id: song.Id, Version: getSongVersionValue(song), IsOriginal: !!song.isOriginalVersion }];
+        }
+        renderVersionControls(song);
+        return true;
+    }
+
+    function buildSongPayloadFromForm() {
+        const singleContentText = document.getElementById('song-content-textarea').value;
+        const column1Text = document.getElementById('song-content-column1-textarea').value;
+        const column2Text = document.getElementById('song-content-column2-textarea').value;
+        const selectedFolders = Array.from(document.querySelectorAll('.folder-checkbox:checked')).map(cb => parseInt(cb.value, 10));
+        const effectiveContentText = layoutColumnCount === 2
+            ? buildCombinedTextFromColumns(column1Text, column2Text)
+            : singleContentText;
+
+        return {
+            title: document.getElementById('song-title-input').value.trim(),
+            songDate: document.getElementById('song-date-input').value.trim(),
+            notes: document.getElementById('song-notes-input').value.trim(),
+            songKey: document.getElementById('song-key-input').value.trim(),
+            capo: document.getElementById('song-capo-input').value.trim(),
+            bpm: document.getElementById('song-bpm-input').value.trim(),
+            effects: document.getElementById('song-effects-input').value.trim(),
+            songContentFontSizePt: document.getElementById('song-content-font-size-input').value.trim(),
+            contentText: effectiveContentText,
+            layoutColumnCount: layoutColumnCount,
+            layoutDividerRatio: layoutDividerRatio,
+            contentTextColumn1: layoutColumnCount === 2 ? column1Text : singleContentText,
+            contentTextColumn2: layoutColumnCount === 2 ? column2Text : '',
+            chordIds: selectedChordIds,
+            folderIds: selectedFolders
+        };
+    }
+
+    async function handleVersionSelectionChange(event) {
+        const versionSongId = parseInt(event.target.value, 10);
+        if (!Number.isFinite(versionSongId) || versionSongId <= 0) return;
+        if (versionSongId === currentSongId) return;
+        isAddVersionMode = false;
+        await loadSongForEditing(versionSongId);
+    }
+
+    async function moveSelectedVersion(offset) {
+        const selectedIndex = getSelectedVersionIndex();
+        const targetIndex = selectedIndex + offset;
+        if (selectedIndex < 0 || targetIndex < 0 || targetIndex >= versionList.length) return;
+
+        const reordered = [...versionList];
+        const [moved] = reordered.splice(selectedIndex, 1);
+        reordered.splice(targetIndex, 0, moved);
+        const orderedSongIds = reordered.map((item) => parseInt(item.Id, 10)).filter((id) => Number.isFinite(id) && id > 0);
+
+        try {
+            await SONGS_SERVICE.reorderSongVersions(currentSongId, orderedSongIds);
+            versionList = reordered.map((item, index) => ({ ...item, Version: index + 1 }));
+            const selectedSong = await SONGS_SERVICE.getSongById(currentSongId);
+            if (selectedSong) {
+                versionList = Array.isArray(selectedSong.versions) ? selectedSong.versions : versionList;
+                renderVersionControls(selectedSong);
+            }
+        } catch (error) {
+            alert(error.message || (translations[currentLanguage]['Error saving song: '] + 'Unable to reorder versions'));
+        }
+    }
+
+    async function openAddVersionForm() {
+        if (!currentSongId) return;
+        isAddVersionMode = true;
+        versionSourceSongId = currentSongId;
+        const song = await SONGS_SERVICE.getSongById(currentSongId);
+        if (!song) {
+            alert(translations[currentLanguage]['Song not found'] || 'Song not found');
+            return;
+        }
+
+        applySongToForm(song);
+        await updateSelectedChordsList();
+        const folderIds = song.folderIds || [];
+        document.querySelectorAll('.folder-checkbox').forEach(cb => {
+            cb.checked = folderIds.includes(parseInt(cb.value, 10));
+        });
+        renderVersionControls(song);
+    }
+
     async function openEditor(songId = null) {
         currentSongId = songId;
+        currentEditSongId = songId;
+        versionSourceSongId = songId;
+        versionList = [];
+        isAddVersionMode = false;
         selectedChordIds = [];
         await refreshFolderCheckboxes();
         if (songId) {
-            const song = await SONGS_SERVICE.getSongById(songId);
-            if (!song) {
-                alert(translations[currentLanguage]['Song not found'] || 'Song not found');
-                return;
-            }
-            const savedColumnCount = parseInt(song.LayoutColumnCount, 10) === 2 ? 2 : 1;
-            const savedDividerRatio = clampDividerRatio(song.LayoutDividerRatio);
+            const loaded = await loadSongForEditing(songId);
+            if (!loaded) return;
 
-            document.getElementById('song-title-input').value = song.Title;
-            document.getElementById('song-date-input').value = song.SongDate;
-            document.getElementById('song-notes-input').value = song.Notes;
-            document.getElementById('song-key-input').value = song.SongKey;
-            document.getElementById('song-capo-input').value = song.Capo;
-            document.getElementById('song-bpm-input').value = song.BPM;
-            document.getElementById('song-effects-input').value = song.Effects;
-            document.getElementById('song-content-font-size-input').value = song.SongContentFontSizePt || '';
-            const contentColumn1 = song.ContentTextColumn1 || song.ContentText || '';
-            document.getElementById('song-content-textarea').value = contentColumn1;
-            document.getElementById('song-content-column1-textarea').value = contentColumn1;
-            document.getElementById('song-content-column2-textarea').value = song.ContentTextColumn2 || '';
-            layoutDividerRatio = savedDividerRatio;
-            resetDefaultEditorHeights();
-            setLayoutColumnCount(savedColumnCount);
-            applyDividerPosition();
-            updateContentFontSize();
-            refreshLineNumberGutters();
-            selectedChordIds = song.chordIds || [];
-            await updateSelectedChordsList();
-            const folderIds = song.folderIds || [];
-            document.querySelectorAll('.folder-checkbox').forEach(cb => {
-                cb.checked = folderIds.includes(parseInt(cb.value));
-            });
+            if (versionList.length > 1) {
+                const defaultVersion = versionList.find((item) => getSongVersionValue(item) === 1) || versionList[0];
+                const defaultVersionId = parseInt(defaultVersion && defaultVersion.Id, 10);
+                if (Number.isFinite(defaultVersionId) && defaultVersionId > 0 && defaultVersionId !== currentSongId) {
+                    await loadSongForEditing(defaultVersionId);
+                }
+            }
         } else {
+            currentSongId = null;
+            currentEditSongId = null;
+            versionSourceSongId = null;
             document.getElementById('song-title-input').value = '';
             document.getElementById('song-date-input').value = '';
             document.getElementById('song-notes-input').value = '';
@@ -585,8 +792,14 @@ const SongEditor = (function() {
             refreshLineNumberGutters();
             document.querySelectorAll('.folder-checkbox').forEach(cb => {
                 cb.checked = false;
+                cb.disabled = false;
             });
             updateSelectedChordsList();
+            const versionRow = document.getElementById('song-version-control-row');
+            const addVersionBtn = document.getElementById('add-song-version-btn');
+            if (versionRow) versionRow.classList.add('hidden');
+            if (addVersionBtn) addVersionBtn.classList.add('hidden');
+            setTitleAndFolderReadOnlyState(false);
         }
         document.getElementById('song-editor-modal').classList.remove('hidden');
         applyDividerPosition();
@@ -596,6 +809,10 @@ const SongEditor = (function() {
     function closeEditor() {
         document.getElementById('song-editor-modal').classList.add('hidden');
         currentSongId = null;
+        currentEditSongId = null;
+        versionSourceSongId = null;
+        versionList = [];
+        isAddVersionMode = false;
         selectedChordIds = [];
         layoutColumnCount = 1;
         layoutDividerRatio = 0.5;
@@ -776,17 +993,13 @@ const SongEditor = (function() {
     }
     
     async function saveSong() {
-        const title = document.getElementById('song-title-input').value.trim();
+        const songData = buildSongPayloadFromForm();
+        const title = songData.title;
         if (!title) {
             alert(translations[currentLanguage]['Title is required'] || 'Title is required');
             return;
         }
-        const singleContentText = document.getElementById('song-content-textarea').value;
-        const column1Text = document.getElementById('song-content-column1-textarea').value;
-        const column2Text = document.getElementById('song-content-column2-textarea').value;
-        const effectiveContentText = layoutColumnCount === 2
-            ? buildCombinedTextFromColumns(column1Text, column2Text)
-            : singleContentText;
+        const effectiveContentText = songData.contentText;
 
         if (!effectiveContentText.trim()) {
             alert(translations[currentLanguage]['Song content cannot be empty'] || 'Song content cannot be empty');
@@ -797,26 +1010,11 @@ const SongEditor = (function() {
             alert(translations[currentLanguage]['Font size must be between 6 and 72 pt'] || 'Font size must be between 6 and 72 pt');
             return;
         }
-        const selectedFolders = Array.from(document.querySelectorAll('.folder-checkbox:checked')).map(cb => parseInt(cb.value));
-        const songData = {
-            title: title,
-            songDate: document.getElementById('song-date-input').value.trim(),
-            notes: document.getElementById('song-notes-input').value.trim(),
-            songKey: document.getElementById('song-key-input').value.trim(),
-            capo: document.getElementById('song-capo-input').value.trim(),
-            bpm: document.getElementById('song-bpm-input').value.trim(),
-            effects: document.getElementById('song-effects-input').value.trim(),
-            songContentFontSizePt: document.getElementById('song-content-font-size-input').value.trim(),
-            contentText: effectiveContentText,
-            layoutColumnCount: layoutColumnCount,
-            layoutDividerRatio: layoutDividerRatio,
-            contentTextColumn1: layoutColumnCount === 2 ? column1Text : singleContentText,
-            contentTextColumn2: layoutColumnCount === 2 ? column2Text : '',
-            chordIds: selectedChordIds,
-            folderIds: selectedFolders
-        };
         try {
-            if (currentSongId) {
+            if (isAddVersionMode && versionSourceSongId) {
+                await SONGS_SERVICE.addSongVersion(versionSourceSongId, songData);
+                alert(translations[currentLanguage]['Song version created successfully!'] || 'Song version created successfully!');
+            } else if (currentSongId) {
                 await SONGS_SERVICE.updateSong(currentSongId, songData);
                 alert(translations[currentLanguage]['Song updated successfully!'] || 'Song updated successfully!');
             } else {
@@ -828,7 +1026,8 @@ const SongEditor = (function() {
             }
             closeEditor();
         } catch (error) {
-            alert(translations[currentLanguage]['Error saving song: '] + error.message);
+            const localizedMessage = (translations[currentLanguage] && translations[currentLanguage][error.message]) || error.message;
+            alert((translations[currentLanguage]['Error saving song: '] || 'Error saving song: ') + localizedMessage);
         }
     }
     

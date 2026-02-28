@@ -21,6 +21,10 @@
         <div class="view pdf-preview-view">
             <img id="language-toggle" src="assets/translate.png" alt="Language Toggle">
             <h1 data-translate="PDF Preview">PDF Preview</h1>
+            <div id="pdf-version-control" class="pdf-version-control hidden">
+                <label for="pdf-version-select" data-translate="Version:">Version:</label>
+                <select id="pdf-version-select"></select>
+            </div>
             <p id="pdf-preview-status" class="pdf-preview-status" data-translate="Loading PDF preview...">Loading PDF preview...</p>
             <iframe id="pdf-preview-frame" class="pdf-preview-frame hidden" title="PDF Preview"></iframe>
         </div>

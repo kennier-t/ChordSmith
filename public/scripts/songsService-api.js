@@ -93,6 +93,10 @@ const SONGS_SERVICE = (function() {
         }
     }
 
+    async function getSongVersions(songId) {
+        return await apiCall(`/songs/${songId}/versions`);
+    }
+
     async function getSongsByFolder(folderId) {
         return await apiCall(`/songs/folders/${folderId}/songs`);
     }
@@ -110,6 +114,20 @@ const SONGS_SERVICE = (function() {
             body: JSON.stringify(songData)
         });
         return songId;
+    }
+
+    async function addSongVersion(songId, songData) {
+        return await apiCall(`/songs/${songId}/versions`, {
+            method: 'POST',
+            body: JSON.stringify(songData)
+        });
+    }
+
+    async function reorderSongVersions(songId, orderedSongIds) {
+        return await apiCall(`/songs/${songId}/versions/order`, {
+            method: 'PUT',
+            body: JSON.stringify({ orderedSongIds })
+        });
     }
 
     async function deleteSong(songId) {
@@ -164,9 +182,12 @@ const SONGS_SERVICE = (function() {
         deleteFolder,
         getAllSongs,
         getSongById,
+        getSongVersions,
         getSongsByFolder,
         createSong,
         updateSong,
+        addSongVersion,
+        reorderSongVersions,
         deleteSong,
         getSongChordDiagrams,
         getSongFolders,
