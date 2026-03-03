@@ -31,7 +31,7 @@ const SongEditor = (function() {
         const closeBtn = document.getElementById('close-song-editor-modal');
         const saveBtn = document.getElementById('save-song-btn');
         const cancelBtn = document.getElementById('cancel-song-edit-btn');
-        const versionSelect = document.getElementById('song-version-select');
+        const versionSelectBtn = document.getElementById('song-version-select-btn');
         const versionUpBtn = document.getElementById('song-version-up-btn');
         const versionDownBtn = document.getElementById('song-version-down-btn');
         const addVersionBtn = document.getElementById('add-song-version-btn');
@@ -40,7 +40,7 @@ const SongEditor = (function() {
         if (closeBtn) closeBtn.addEventListener('click', closeEditor);
         if (saveBtn) saveBtn.addEventListener('click', saveSong);
         if (cancelBtn) cancelBtn.addEventListener('click', closeEditor);
-        if (versionSelect) versionSelect.addEventListener('change', handleVersionSelectionChange);
+        if (versionSelectBtn) versionSelectBtn.addEventListener('click', toggleSongVersionDropdown);
         if (versionUpBtn) versionUpBtn.addEventListener('click', () => moveSelectedVersion(-1));
         if (versionDownBtn) versionDownBtn.addEventListener('click', () => moveSelectedVersion(1));
         if (addVersionBtn) addVersionBtn.addEventListener('click', openAddVersionForm);
@@ -48,6 +48,8 @@ const SongEditor = (function() {
         // --- PREVIOUSLY UNCHANGED INITIALIZE LOGIC ---
         const keyInput = document.getElementById('song-key-input');
         const layoutSelect = document.getElementById('song-layout-select');
+        const layoutBtn = document.getElementById('song-layout-btn');
+        const layoutDropdown = document.getElementById('song-layout-dropdown');
         const divider = document.getElementById('song-column-divider');
         if (keyInput) {
             keyInput.addEventListener('input', function() {
@@ -58,6 +60,16 @@ const SongEditor = (function() {
         }
         if (layoutSelect) {
             layoutSelect.addEventListener('change', handleLayoutChange);
+        }
+        if (layoutBtn) {
+            layoutBtn.addEventListener('click', toggleLayoutDropdown);
+        }
+        if (layoutDropdown) {
+            layoutDropdown.querySelectorAll('.custom-dropdown-item').forEach((item) => {
+                item.addEventListener('click', () => {
+                    selectLayoutOption(item.dataset.value || '1');
+                });
+            });
         }
         if (divider) {
             divider.addEventListener('mousedown', startDividerDrag);
@@ -285,6 +297,41 @@ const SongEditor = (function() {
         return Math.min(0.8, Math.max(0.2, numeric));
     }
 
+    function closeLayoutDropdown() {
+        const dropdown = document.getElementById('song-layout-dropdown');
+        const button = document.getElementById('song-layout-btn');
+        if (dropdown) dropdown.classList.add('hidden');
+        if (button) button.classList.remove('active');
+    }
+
+    function toggleLayoutDropdown() {
+        const dropdown = document.getElementById('song-layout-dropdown');
+        const button = document.getElementById('song-layout-btn');
+        if (!dropdown || !button) return;
+        const isVisible = !dropdown.classList.contains('hidden');
+        if (isVisible) {
+            closeLayoutDropdown();
+        } else {
+            dropdown.classList.remove('hidden');
+            button.classList.add('active');
+        }
+    }
+
+    function updateLayoutDisplay() {
+        const display = document.getElementById('song-layout-display');
+        if (!display) return;
+        const key = layoutColumnCount === 2 ? 'Two Columns' : 'Single Column';
+        display.textContent = (translations[currentLanguage] && translations[currentLanguage][key]) || key;
+    }
+
+    function selectLayoutOption(value) {
+        const layoutSelect = document.getElementById('song-layout-select');
+        if (!layoutSelect) return;
+        layoutSelect.value = String(parseInt(value, 10) === 2 ? 2 : 1);
+        handleLayoutChange({ target: layoutSelect });
+        closeLayoutDropdown();
+    }
+
     function setLayoutColumnCount(count, syncSelect = true) {
         layoutColumnCount = count === 2 ? 2 : 1;
         const layoutSelect = document.getElementById('song-layout-select');
@@ -302,6 +349,7 @@ const SongEditor = (function() {
             if (singleEditor) singleEditor.classList.remove('hidden');
             if (twoColumnEditor) twoColumnEditor.classList.add('hidden');
         }
+        updateLayoutDisplay();
         refreshLineNumberGutters();
     }
 
@@ -559,6 +607,28 @@ const SongEditor = (function() {
         return versionList.findIndex((row) => parseInt(row.Id, 10) === versionId);
     }
 
+    function closeSongVersionDropdown() {
+        const dropdown = document.getElementById('song-version-select-dropdown');
+        const button = document.getElementById('song-version-select-btn');
+        if (dropdown) dropdown.classList.add('hidden');
+        if (button) button.classList.remove('active');
+    }
+
+    function toggleSongVersionDropdown() {
+        const dropdown = document.getElementById('song-version-select-dropdown');
+        const button = document.getElementById('song-version-select-btn');
+        if (!dropdown || !button || button.disabled) return;
+
+        const isVisible = !dropdown.classList.contains('hidden');
+        if (isVisible) {
+            dropdown.classList.add('hidden');
+            button.classList.remove('active');
+        } else {
+            dropdown.classList.remove('hidden');
+            button.classList.add('active');
+        }
+    }
+
     function setTitleAndFolderReadOnlyState(readOnly) {
         const titleInput = document.getElementById('song-title-input');
         if (titleInput) {
@@ -584,7 +654,9 @@ const SongEditor = (function() {
 
     function renderVersionControls(song) {
         const versionManagement = document.getElementById('song-version-management');
-        const versionSelect = document.getElementById('song-version-select');
+        const versionSelectBtn = document.getElementById('song-version-select-btn');
+        const versionSelectDisplay = document.getElementById('song-version-select-display');
+        const versionSelectDropdown = document.getElementById('song-version-select-dropdown');
         const addVersionBtn = document.getElementById('add-song-version-btn');
         const hasMultipleVersions = versionList.length > 1;
         const isEditing = !!editRootSongId;
@@ -598,17 +670,25 @@ const SongEditor = (function() {
             addVersionBtn.classList.toggle('hidden', !isEditing || isAddVersionMode);
         }
 
-        if (!versionSelect) return;
-        versionSelect.innerHTML = '';
-        versionSelect.disabled = isAddVersionMode;
+        if (!versionSelectBtn || !versionSelectDisplay || !versionSelectDropdown) return;
+        versionSelectDropdown.innerHTML = '';
+        versionSelectBtn.disabled = isAddVersionMode;
+        closeSongVersionDropdown();
+
+        const currentVersionItem = versionList.find((item) => parseInt(item.Id, 10) === parseInt(currentSongId, 10));
+        versionSelectDisplay.textContent = currentVersionItem ? formatVersionLabel(currentVersionItem) : (translations[currentLanguage]['Version'] || 'Version');
+
         if (hasMultipleVersions && isEditing) {
             versionList.forEach((versionItem) => {
-                const option = document.createElement('option');
-                option.value = String(versionItem.Id);
+                const option = document.createElement('div');
+                option.className = 'custom-dropdown-item';
                 option.textContent = formatVersionLabel(versionItem);
-                versionSelect.appendChild(option);
+                option.dataset.versionId = String(versionItem.Id);
+                option.addEventListener('click', async () => {
+                    await handleVersionSelectionChange(parseInt(versionItem.Id, 10));
+                });
+                versionSelectDropdown.appendChild(option);
             });
-            versionSelect.value = String(currentSongId);
         }
 
         const shouldLockTitleAndFolders = isAddVersionMode || (isEditing && !isOriginalVersion);
@@ -704,8 +784,8 @@ const SongEditor = (function() {
         };
     }
 
-    async function handleVersionSelectionChange(event) {
-        const versionSongId = parseInt(event.target.value, 10);
+    async function handleVersionSelectionChange(versionSongId) {
+        closeSongVersionDropdown();
         if (!Number.isFinite(versionSongId) || versionSongId <= 0) return;
         if (versionSongId === currentSongId) return;
         isAddVersionMode = false;
@@ -1052,6 +1132,20 @@ const SongEditor = (function() {
             alert((translations[currentLanguage]['Error saving song: '] || 'Error saving song: ') + localizedMessage);
         }
     }
+
+    document.addEventListener('click', (event) => {
+        const versionDropdown = document.getElementById('song-version-select-dropdown');
+        const versionButton = document.getElementById('song-version-select-btn');
+        if (versionDropdown && versionButton && !versionButton.contains(event.target) && !versionDropdown.contains(event.target)) {
+            closeSongVersionDropdown();
+        }
+
+        const layoutDropdown = document.getElementById('song-layout-dropdown');
+        const layoutButton = document.getElementById('song-layout-btn');
+        if (layoutDropdown && layoutButton && !layoutButton.contains(event.target) && !layoutDropdown.contains(event.target)) {
+            closeLayoutDropdown();
+        }
+    });
     
     document.addEventListener('DOMContentLoaded', initialize);
     

@@ -22,8 +22,14 @@
             <img id="language-toggle" src="assets/translate.png" alt="Language Toggle">
             <h1 data-translate="PDF Preview">PDF Preview</h1>
             <div id="pdf-version-control" class="pdf-version-control hidden">
-                <label for="pdf-version-select" data-translate="Version:">Version:</label>
-                <select id="pdf-version-select"></select>
+                <label for="pdf-version-select-btn" data-translate="Version:">Version:</label>
+                <div class="custom-select-container">
+                    <button id="pdf-version-select-btn" type="button" class="custom-select">
+                        <span id="pdf-version-select-display">Version 1</span>
+                        <span class="custom-select-arrow"></span>
+                    </button>
+                    <div id="pdf-version-select-dropdown" class="custom-dropdown hidden"></div>
+                </div>
             </div>
             <p id="pdf-preview-status" class="pdf-preview-status" data-translate="Loading PDF preview...">Loading PDF preview...</p>
             <iframe id="pdf-preview-frame" class="pdf-preview-frame hidden" title="PDF Preview"></iframe>

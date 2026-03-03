@@ -56,29 +56,72 @@
         document.body.removeChild(a);
     }
 
+    function closePdfVersionDropdown() {
+        const dropdown = document.getElementById('pdf-version-select-dropdown');
+        const button = document.getElementById('pdf-version-select-btn');
+        if (dropdown) dropdown.classList.add('hidden');
+        if (button) button.classList.remove('active');
+    }
+
+    function togglePdfVersionDropdown() {
+        const dropdown = document.getElementById('pdf-version-select-dropdown');
+        const button = document.getElementById('pdf-version-select-btn');
+        if (!dropdown || !button || button.disabled) return;
+
+        const isVisible = !dropdown.classList.contains('hidden');
+        if (isVisible) {
+            dropdown.classList.add('hidden');
+            button.classList.remove('active');
+        } else {
+            dropdown.classList.remove('hidden');
+            button.classList.add('active');
+        }
+    }
+
     function renderVersionSelector() {
         const container = document.getElementById('pdf-version-control');
-        const select = document.getElementById('pdf-version-select');
-        if (!container || !select) return;
+        const button = document.getElementById('pdf-version-select-btn');
+        const display = document.getElementById('pdf-version-select-display');
+        const dropdown = document.getElementById('pdf-version-select-dropdown');
+        if (!container || !button || !display || !dropdown) return;
 
         const hasMultipleVersions = Array.isArray(state.versions) && state.versions.length > 1;
         container.classList.toggle('hidden', !hasMultipleVersions);
+        closePdfVersionDropdown();
         if (!hasMultipleVersions) {
-            select.innerHTML = '';
+            dropdown.innerHTML = '';
             return;
         }
 
         const versionLabel = t('Version', 'Version');
         const originalLabel = t('Original', 'Original');
-        select.innerHTML = '';
+        dropdown.innerHTML = '';
+        const selectedVersion = state.versions.find((item) => Number.parseInt(item.Id, 10) === Number.parseInt(state.currentPreviewSongId, 10));
+        if (selectedVersion) {
+            const selectedVersionNumber = Number.parseInt(selectedVersion.Version, 10) || 1;
+            display.textContent = `${versionLabel} ${selectedVersionNumber}${selectedVersion.IsOriginal ? ` (${originalLabel})` : ''}`;
+        }
+
         state.versions.forEach((versionItem) => {
-            const option = document.createElement('option');
-            option.value = String(versionItem.Id);
+            const option = document.createElement('div');
+            option.className = 'custom-dropdown-item';
+            option.dataset.versionId = String(versionItem.Id);
             const versionNumber = Number.parseInt(versionItem.Version, 10) || 1;
             option.textContent = `${versionLabel} ${versionNumber}${versionItem.IsOriginal ? ` (${originalLabel})` : ''}`;
-            select.appendChild(option);
+            option.addEventListener('click', async () => {
+                const selectedSongId = Number.parseInt(versionItem.Id, 10);
+                closePdfVersionDropdown();
+                if (!Number.isFinite(selectedSongId) || selectedSongId <= 0) return;
+                if (selectedSongId === state.currentPreviewSongId) return;
+                try {
+                    await loadPdfForSong(selectedSongId);
+                } catch (error) {
+                    console.error(error);
+                    setStatus('Unable to load PDF preview.', 'Unable to load PDF preview.');
+                }
+            });
+            dropdown.appendChild(option);
         });
-        select.value = String(state.currentPreviewSongId || state.songId);
     }
 
     async function loadPdfForSong(songId) {
@@ -140,23 +183,11 @@
     function initialize() {
         const backBtn = document.getElementById('back-preview-btn');
         const downloadBtn = document.getElementById('download-preview-btn');
-        const versionSelect = document.getElementById('pdf-version-select');
+        const versionSelectBtn = document.getElementById('pdf-version-select-btn');
 
         if (backBtn) backBtn.addEventListener('click', goBackOrClose);
         if (downloadBtn) downloadBtn.addEventListener('click', downloadCurrentPdf);
-        if (versionSelect) {
-            versionSelect.addEventListener('change', async (event) => {
-                const selectedSongId = Number.parseInt(event.target.value, 10);
-                if (!Number.isFinite(selectedSongId) || selectedSongId <= 0) return;
-                if (selectedSongId === state.currentPreviewSongId) return;
-                try {
-                    await loadPdfForSong(selectedSongId);
-                } catch (error) {
-                    console.error(error);
-                    setStatus('Unable to load PDF preview.', 'Unable to load PDF preview.');
-                }
-            });
-        }
+        if (versionSelectBtn) versionSelectBtn.addEventListener('click', togglePdfVersionDropdown);
 
         loadPreview();
     }
@@ -168,4 +199,11 @@
     });
 
     document.addEventListener('DOMContentLoaded', initialize);
+    document.addEventListener('click', (event) => {
+        const dropdown = document.getElementById('pdf-version-select-dropdown');
+        const button = document.getElementById('pdf-version-select-btn');
+        if (!dropdown || !button) return;
+        if (button.contains(event.target) || dropdown.contains(event.target)) return;
+        closePdfVersionDropdown();
+    });
 })();
