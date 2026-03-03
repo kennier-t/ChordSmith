@@ -157,10 +157,13 @@ async function getVersionGroupSongRows(creatorId, title, userId = null) {
 async function getOriginalSongIdForGroup(creatorId, title) {
     const result = await db.query(
         `
-        SELECT MIN(s.Id) AS OriginalSongId
+        SELECT s.Id AS OriginalSongId
         FROM Songs s
         WHERE s.creator_id = @creatorId
           AND LOWER(TRIM(s.Title)) = LOWER(TRIM(@title))
+          AND s.Version = 1
+        ORDER BY s.Id ASC
+        LIMIT 1
     `,
         { creatorId, title: String(title || '').trim() }
     );
@@ -329,10 +332,10 @@ async function getSongById(songId, userId) {
         song.versions = versions.map((versionRow) => ({
             Id: versionRow.Id,
             Version: toInt(versionRow.Version, 1),
-            IsOriginal: versionRow.Id === originalSongId
+            IsOriginal: toInt(versionRow.Version, 1) === 1
         }));
-        song.originalSongId = originalSongId;
-        song.isOriginalVersion = song.Id === originalSongId;
+        song.originalSongId = originalSongId || (song.versions.find((row) => row.IsOriginal) || {}).Id || null;
+        song.isOriginalVersion = toInt(song.Version, 1) === 1;
         song.canEditTitleAndFolders = song.creator_id === userId && song.isOriginalVersion;
         applyLegacyContentCompatibility(song);
     }
@@ -345,6 +348,7 @@ async function getSongsByUserId(userId) {
         SELECT s.*, us.is_creator FROM Songs s
         JOIN UserSongs us ON s.id = us.song_id
         WHERE us.user_id = @userId
+          AND s.Version = 1
         ORDER BY LOWER(TRIM(s.Title)), s.Version, s.Id
     `,
         { userId }
@@ -590,12 +594,20 @@ async function addSongVersion(songId, song, userId) {
     } = normalizeSongLayoutInput(song);
     const { songDate, notes, songKey, capo, bpm, effects, songContentFontSizePt, chordIds } = song;
 
-    const versionRows = await getVersionGroupSongRows(baseSong.creator_id, baseSong.Title);
-    const maxVersion = versionRows.reduce((max, row) => Math.max(max, toInt(row.Version, 1)), 1);
-    const nextVersion = maxVersion + 1;
-
     const tx = await db.beginTransaction();
     try {
+        const maxVersionResult = await tx.query(
+            `
+            SELECT COALESCE(MAX(s.Version), 0) AS MaxVersion
+            FROM Songs s
+            WHERE s.creator_id = @creatorId
+              AND LOWER(TRIM(s.Title)) = LOWER(TRIM(@title))
+            FOR UPDATE
+        `,
+            { creatorId: baseSong.creator_id, title: baseSong.Title }
+        );
+        const nextVersion = toInt(maxVersionResult.recordset[0] && maxVersionResult.recordset[0].MaxVersion, 0) + 1;
+
         const songResult = await tx.query(
             `
                 INSERT INTO Songs (
@@ -681,23 +693,41 @@ async function reorderSongVersions(songId, orderedSongIds, userId) {
         throw createAppError('Only the creator can reorder versions.', 'FORBIDDEN', 403);
     }
 
-    const existingVersions = await getVersionGroupSongRows(song.creator_id, song.Title);
-    const existingIds = existingVersions.map((row) => toInt(row.Id, 0)).filter((id) => id > 0);
     const requestedIds = Array.isArray(orderedSongIds)
         ? orderedSongIds.map((id) => toInt(id, 0)).filter((id) => id > 0)
         : [];
 
-    if (requestedIds.length !== existingIds.length) {
-        throw createAppError('Invalid version order payload.', 'VALIDATION_ERROR', 400);
-    }
-
-    const requestedIdSet = new Set(requestedIds);
-    if (requestedIdSet.size !== requestedIds.length || existingIds.some((id) => !requestedIdSet.has(id))) {
-        throw createAppError('Invalid version order payload.', 'VALIDATION_ERROR', 400);
-    }
-
     const tx = await db.beginTransaction();
     try {
+        const existingVersionsResult = await tx.query(
+            `
+            SELECT s.Id, s.Version
+            FROM Songs s
+            WHERE s.creator_id = @creatorId
+              AND LOWER(TRIM(s.Title)) = LOWER(TRIM(@title))
+            ORDER BY s.Version, s.Id
+            FOR UPDATE
+        `,
+            { creatorId: song.creator_id, title: song.Title }
+        );
+        const existingIds = existingVersionsResult.recordset.map((row) => toInt(row.Id, 0)).filter((id) => id > 0);
+
+        if (requestedIds.length !== existingIds.length) {
+            throw createAppError('Invalid version order payload.', 'VALIDATION_ERROR', 400);
+        }
+
+        const requestedIdSet = new Set(requestedIds);
+        if (requestedIdSet.size !== requestedIds.length || existingIds.some((id) => !requestedIdSet.has(id))) {
+            throw createAppError('Invalid version order payload.', 'VALIDATION_ERROR', 400);
+        }
+
+        for (const versionSongId of requestedIds) {
+            await tx.query(
+                'UPDATE Songs SET Version = Version + 1000 WHERE Id = @songId',
+                { songId: versionSongId }
+            );
+        }
+
         for (let index = 0; index < requestedIds.length; index++) {
             const versionSongId = requestedIds[index];
             await tx.query(
@@ -720,19 +750,39 @@ async function deleteSong(songId, userId) {
     if (!song) {
         throw new Error('Song not found');
     }
+    const versionGroupSongs = await getVersionGroupSongRows(song.creator_id, song.Title);
+    const groupSongIds = versionGroupSongs.map((row) => toInt(row.Id, 0)).filter((id) => id > 0);
+
     if (song.creator_id === userId) {
-        await db.query('DELETE FROM Songs WHERE Id = @songId', { songId });
+        if (groupSongIds.length > 0) {
+            await db.query(`DELETE FROM Songs WHERE Id IN (${groupSongIds.join(',')})`);
+        } else {
+            await db.query('DELETE FROM Songs WHERE Id = @songId', { songId });
+        }
     } else {
-        await db.query('DELETE FROM UserSongs WHERE user_id = @userId AND song_id = @songId', { userId, songId });
-        await db.query(
-            `
-            DELETE sfm
-            FROM SongFolderMapping sfm
-            JOIN Folders f ON sfm.FolderId = f.Id
-            WHERE sfm.SongId = @songId AND f.creator_id = @userId
-        `,
-            { songId, userId }
-        );
+        if (groupSongIds.length > 0) {
+            await db.query(`DELETE FROM UserSongs WHERE user_id = @userId AND song_id IN (${groupSongIds.join(',')})`, { userId });
+            await db.query(
+                `
+                DELETE sfm
+                FROM SongFolderMapping sfm
+                JOIN Folders f ON sfm.FolderId = f.Id
+                WHERE sfm.SongId IN (${groupSongIds.join(',')}) AND f.creator_id = @userId
+            `,
+                { userId }
+            );
+        } else {
+            await db.query('DELETE FROM UserSongs WHERE user_id = @userId AND song_id = @songId', { userId, songId });
+            await db.query(
+                `
+                DELETE sfm
+                FROM SongFolderMapping sfm
+                JOIN Folders f ON sfm.FolderId = f.Id
+                WHERE sfm.SongId = @songId AND f.creator_id = @userId
+            `,
+                { songId, userId }
+            );
+        }
     }
 }
 
@@ -839,7 +889,7 @@ async function getSongsByFolder(folderId, userId) {
         SELECT s.*, us.is_creator FROM Songs s
         JOIN UserSongs us ON s.id = us.song_id
         JOIN SongFolderMapping sfm ON s.id = sfm.SongId
-        WHERE sfm.FolderId = @folderId AND us.user_id = @userId
+        WHERE sfm.FolderId = @folderId AND us.user_id = @userId AND s.Version = 1
     `,
         { folderId: parsedFolderId, userId }
     );

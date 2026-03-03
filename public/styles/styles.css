@@ -1481,12 +1481,24 @@ h2::after {
     outline: 1px solid var(--primary);
 }
 
+.song-version-management,
 .song-version-control-wrap {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
+.song-version-management {
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.song-version-management label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.song-version-management select,
 .song-version-control-wrap select {
     flex: 1;
     min-width: 180px;
@@ -1497,6 +1509,7 @@ h2::after {
     background: white;
 }
 
+.song-version-management select:focus,
 .song-version-control-wrap select:focus {
     outline: none;
     border-color: var(--primary);

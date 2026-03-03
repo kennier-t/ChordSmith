@@ -361,16 +361,6 @@
                                 <td data-translate="Title:">Title:</td>
                                 <td><input type="text" id="song-title-input" required></td>
                             </tr>
-                            <tr id="song-version-control-row" class="hidden">
-                                <td data-translate="Version:">Version:</td>
-                                <td>
-                                    <div class="song-version-control-wrap">
-                                        <select id="song-version-select"></select>
-                                        <button id="song-version-up-btn" type="button" class="mini-btn" title="Move version up" data-translate-title="Move version up">↑</button>
-                                        <button id="song-version-down-btn" type="button" class="mini-btn" title="Move version down" data-translate-title="Move version down">↓</button>
-                                    </div>
-                                </td>
-                            </tr>
                             <tr>
                                 <td data-translate="Date:">Date:</td>
                                 <td><input type="text" id="song-date-input"></td>
@@ -464,6 +454,13 @@
                     <!-- Folder Selector -->
                     <div id="folder-selection" class="folder-selection"></div>
                     
+                    <div id="song-version-management" class="song-version-management hidden">
+                        <label for="song-version-select" data-translate="Version:">Version:</label>
+                        <select id="song-version-select"></select>
+                        <button id="song-version-up-btn" type="button" class="mini-btn" title="Move version up" data-translate-title="Move version up">&#8593;</button>
+                        <button id="song-version-down-btn" type="button" class="mini-btn" title="Move version down" data-translate-title="Move version down">&#8595;</button>
+                    </div>
+                    
                     <!-- Actions -->
                     <div class="song-editor-actions">
                         <button id="add-song-version-btn" class="editor-action-btn btn-secondary hidden" data-translate="Add new version">Add new version</button>
@@ -513,3 +510,4 @@
     <script src="scripts/songsManager.js"></script>
 </body>
 </html>
+

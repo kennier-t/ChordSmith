@@ -3,7 +3,7 @@ const SongEditor = (function() {
     
     // Editor State
     let currentSongId = null;
-    let currentEditSongId = null;
+    let editRootSongId = null;
     let versionSourceSongId = null;
     let versionList = [];
     let isAddVersionMode = false;
@@ -583,15 +583,15 @@ const SongEditor = (function() {
     }
 
     function renderVersionControls(song) {
-        const versionRow = document.getElementById('song-version-control-row');
+        const versionManagement = document.getElementById('song-version-management');
         const versionSelect = document.getElementById('song-version-select');
         const addVersionBtn = document.getElementById('add-song-version-btn');
         const hasMultipleVersions = versionList.length > 1;
-        const isEditing = !!currentEditSongId;
+        const isEditing = !!editRootSongId;
         const isOriginalVersion = !!(song && song.isOriginalVersion);
 
-        if (versionRow) {
-            versionRow.classList.toggle('hidden', !hasMultipleVersions || !isEditing);
+        if (versionManagement) {
+            versionManagement.classList.toggle('hidden', !hasMultipleVersions || !isEditing);
         }
 
         if (addVersionBtn) {
@@ -649,7 +649,7 @@ const SongEditor = (function() {
         selectedChordIds = song.chordIds || [];
     }
 
-    async function loadSongForEditing(songId) {
+    async function loadSongForEditing(songId, options = {}) {
         const song = await SONGS_SERVICE.getSongById(songId);
         if (!song) {
             alert(translations[currentLanguage]['Song not found'] || 'Song not found');
@@ -664,9 +664,13 @@ const SongEditor = (function() {
             cb.checked = folderIds.includes(parseInt(cb.value, 10));
         });
 
-        versionList = Array.isArray(song.versions) ? [...song.versions].sort((a, b) => getSongVersionValue(a) - getSongVersionValue(b)) : [];
+        const fetchedVersions = Array.isArray(song.versions) ? [...song.versions].sort((a, b) => getSongVersionValue(a) - getSongVersionValue(b)) : [];
+        versionList = fetchedVersions;
         if (!versionList.length) {
             versionList = [{ Id: song.Id, Version: getSongVersionValue(song), IsOriginal: !!song.isOriginalVersion }];
+        }
+        if (!editRootSongId && options.rootSongId) {
+            editRootSongId = options.rootSongId;
         }
         renderVersionControls(song);
         return true;
@@ -752,26 +756,40 @@ const SongEditor = (function() {
 
     async function openEditor(songId = null) {
         currentSongId = songId;
-        currentEditSongId = songId;
+        editRootSongId = null;
         versionSourceSongId = songId;
         versionList = [];
         isAddVersionMode = false;
         selectedChordIds = [];
         await refreshFolderCheckboxes();
         if (songId) {
-            const loaded = await loadSongForEditing(songId);
-            if (!loaded) return;
-
-            if (versionList.length > 1) {
-                const defaultVersion = versionList.find((item) => getSongVersionValue(item) === 1) || versionList[0];
-                const defaultVersionId = parseInt(defaultVersion && defaultVersion.Id, 10);
-                if (Number.isFinite(defaultVersionId) && defaultVersionId > 0 && defaultVersionId !== currentSongId) {
-                    await loadSongForEditing(defaultVersionId);
-                }
+            const entrySong = await SONGS_SERVICE.getSongById(songId);
+            if (!entrySong) {
+                alert(translations[currentLanguage]['Song not found'] || 'Song not found');
+                return;
             }
+
+            versionList = Array.isArray(entrySong.versions)
+                ? [...entrySong.versions].sort((a, b) => getSongVersionValue(a) - getSongVersionValue(b))
+                : [];
+            if (!versionList.length) {
+                versionList = [{ Id: entrySong.Id, Version: getSongVersionValue(entrySong), IsOriginal: !!entrySong.isOriginalVersion }];
+            }
+
+            const originalVersion = versionList.find((item) => getSongVersionValue(item) === 1) || versionList[0];
+            const originalVersionId = parseInt(originalVersion && originalVersion.Id, 10);
+            editRootSongId = Number.isFinite(originalVersionId) && originalVersionId > 0 ? originalVersionId : parseInt(entrySong.Id, 10);
+
+            const requestedVersion = versionList.find((item) => parseInt(item.Id, 10) === parseInt(songId, 10));
+            const initialVersionId = requestedVersion
+                ? parseInt(requestedVersion.Id, 10)
+                : editRootSongId;
+
+            const loaded = await loadSongForEditing(initialVersionId, { rootSongId: editRootSongId });
+            if (!loaded) return;
         } else {
             currentSongId = null;
-            currentEditSongId = null;
+            editRootSongId = null;
             versionSourceSongId = null;
             document.getElementById('song-title-input').value = '';
             document.getElementById('song-date-input').value = '';
@@ -795,9 +813,9 @@ const SongEditor = (function() {
                 cb.disabled = false;
             });
             updateSelectedChordsList();
-            const versionRow = document.getElementById('song-version-control-row');
+            const versionManagement = document.getElementById('song-version-management');
             const addVersionBtn = document.getElementById('add-song-version-btn');
-            if (versionRow) versionRow.classList.add('hidden');
+            if (versionManagement) versionManagement.classList.add('hidden');
             if (addVersionBtn) addVersionBtn.classList.add('hidden');
             setTitleAndFolderReadOnlyState(false);
         }
@@ -809,7 +827,7 @@ const SongEditor = (function() {
     function closeEditor() {
         document.getElementById('song-editor-modal').classList.add('hidden');
         currentSongId = null;
-        currentEditSongId = null;
+        editRootSongId = null;
         versionSourceSongId = null;
         versionList = [];
         isAddVersionMode = false;
@@ -976,6 +994,10 @@ const SongEditor = (function() {
     
     async function refreshFolderCheckboxes() {
         const container = document.getElementById('folder-selection');
+        if (!container) {
+            console.error('Song editor folder container not found (#folder-selection)');
+            return;
+        }
         const folders = await SONGS_SERVICE.getAllFolders();
         container.innerHTML = '<h4 data-translate="Save to folders"></h4>';
         translatePage();
