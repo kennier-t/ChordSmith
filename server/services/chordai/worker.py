@@ -3,6 +3,7 @@ import argparse
 import json
 import math
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -30,7 +31,36 @@ def run_cmd(args):
 def prepare_audio_from_youtube(url, work_dir):
     print_progress(15, "Downloading YouTube audio")
     out_path = os.path.join(work_dir, "input_audio.%(ext)s")
-    run_cmd(["yt-dlp", "-f", "bestaudio", "-o", out_path, url])
+    default_download_args = [
+        "--js-runtimes", "node",
+        "--remote-components", "ejs:github",
+        "--extractor-args", "youtube:player_client=web",
+        "-f", "bestaudio/best",
+        "-o", out_path,
+        url
+    ]
+    ytdlp_commands = []
+    custom_cmd = os.environ.get("CHORDAI_YTDLP_CMD", "").strip()
+    if custom_cmd:
+        ytdlp_commands.append(shlex.split(custom_cmd, posix=False))
+    ytdlp_commands.append(["yt-dlp"])
+    ytdlp_commands.append([sys.executable, "-m", "yt_dlp"])
+
+    last_error = None
+    attempted = []
+    for base_cmd in ytdlp_commands:
+        attempted.append(" ".join(base_cmd))
+        try:
+            run_cmd(base_cmd + default_download_args)
+            last_error = None
+            break
+        except Exception as exc:
+            last_error = exc
+
+    if last_error is not None:
+        raise RuntimeError(
+            f"Unable to execute yt-dlp. Tried: {attempted}. Last error: {last_error}"
+        ) from last_error
 
     found = None
     for p in Path(work_dir).glob("input_audio.*"):
@@ -154,6 +184,46 @@ def transcribe_lyrics(wav_path, language_mode):
     model = WhisperModel(model_size, compute_type=compute_type)
 
     language = None if language_mode == "auto" else language_mode
+    def extract_words_from_segments(segment_items):
+        extracted_words = []
+        for seg in segment_items:
+            seg_start = round(safe_float(getattr(seg, "start", 0.0)), 3)
+            seg_end = round(safe_float(getattr(seg, "end", seg_start)), 3)
+
+            if getattr(seg, "words", None):
+                for w in seg.words:
+                    token = (w.word or "").strip()
+                    if not token:
+                        continue
+                    extracted_words.append({
+                        "word": token,
+                        "start": round(safe_float(w.start, seg_start), 3),
+                        "end": round(safe_float(w.end, seg_end), 3)
+                    })
+                continue
+
+            # Fallback: if word-level timestamps are unavailable, split segment text
+            # into approximate timed words so lyrics/chord alignment still renders.
+            seg_text = (getattr(seg, "text", "") or "").strip()
+            if not seg_text:
+                continue
+            tokens = [tok for tok in seg_text.split() if tok.strip()]
+            if not tokens:
+                continue
+
+            duration = max(0.1, seg_end - seg_start)
+            slice_len = duration / len(tokens)
+            for index, token in enumerate(tokens):
+                token_start = seg_start + (index * slice_len)
+                token_end = min(seg_end, token_start + slice_len)
+                extracted_words.append({
+                    "word": token.strip(),
+                    "start": round(token_start, 3),
+                    "end": round(token_end, 3)
+                })
+        return extracted_words
+
+    # First pass: keep timestamps and speed.
     segments, info = model.transcribe(
         wav_path,
         language=language,
@@ -161,20 +231,23 @@ def transcribe_lyrics(wav_path, language_mode):
         word_timestamps=True,
         vad_filter=True
     )
+    segment_items = list(segments)
+    words = extract_words_from_segments(segment_items)
 
-    words = []
-    for seg in segments:
-        if not seg.words:
-            continue
-        for w in seg.words:
-            token = (w.word or "").strip()
-            if not token:
-                continue
-            words.append({
-                "word": token,
-                "start": round(safe_float(w.start), 3),
-                "end": round(safe_float(w.end), 3)
-            })
+    # Retry if VAD removed sung vocals or timestamps are empty.
+    if not words:
+        segments_retry, info_retry = model.transcribe(
+            wav_path,
+            language=language,
+            beam_size=5,
+            word_timestamps=False,
+            vad_filter=False
+        )
+        retry_items = list(segments_retry)
+        retry_words = extract_words_from_segments(retry_items)
+        if retry_words:
+            words = retry_words
+            info = info_retry
 
     return words, getattr(info, "language", None) or language_mode
 
