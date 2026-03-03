@@ -110,6 +110,7 @@ CREATE TABLE Folders (
 CREATE TABLE Songs (
     Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     Title VARCHAR(200) NOT NULL,
+    Version INT NOT NULL DEFAULT 1,
     SongDate VARCHAR(50) NULL,
     Notes LONGTEXT NULL,
     SongKey VARCHAR(20) NULL,
@@ -129,7 +130,10 @@ CREATE TABLE Songs (
     CONSTRAINT FK_Songs_creator FOREIGN KEY (creator_id) REFERENCES Users(id),
     CONSTRAINT CK_Songs_LayoutColumnCount CHECK (LayoutColumnCount IN (1, 2)),
     CONSTRAINT CK_Songs_LayoutDividerRatio CHECK (LayoutDividerRatio >= 0.20000 AND LayoutDividerRatio <= 0.80000),
-    KEY IX_Songs_creator (creator_id)
+    CONSTRAINT CK_Songs_Version_Positive CHECK (Version >= 1),
+    KEY IX_Songs_creator (creator_id),
+    KEY IX_Songs_Title_Version (Title, Version),
+    KEY IX_Songs_Creator_Title_Version (creator_id, Title, Version)
 ) ENGINE=InnoDB;
 
 CREATE TABLE SongChordDiagrams (
@@ -386,6 +390,7 @@ CREATE OR REPLACE VIEW vw_SongsWithFolders AS
 SELECT
     s.Id,
     s.Title,
+    s.Version,
     s.SongDate,
     s.Notes,
     s.SongKey,

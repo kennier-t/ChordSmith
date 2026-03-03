@@ -7,6 +7,18 @@
     let selectedValues = {}; // Selected values for each sort mode, e.g. {key: ['A', 'C'], folder: ['Folder1']}
     let cachedImportPack = null;
     const ALL_FOLDER_ID = '__ALL__'; // Special ID for the ALL folder
+
+    function getFolderSortLabel(mode) {
+        const map = {
+            'date-asc': translations[currentLanguage]['Date (Oldest First)'] || 'Date (Oldest First)',
+            'date-desc': translations[currentLanguage]['Date (Newest First)'] || 'Date (Newest First)',
+            'name-asc': translations[currentLanguage]['Name (A-Z)'] || 'Name (A-Z)',
+            'name-desc': translations[currentLanguage]['Name (Z-A)'] || 'Name (Z-A)',
+            'songs-desc': translations[currentLanguage]['Songs (Most First)'] || 'Songs (Most First)',
+            'songs-asc': translations[currentLanguage]['Songs (Least First)'] || 'Songs (Least First)'
+        };
+        return map[mode] || map['date-asc'];
+    }
     
     function initialize() {
         document.getElementById('open-songs-btn').addEventListener('click', openSongsView);
@@ -32,10 +44,10 @@
             SongEditor.openEditor();
         });
         document.getElementById('back-to-folders-btn').addEventListener('click', showFoldersView);
-        document.getElementById('folder-sort-select').addEventListener('change', (e) => {
-            currentSortMode = e.target.value;
-            refreshFoldersList();
-        });
+        const folderSortDisplay = document.getElementById('folder-sort-display');
+        if (folderSortDisplay) {
+            folderSortDisplay.textContent = getFolderSortLabel(currentSortMode);
+        }
     }
     
     function openSongsView() {
@@ -355,6 +367,10 @@
         const container = document.getElementById('folders-list');
         const folders = await SONGS_SERVICE.getAllFolders();
         const allSongs = await SONGS_SERVICE.getAllSongs();
+        const folderSortDisplay = document.getElementById('folder-sort-display');
+        if (folderSortDisplay) {
+            folderSortDisplay.textContent = getFolderSortLabel(currentSortMode);
+        }
         
         container.innerHTML = '';
         
@@ -622,6 +638,31 @@
             dropdown.classList.remove('hidden');
             button.classList.add('active');
         }
+    }
+
+    function toggleFolderSortDropdown() {
+        const dropdown = document.getElementById('folder-sort-dropdown');
+        const button = document.getElementById('folder-sort-btn');
+        if (!dropdown || !button) return;
+
+        const isVisible = !dropdown.classList.contains('hidden');
+        if (isVisible) {
+            dropdown.classList.add('hidden');
+            button.classList.remove('active');
+        } else {
+            dropdown.classList.remove('hidden');
+            button.classList.add('active');
+        }
+    }
+
+    function selectFolderSortOption(mode) {
+        currentSortMode = mode;
+        const display = document.getElementById('folder-sort-display');
+        if (display) {
+            display.textContent = getFolderSortLabel(mode);
+        }
+        toggleFolderSortDropdown();
+        refreshFoldersList();
     }
 
     function selectSortOption(value) {
@@ -949,10 +990,16 @@
     document.addEventListener('click', (e) => {
         const dropdown = document.getElementById('value-dropdown');
         const button = document.getElementById('value-filter-btn');
+        const folderSortDropdown = document.getElementById('folder-sort-dropdown');
+        const folderSortButton = document.getElementById('folder-sort-btn');
 
         if (dropdown && button && !button.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.classList.add('hidden');
             button.classList.remove('active');
+        }
+        if (folderSortDropdown && folderSortButton && !folderSortButton.contains(e.target) && !folderSortDropdown.contains(e.target)) {
+            folderSortDropdown.classList.add('hidden');
+            folderSortButton.classList.remove('active');
         }
     });
     
@@ -975,7 +1022,9 @@
         refreshAllSongsView,
         handleAllSongsSortChange,
         toggleValueDropdown,
+        toggleFolderSortDropdown,
         toggleSortDropdown,
+        selectFolderSortOption,
         selectSortOption,
         openContentPackModal,
         closeContentPackModal,

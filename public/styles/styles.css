@@ -1379,7 +1379,8 @@ h2::after {
     white-space: nowrap;
 }
 
-.layout-control select {
+.layout-control select,
+.layout-control .custom-select {
     padding: 4px 8px;
     border: 1px solid var(--border);
     background: white;
@@ -1387,13 +1388,16 @@ h2::after {
     font-size: 0.875rem;
     cursor: pointer;
     transition: all 0.3s ease;
+    min-width: 160px;
 }
 
-.layout-control select:hover {
+.layout-control select:hover,
+.layout-control .custom-select:hover {
     border-color: var(--primary);
 }
 
-.layout-control select:focus {
+.layout-control select:focus,
+.layout-control .custom-select:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(139, 111, 71, 0.1);
@@ -1479,6 +1483,49 @@ h2::after {
 
 .metadata-table input:focus {
     outline: 1px solid var(--primary);
+}
+
+.song-version-management,
+.song-version-control-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.song-version-management {
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+
+.song-version-management label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.song-version-management .custom-select-container {
+    min-width: 220px;
+}
+
+.song-version-management .custom-select {
+    min-width: 220px;
+}
+
+.song-version-management select,
+.song-version-control-wrap select {
+    flex: 1;
+    min-width: 180px;
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    font-family: inherit;
+    font-size: inherit;
+    background: white;
+}
+
+.song-version-management select:focus,
+.song-version-control-wrap select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(139, 111, 71, 0.1);
 }
 
 #song-content-textarea,
@@ -1943,6 +1990,36 @@ h2::after {
     text-align: center;
     color: var(--text-secondary);
     margin-bottom: 16px;
+}
+
+.pdf-version-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.pdf-version-control label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.pdf-version-control select {
+    min-width: 180px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text-primary);
+    padding: 6px 10px;
+    font-size: 0.875rem;
+}
+
+.pdf-version-control .custom-select-container {
+    min-width: 220px;
+}
+
+.pdf-version-control .custom-select {
+    min-width: 220px;
 }
 
 .pdf-preview-frame {

@@ -16,13 +16,19 @@ ChordSmith is a web app to create, manage, share, and export guitar chords and s
 
 ### Songs
 - Song editor with metadata: title, date, notes, key, capo, bpm, effects.
+- Song versioning per title (multiple arrangements under one canonical song identity).
 - Select up to 8 chord diagrams per song.
 - Organize songs in folders.
 - Full song/folder CRUD.
 - Song layout modes: single column and two columns with draggable divider.
 - Two-column layout persists per song (column count, divider position, column content).
 - Song editor includes a UI-only line-number gutter for the first text column.
+- Edit view shows version selector only when a song has multiple versions.
+- Add new version flow clones current content/chords, locks title/folders, and stores next `Version`.
+- Version order can be rearranged and is persisted.
+- Title/folder edits are restricted to the original record and applied to all versions atomically.
 - Song-list `PDF` action opens a preview page before download.
+- PDF preview supports version switching (only for multi-version songs) and downloads current selection.
 
 ### Sharing and Multi-user
 - User registration/login with JWT auth.
@@ -58,7 +64,8 @@ ChordSmith is a web app to create, manage, share, and export guitar chords and s
 ## Important Notes Before You Start
 - ChordSmith uses MySQL only.
 - The database name used by default is `ChordSmith`.
-- The setup script `database/setup-mysql.sql` recreates the database from scratch.
+- The setup script `database/setup.sql` recreates the database from scratch.
+- Run `database/2026-02-28-song-versioning.sql` once after `setup.sql` to enable song versioning.
 - If you already had a database named `Chordsmith Studio`, use `database/rename-db-chordsmith-studio-to-chordsmith.sql`.
 
 ## 0 to 100 Setup: Windows
@@ -109,9 +116,10 @@ If you do not plan to use registration/password emails now, you can still run th
 1. Open MySQL Workbench.
 2. Connect to your local MySQL server.
 3. Go to `File` -> `Open SQL Script...`.
-4. Open `database/setup-mysql.sql`.
+4. Open `database/setup.sql`.
 5. Click the lightning bolt Execute button.
 6. Confirm script runs without errors.
+7. Run `database/2026-02-28-song-versioning.sql` once.
 
 ### 6. Install project dependencies
 In PowerShell inside project root:
@@ -185,8 +193,9 @@ If already downloaded, open Terminal in the project folder.
 1. Open MySQL Workbench.
 2. Connect to local MySQL server.
 3. `File` -> `Open SQL Script...`.
-4. Select `database/setup-mysql.sql`.
+4. Select `database/setup.sql`.
 5. Click Execute (lightning icon).
+6. Run `database/2026-02-28-song-versioning.sql` once.
 
 ### 6. Install dependencies and run
 ```bash
@@ -299,7 +308,7 @@ pdftotext -v
 - `ER_ACCESS_DENIED_ERROR`
   - Check `DB_USER` and `DB_PASSWORD` in `.env`.
 - `Unknown database 'ChordSmith'`
-  - Run `database/setup-mysql.sql` again.
+  - Run `database/setup.sql` again.
 - App starts but login/register fails with email errors
   - Set valid SMTP values in `.env`, or postpone email-dependent flows.
 - `pdftotext command failed`
@@ -310,6 +319,7 @@ pdftotext -v
 - `server/db.js`: MySQL connection and transaction layer
 - `server/routes/`: API routes
 - `server/services/`: business/data logic
+<<<<<<< HEAD
 - `server/routes/chordai.js`: ChordAI API routes
 - `server/services/chordaiService.js`: ChordAI job orchestration and cleanup
 - `server/services/chordai/worker.py`: local audio analysis pipeline
@@ -317,7 +327,23 @@ pdftotext -v
 - `public/scripts/chord-ai.js`: ChordAI UI logic and sync rendering
 - `public/styles/chord-ai.css`: ChordAI page styles
 - `database/setup-mysql.sql`: full DB bootstrap
+=======
+- `database/setup.sql`: full DB bootstrap
+- `database/2026-02-28-song-versioning.sql`: song versioning migration
+>>>>>>> origin/main
 - `database/rename-db-chordsmith-studio-to-chordsmith.sql`: rename existing DB
+
+## Migration Checklist (Production)
+1. Take a verified full DB backup (and test restore).
+2. Announce a short maintenance window or put write operations in maintenance mode.
+3. Run `database/2026-02-28-song-versioning.sql` in the target `ChordSmith` database.
+4. Validate:
+   - `Songs.Version` exists and all rows have `Version >= 1`.
+   - App can create new songs with unique titles.
+   - Duplicate title create is blocked in normal Create flow.
+   - Add new version succeeds and increments version order.
+5. Smoke-test edit and PDF preview with a multi-version song.
+6. Re-enable normal traffic.
 
 ## License
 Personal educational project.

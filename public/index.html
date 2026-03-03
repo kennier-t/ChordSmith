@@ -259,15 +259,21 @@
                         <button id="create-new-song-btn" class="download-btn" data-translate="Create New Song">Create New Song</button>
                         <button id="open-content-pack-modal-btn" class="download-btn" data-translate="Import / Export">Import / Export</button>
                         <div class="sort-control">
-                            <label for="folder-sort-select" data-translate="Sort by:">Sort by:</label>
-                            <select id="folder-sort-select">
-                                <option value="date-asc" data-translate="Date (Oldest First)">Date (Oldest First)</option>
-                                <option value="date-desc" data-translate="Date (Newest First)">Date (Newest First)</option>
-                                <option value="name-asc" data-translate="Name (A-Z)">Name (A-Z)</option>
-                                <option value="name-desc" data-translate="Name (Z-A)">Name (Z-A)</option>
-                                <option value="songs-desc" data-translate="Songs (Most First)">Songs (Most First)</option>
-                                <option value="songs-asc" data-translate="Songs (Least First)">Songs (Least First)</option>
-                            </select>
+                            <label for="folder-sort-btn" data-translate="Sort by:">Sort by:</label>
+                            <div class="custom-select-container">
+                                <button id="folder-sort-btn" type="button" class="custom-select" onclick="SongsManager.toggleFolderSortDropdown()">
+                                    <span id="folder-sort-display">Date (Oldest First)</span>
+                                    <span class="custom-select-arrow"></span>
+                                </button>
+                                <div id="folder-sort-dropdown" class="custom-dropdown hidden">
+                                    <div class="custom-dropdown-item" data-value="date-asc" onclick="SongsManager.selectFolderSortOption('date-asc')" data-translate="Date (Oldest First)">Date (Oldest First)</div>
+                                    <div class="custom-dropdown-item" data-value="date-desc" onclick="SongsManager.selectFolderSortOption('date-desc')" data-translate="Date (Newest First)">Date (Newest First)</div>
+                                    <div class="custom-dropdown-item" data-value="name-asc" onclick="SongsManager.selectFolderSortOption('name-asc')" data-translate="Name (A-Z)">Name (A-Z)</div>
+                                    <div class="custom-dropdown-item" data-value="name-desc" onclick="SongsManager.selectFolderSortOption('name-desc')" data-translate="Name (Z-A)">Name (Z-A)</div>
+                                    <div class="custom-dropdown-item" data-value="songs-desc" onclick="SongsManager.selectFolderSortOption('songs-desc')" data-translate="Songs (Most First)">Songs (Most First)</div>
+                                    <div class="custom-dropdown-item" data-value="songs-asc" onclick="SongsManager.selectFolderSortOption('songs-asc')" data-translate="Songs (Least First)">Songs (Least First)</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div id="folders-list" class="folders-list"></div>
@@ -397,8 +403,18 @@
                         <div class="content-header">
                             <h3 data-translate="Song Content">Song Content</h3>
                             <div class="layout-control">
-                                <label for="song-layout-select" data-translate="Page Layout:">Page Layout:</label>
-                                <select id="song-layout-select">
+                                <label for="song-layout-btn" data-translate="Page Layout:">Page Layout:</label>
+                                <div class="custom-select-container">
+                                    <button id="song-layout-btn" type="button" class="custom-select">
+                                        <span id="song-layout-display">Single Column</span>
+                                        <span class="custom-select-arrow"></span>
+                                    </button>
+                                    <div id="song-layout-dropdown" class="custom-dropdown hidden">
+                                        <div class="custom-dropdown-item" data-value="1" data-translate="Single Column">Single Column</div>
+                                        <div class="custom-dropdown-item" data-value="2" data-translate="Two Columns">Two Columns</div>
+                                    </div>
+                                </div>
+                                <select id="song-layout-select" class="hidden">
                                     <option value="1" selected data-translate="Single Column">Single Column</option>
                                     <option value="2" data-translate="Two Columns">Two Columns</option>
                                 </select>
@@ -454,8 +470,22 @@
                     <!-- Folder Selector -->
                     <div id="folder-selection" class="folder-selection"></div>
                     
+                    <div id="song-version-management" class="song-version-management hidden">
+                        <label for="song-version-select-btn" data-translate="Version:">Version:</label>
+                        <div class="custom-select-container">
+                            <button id="song-version-select-btn" type="button" class="custom-select">
+                                <span id="song-version-select-display">Version 1</span>
+                                <span class="custom-select-arrow"></span>
+                            </button>
+                            <div id="song-version-select-dropdown" class="custom-dropdown hidden"></div>
+                        </div>
+                        <button id="song-version-up-btn" type="button" class="mini-btn" title="Move version up" data-translate-title="Move version up">&#8593;</button>
+                        <button id="song-version-down-btn" type="button" class="mini-btn" title="Move version down" data-translate-title="Move version down">&#8595;</button>
+                    </div>
+                    
                     <!-- Actions -->
                     <div class="song-editor-actions">
+                        <button id="add-song-version-btn" class="editor-action-btn btn-secondary hidden" data-translate="Add new version">Add new version</button>
                         <button id="save-song-btn" class="editor-action-btn btn-primary" data-translate="Save Song">Save Song</button>
                         <button id="cancel-song-edit-btn" class="editor-action-btn btn-secondary" data-translate="Cancel">Cancel</button>
                     </div>
@@ -502,3 +532,4 @@
     <script src="scripts/songsManager.js"></script>
 </body>
 </html>
+

@@ -3,6 +3,16 @@ const router = express.Router();
 const songService = require('../services/songService');
 const { authMiddleware } = require('./users');
 
+function handleSongError(error, res) {
+    console.error(error);
+    const status = Number.isInteger(error.status) ? error.status : 500;
+    const message = error.message || 'Internal server error';
+    if (status >= 500) {
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+    return res.status(status).json({ error: message, code: error.code || 'REQUEST_ERROR' });
+}
+
 // Folders routes
 router.get('/folders', authMiddleware, async (req, res) => {
     try {
@@ -85,8 +95,7 @@ router.post('/', authMiddleware, async (req, res) => {
         const song = await songService.createSong(req.body, req.user.id);
         res.status(201).json(song);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
+        handleSongError(error, res);
     }
 });
 
@@ -105,8 +114,35 @@ router.get('/:id', authMiddleware, async (req, res) => {
         const song = await songService.getSongById(req.params.id, req.user.id);
         res.json(song);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
+        handleSongError(error, res);
+    }
+});
+
+router.get('/:id/versions', authMiddleware, async (req, res) => {
+    try {
+        const versions = await songService.getSongVersions(req.params.id, req.user.id);
+        res.json(versions);
+    } catch (error) {
+        handleSongError(error, res);
+    }
+});
+
+router.post('/:id/versions', authMiddleware, async (req, res) => {
+    try {
+        const song = await songService.addSongVersion(req.params.id, req.body, req.user.id);
+        res.status(201).json(song);
+    } catch (error) {
+        handleSongError(error, res);
+    }
+});
+
+router.put('/:id/versions/order', authMiddleware, async (req, res) => {
+    try {
+        const orderedSongIds = Array.isArray(req.body && req.body.orderedSongIds) ? req.body.orderedSongIds : [];
+        const result = await songService.reorderSongVersions(req.params.id, orderedSongIds, req.user.id);
+        res.json(result);
+    } catch (error) {
+        handleSongError(error, res);
     }
 });
 
@@ -115,8 +151,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
         const song = await songService.updateSong(req.params.id, req.body, req.user.id);
         res.json(song);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
+        handleSongError(error, res);
     }
 });
 
